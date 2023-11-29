@@ -24,6 +24,7 @@ class BankAccountCreateView(SchoolIdMixin, generics.CreateAPIView):
         request.data['school'] = school
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+            serializer.validated_data['school'] = school
             self.perform_create(serializer)
             return Response({'detail': 'BankAccount created successfully'}, status=status.HTTP_201_CREATED)
         else:
@@ -69,11 +70,11 @@ class BankAccountDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView
         if not school_id:
             return JsonResponse({'detail': 'Invalid school in token'}, status=401)
 
-        request.data['school_id'] = school_id
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
+            serializer.validated_data['school_id'] = school_id
             self.perform_update(serializer)
             return Response({'detail': 'BankAccount updated successfully'}, status=status.HTTP_201_CREATED)
         else:

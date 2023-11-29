@@ -21,9 +21,9 @@ class ClassesCreateView(SchoolIdMixin, generics.CreateAPIView):
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
-        request.data['school_id'] = school_id
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+            serializer.validated_data['school_id'] = school_id
             self.perform_create(serializer)
             return Response({'detail': 'Class created successfully'}, status=status.HTTP_201_CREATED)
         else:
@@ -66,11 +66,11 @@ class ClassesDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
-        request.data['school_id'] = school_id
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
+            serializer.validated_data['school_id'] = school_id
             self.perform_update(serializer)
             return Response({'detail': 'Class updated successfully'}, status=status.HTTP_201_CREATED)
         else:
