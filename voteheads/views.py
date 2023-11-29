@@ -32,14 +32,19 @@ class VoteHeadCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 class VoteHeadListView(SchoolIdMixin, generics.ListAPIView):
     serializer_class = VoteHeadSerializer
-    queryset = VoteHead.objects.all()
     permission_classes = [IsAuthenticated]
-
-    def list(self, request, *args, **kwargs):
-        school_id = self.check_school_id(request)
+    def get_queryset(self):
+        school_id = self.check_school_id(self.request)
         if not school_id:
-            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
-        return super().list(request, *args, **kwargs)
+            return VoteHead.objects.none()
+        queryset = VoteHead.objects.filter(school_id=school_id)
+        return queryset
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        if not queryset.exists():
+            return JsonResponse({'detail': 'No data found for the specified school_id'}, status=404)
+        serializer = self.get_serializer(queryset, many=True)
+        return JsonResponse(serializer.data, safe=False)
 
 
 class VoteHeadDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):

@@ -30,16 +30,25 @@ class BankAccountCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class BankAccountListView(SchoolIdMixin, generics.ListAPIView):
     serializer_class = BankAccountSerializer
-    queryset = BankAccount.objects.all()
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        school_id = self.check_school_id(self.request)
+        if not school_id:
+            return BankAccount.objects.none()
+        queryset = BankAccount.objects.filter(school_id=school_id)
+        return queryset
+
     def list(self, request, *args, **kwargs):
-        school = self.check_school_id(request)
-        if not school:
-            return JsonResponse({'detail': 'Invalid school in token'}, status=401)
-        return super().list(request, *args, **kwargs)
+        queryset = self.get_queryset()
+        if not queryset.exists():
+            return JsonResponse({'detail': 'No data found for the specified school_id'}, status=404)
+        serializer = self.get_serializer(queryset, many=True)
+        return JsonResponse(serializer.data, safe=False)
+
 
 
 class BankAccountDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
