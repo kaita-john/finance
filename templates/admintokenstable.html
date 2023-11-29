@@ -1,0 +1,104 @@
+{% extends 'adminmenu.html' %}
+{% load static %}
+{% block body %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                alert("{{ message }}")
+            </script>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Begin Page Content -->
+    <div class="container-fluid">
+
+        <br>
+        <div class="row">
+
+            <div class="col-lg-6">
+                <!-- Circle Buttons -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 align="center" class="m-0 font-weight-bold text-primary">TOKENS CONSUMED</h6>
+                    </div>
+                    <div class="card-body">
+                        <div align="center"
+                             class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.tokenconsumedsum }}
+                            Tkns
+                        </div>
+                        <!-- Circle Buttons (Default) -->
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary" align="center">RELATIVE TALK TIME</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div align="center"
+                                     class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.relativetalktime }}
+                                    Mins
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- DataTales Example -->
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th>DEVICE ID</th>
+                            <th>School</th>
+                            <th>Device Mobile</th>
+                            <th>Tokens Used</th>
+                            <th>Tokens Unused</th>
+                        </tr>
+                        </thead>
+                        <tfoot>
+                        <tr>
+                            <th>DEVICE ID</th>
+                            <th>School</th>
+                            <th>Device Mobile</th>
+                            <th>Tokens Used</th>
+                            <th>Tokens Unused</th>
+                        </tr>
+                        </tfoot>
+                        <tbody>
+
+                        {% for valued in summary.devicelist %}
+                            <tr>
+                                <td>{{ valued.id }}</td>
+                                <td>{{ valued.school.name }}</td>
+                                <td>{{ valued.mobile }}</td>
+                                <td>{{ valued.tokensconsumed |floatformat:2 }}</td>
+                                <td>{{ valued.standingtoken|floatformat:2 }}</td>
+                                {% comment %}<td style="border: 1px solid;">{% endcomment %}
+                            </tr>
+                        {% endfor %}
+
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+{% endblock %}

@@ -1,0 +1,121 @@
+{% load crispy_forms_tags %}
+{% load static %}
+{% if messages %}
+    {% for message in messages %}
+        <script>
+            alert("{{ message }}")
+        </script>
+    {% endfor %}
+{% endif %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="{% static 'assets/logod.png' %}" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: #5968B0;
+        }
+
+        .form-control {
+            margin-bottom: 1em;
+        }
+
+        .btn-login, .btn-login:hover {
+            background-color: #5968B0;
+            color: white;
+            font-size: 1.5em;
+        }
+
+        label {
+            color: #0c0c0c;
+        }
+
+        @media (max-width: 767.98px) {
+            .card {
+                width: 100% !important;
+
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container d-flex justify-content-center" style="height:100vh;">
+
+    <div class="card rounded-4 align-self-center w-50 py-4 px-md-4">
+        <div class="card-header mx-auto text-center bg-transparent border-0 mb-0">
+            <a href="/"><img src="{% static 'assets/logo.png' %}" alt="tafa logo" width="300em"></a>
+            <h3 class="mt-3">User Login!</h3><br>
+        </div>
+        <div class="card-body border-0 px-md-4 py-0">
+            <div class="error-display" id="error-disp">
+                <p class="text-danger">{{ errors }}</p>
+            </div>
+
+            <div>
+                {% for message in messages %}
+                    <p class="text-success small">{{ message }}</p>
+                {% endfor %}
+            </div>
+
+           {% comment %} <form action="" method="post">
+                {% csrf_token %}
+
+                <label for="uname"><b>Email</b></label><br>
+                <input id="email" style="width: 100%" type="text" placeholder="Your Email" name="email" required>
+                <br>
+                <br>
+
+                <label for="psw"><b>Password</b></label><br>
+                <input id="password" style="width: 100%" type="password" placeholder="Enter Password" name="password"
+                       required>
+                <br><br>
+
+                <button type="submit" id="submit" value="submit" class="btn rounded-4 shadow-none w-100 btn-login"
+                        style="background-color: {{summary.color}}">
+                    Login
+                </button>
+
+            </form>{% endcomment %}
+
+
+            <form action="" method="post">
+                {% csrf_token %}
+                {{ summary.form | crispy}}
+                <button type="submit" id="submit" value="submit" class="btn rounded-4 shadow-none w-100 btn-login" style="background-color: {{summary.color}}">Sign In</button>
+            </form>
+
+
+        </div>
+        {% comment %}<div class="card-footer bg-transparent border-0 pt-4">
+            <hr class="mb-3">
+            <a href=''>
+                <button class="btn btn-secondary w-100 rounded-4 shadow-none" id="tf-reg"><span style="color: white;">REGISTER</span>
+                </button>
+            </a>
+            {#            <p class="mb-0 mt-3">Forgot your password? <a href="/reset-password" class="text-decoration-none text-secondary">Reset now</a></p>#}
+        </div>{% endcomment %}
+
+    </div>
+
+</div>
+<script>
+    const element = document.getElementById("tf-reg");
+    element.addEventListener("click", rgRoute);
+
+    function rgRoute() {
+        window.location.href = "/registration"
+    }
+</script>
+</body>
+
+</html>

@@ -1,0 +1,115 @@
+{% extends 'agentmenu.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block body %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                alert("{{ message }}")
+            </script>
+        {% endfor %}
+    {% endif %}
+
+    <div class="container-fluid">
+
+        <br>
+        <h3 class="mt-3">Edit Student</h3>
+
+        <p>Contacts</p>
+        <table style="background-color: white; width: 100%; border-collapse: collapse; border: 1px solid black; padding-left: 40px">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Mobile</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for parent in summary.studentparents %}
+                <tr>
+                    <td>{{ parent.name }}</td>
+                    <td>{{ parent.mobile }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table><br>
+
+        <form action="" method="post">
+            {% csrf_token %}
+            {{ summary.form | crispy }}
+            <button
+                    type="submit"
+                    id="submit"
+                    value="submit"
+                    class="btn rounded-4 shadow-none w-100 btn-login"
+                    style="background-color: {{ summary.color }}; color: white;">
+                Edit Student
+            </button>
+        </form>
+
+        <br><br>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 style="color: {{ summary.color }}  !important;" class="m-0 font-weight-bold text-primary">
+                    Add or Remove Contacts</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+
+
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th>Parent Name</th>
+                            <th>Phone No.</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tfoot>
+                        <tr>
+                            <th>Parent Name</th>
+                            <th>Phone No.</th>
+                            <th>Actions</th>
+                        </tr>
+                        </tfoot>
+                        <tbody>
+
+                        {% for parent in summary.parents %}
+                            <tr>
+                                <td>{{ parent.name }}</td>
+                                <td>{{ parent.mobile }}</td>
+                                <td>
+
+                                    <div class="row justify-content-center">
+                                        <div class="col-md-4 text-center">
+                                            <a style="width: 60px"
+                                               href="{% url 'addParentToStudent' studentid=summary.studentid parentid=parent.id %}"
+                                               class="btn btn-primary btn-sm">
+                                                <i class=""></i> Add
+                                            </a>
+                                        </div>
+                                        <div class="col-md-1 text-center my-2 my-md-0">|</div>
+                                        <div class="col-md-4 text-center">
+                                            <a href="{% url 'removeParentFromStudent' studentid=summary.studentid parentid=parent.id %}"
+                                               class="btn btn-danger btn-sm">
+                                                <i class=""></i> Remove
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}

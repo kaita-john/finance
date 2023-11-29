@@ -1,0 +1,156 @@
+{% extends 'agentmenu.html' %}
+{% load static %}
+{% block body %}
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                alert("{{ message }}")
+            </script>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Begin Page Content -->
+    <div class="container-fluid">
+
+        <br>
+        <!-- Page Heading -->
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0 text-gray-800"></h1>
+            <div>
+                <a style="background: {{ summary.color }}  !important;" href="{% url 'addStudent' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary
+                       shadow-sm"><i class=""></i> Add Student</a>
+
+                <a style="background: {{ summary.color }}  !important;" href="{% url 'importStudent' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary
+                       shadow-sm"><i class=""></i> Import Students</a>
+            </div>
+        </div>
+        <br>
+
+
+        <!-- DataTales Example -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 style="color: {{ summary.color }}  !important;" class="m-0 font-weight-bold text-primary">
+                    Students</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>K.C.P.E Index No.</th>
+                            <th>Admission No.</th>
+                            <th>Call Contacts</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tfoot>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>K.C.P.E Index No.</th>
+                            <th>Admission No.</th>
+                            <th>Call Contacts</th>
+                            <th>Actions</th>
+                        </tr>
+                        </tfoot>
+                        <tbody>
+
+                        {% for valued in summary.studentslist %}
+                            <tr>
+                                <td>
+                                    {{ valued.fullname }}
+                                    <br>
+                                    <br>
+                                    <p>Tokens : {{ valued.tokenbalance|floatformat:2 }}</p>
+                                </td>
+                                <td>{{ valued.kcpeindexnumber }}</td>
+                                <td>{{ valued.registrationnumber }}</td>
+                                <td>
+                                    <ul>
+                                        {% for contact in valued.contacts.all %}
+                                            <li>{{ contact.name }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                <td>
+                                    <div align="center">
+
+                                        {% if summary.istheadmin %}
+
+                                            {% if valued.active == True %}
+                                                <a style="background: green; width: 160px"
+                                                   href="{% url 'tokenlist' studentid=valued.id %}"
+                                                   class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                                                        class=""></i> Recharge Tokens </a>
+
+                                                <a style="background: green; width: 160px"
+                                                   href="#"
+                                                   class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                                                        class=""></i> Active </a>
+                                            {% else %}
+                                                <a style="width: 160px"
+                                                   href="{% url 'activateStudent' studentid=valued.id %}"
+                                                   class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm"><i
+                                                        class=""></i> Activate </a>
+                                            {% endif %}
+
+
+                                        {% else %}
+                                            {% if valued.active == True %}
+                                                <a style="background: green; width: 160px"
+                                                   href="{% url 'tokenlist' studentid=valued.id %}"
+                                                   class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                                                        class=""></i> Recharge Tokens </a>
+
+                                                <a style="background: green; width: 160px"
+                                                   href=""
+                                                   class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                                                        class=""></i> Active </a>
+                                            {% else %}
+                                                <a style="width: 160px"
+                                                   href="{% url 'activateStudent' studentid=valued.id %}"
+                                                   class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm"><i
+                                                        class=""></i> Activate </a>
+                                            {% endif %}
+                                        {% endif %}
+
+
+                                    </div>
+
+                                    <br>
+                                    <div class="row justify-content-center">
+                                        <div class="col-md-4 text-center">
+                                            <a style="width: 60px" href="{% url 'editstudent' studentid=valued.id %}"
+                                               class="btn btn-danger btn-sm">
+                                                <i class=""></i> Edit
+                                            </a>
+                                        </div>
+                                        <div class="col-md-1 text-center my-2 my-md-0">|</div>
+                                        <div class="col-md-4 text-center">
+                                            <a href="{% url 'deletestudent' studentid=valued.id %}"
+                                               class="btn btn-danger btn-sm">
+                                                <i class=""></i> Delete
+                                            </a>
+                                        </div>
+                                    </div>
+
+
+                                    <br>
+
+
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+{% endblock %}

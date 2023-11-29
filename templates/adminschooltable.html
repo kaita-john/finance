@@ -1,0 +1,113 @@
+{% extends 'adminmenu.html' %}
+{% load static %}
+{% block body %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                alert("{{ message }}")
+            </script>
+        {% endfor %}
+    {% endif %}
+
+
+
+
+    <!-- Begin Page Content -->
+    <!-- Begin Page Content -->
+    <div class="container-fluid">
+
+
+        {% comment %}<br>
+        <br>
+        <br>
+        <br>{% endcomment %}
+        <br>
+        <!-- Page Heading -->
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0 text-gray-800"></h1>
+            <div>
+                <a href="{% url 'addschool' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary
+                       shadow-sm"><i class=""></i>Register New School</a>
+            </div>
+        </div>
+        <br>
+
+
+        <!-- DataTales Example -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Schools</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th>School Name</th>
+                            <th>Code</th>
+                            <th>Mobile</th>
+                            <th>Agents</th>
+                            <th>Registered Students</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tfoot>
+                        <tr>
+                            <th>School Name</th>
+                            <th>Code</th>
+                            <th>Mobile</th>
+                            <th>Agent.</th>
+                            <th>Agent</th>
+                            <th>Actions</th>
+                        </tr>
+                        </tfoot>
+                        <tbody>
+
+                        {% for valued in summary.schoollist %}
+                            <tr>
+                                <td>{{ valued.name }}</td>
+                                <td>{{ valued.code }}</td>
+                                <td>{{ valued.mobile.mobile }}</td>
+                                <td style="width:30%">
+                                    <ul>
+                                        {% for agent in valued.agents %}
+                                            {% if agent.isadmin %}
+                                                <li>{{ agent.fullname }} - {{ agent.phone }}</li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                <td style="width:3%">{{ valued.num_students }}</td>
+                                {% comment %}<td style="border: 1px solid;">{% endcomment %}
+                                <td style="width: 13.33%">
+                                    <div class="d-flex justify-content-center">
+                                        <a href="{% url 'viewschool' schoolid=valued.id %}"
+                                           class="btn btn-primary btn-sm mr-2">
+                                            <i class=""></i> View
+                                        </a>
+                                        <a href="{% url 'editschool' schoolid=valued.id %}"
+                                           class="btn btn-primary btn-sm mr-2">
+                                            <i class=""></i> Edit
+                                        </a>
+                                        <a href="{% url 'deleteschool' schoolid=valued.id %}"
+                                           class="btn btn-danger btn-sm">
+                                            <i class=""></i> Delete
+                                        </a>
+                                    </div>
+                                </td>
+
+                            </tr>
+                        {% endfor %}
+
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+{% endblock %}

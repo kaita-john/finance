@@ -1,0 +1,32 @@
+{% extends 'adminmenu.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block body %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                alert("{{ message }}")
+            </script>
+        {% endfor %}
+    {% endif %}
+
+    <div class="container-fluid">
+
+        <br>
+        <h3 class="mt-3">Edit Global School Settings</h3><br>
+
+        <form action="" method="post">
+            {% csrf_token %}
+            {{ summary.form | crispy }}
+            <br>
+            <br>
+            <button type="submit" id="submit" value="submit" class="btn rounded-4 shadow-none w-100 btn-login"
+                    style="background-color: {{ summary.color }}; color: white;">Submit
+            </button>
+        </form>
+
+    </div>
+
+{% endblock %}

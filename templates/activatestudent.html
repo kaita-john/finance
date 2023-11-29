@@ -1,0 +1,129 @@
+{% extends 'agentmenu.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block body %}
+
+    {% if message %}
+        <script>
+            alert('{{message}}')
+        </script>
+    {% endif %}
+
+    <!-- Begin Page Content -->
+    <div class="container-fluid">
+        <div style="background-color: {{ summary.color }}; width: 80%; margin-left: 10%; margin-top: 10%"
+             class="text-center">
+            <br>
+            <br>
+
+            <div id="unpaid">
+                <h3 style="color: #ffffff">Activate {{ summary.student.fullname }} Account</h3>
+                <p style="color: #ffffff">Activation Fee : </p>
+                <p style="color: #ffffff"> KES : {{ summary.activationfee }} </p>
+            </div>
+
+
+            <div id="paid" style="display:none">
+                <h3 style="color: #ffffff">Payment Was Successful</h3>
+                <p style="color: #ffffff">Thank You!</p>
+                <!-- Page Heading -->
+                <div>
+
+                    {% if summary.istheadmin %}
+                        {% comment %}  <a style="background: {{ summary.color }}  !important;" href="{% url 'adminhomepage' %}"
+                       class="btn btn-sm btn-primary shadow-sm"><i class=""></i>Go Back</a>{% endcomment %}
+                    {% else %}
+                        {% comment %}<a style="background: {{ summary.color }}  !important;" href="{% url 'agenthomepage' %}"
+                           class="btn btn-sm btn-primary shadow-sm"><i class=""></i>Go Back</a>{% endcomment %}
+                    {% endif %}
+
+
+                </div>
+            </div>
+
+            <form id="myForm" action="{% url 'activateStudent' summary.student.id %}" method="post">
+                {% csrf_token %}
+                {{ summary.form | crispy }}
+                <label style="color: #FFFFFF">Mobile :</label>
+                <input style="padding: 2px" type="number" name="mobile" id="mobile" value="{{ summary.mobile }}"
+                       placeholder="254...">
+                <br>
+                <br>
+                <br>
+                <button style="background-color: black; color: white; width: 320px" type="submit" id="submit"
+                        value="submit">Activate Account
+                </button>
+            </form>
+
+            <div id="processing-dialog" style="display:none; color:white;">
+                <div id="processing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <br>
+                <br>
+                <div id="processing" style="margin-top: 20px; color: white">
+                    Processing...
+                </div>
+            </div>
+
+            <script>
+                const submitBtn = document.getElementById("submit");
+                const processingBtn = document.getElementById("processing");
+                const paidView = document.getElementById("paid");
+                const unpaidView = document.getElementById("unpaid");
+                const processingDialog = document.getElementById("processing-dialog");
+                const dismissBtn = document.getElementById("dismiss-btn");
+                const myForm = document.getElementById("myForm");
+
+                myForm.addEventListener("submit", function (event) {
+                    window.alert("You will receive an M-pesa prompt shortly");
+                    event.preventDefault();
+                    // Display the processing dialog
+                    processingDialog.style.display = "block";
+                    // Disable the submit button to prevent multiple form submissions
+                    submitBtn.disabled = true;
+
+                    // Send the form data using AJAX
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', myForm.action, true);
+                    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                    xhr.onload = function () {
+                        if (xhr.status === 200 && xhr.responseText) {
+                            // Update the processing message and re-enable the submit button based on the response
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.success) {
+                                processingDialog.querySelector("div").textContent = "Payment Successful!";
+                                submitBtn.disabled = false;
+                                processingBtn.remove();
+                                myForm.remove();
+                                paidView.style.display = "block";
+                                unpaidView.style.display = "none";
+                                dismissBtn.click();
+                            } else {
+                                processingDialog.querySelector("div").textContent = "Payment was unsuccessful.";
+                                submitBtn.disabled = false;
+                                processingBtn.remove();
+                            }
+                        }
+                    };
+                    xhr.send(new FormData(myForm));
+                });
+
+                dismissBtn.addEventListener("click", function () {
+                    // Hide the processing dialog
+                    processingDialog.style.display = "none";
+                });
+            </script>
+
+            <br>
+            <br>
+
+        </div>
+
+    </div>
+    <!-- /.container-fluid -->
+
+{% endblock %}

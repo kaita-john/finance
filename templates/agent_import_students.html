@@ -1,0 +1,79 @@
+{% extends 'agentmenu.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% block body %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                alert("{{ message }}")
+            </script>
+        {% endfor %}
+    {% endif %}
+
+    <div class="container-fluid">
+
+        <br>
+        <h3 style="font-size: 23px" class="mt-3">Define Excel Tables First</h3><br>
+
+        <form id="myForm" action="" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ summary.form | crispy }}
+            <br>
+            <button type="submit" id="submit" value="submit" class="btn rounded-4 shadow-none w-100 btn-login"
+                    style="background-color: {{ summary.color }} ; color: white">Import Students
+            </button>
+        </form>
+
+
+        <br>
+        <br>
+        <div id="processing-dialog" style="display:none">
+            <div align="center" id="processing">
+                <h3 style="color: {{ summary.color }}">Processing Your Excel File</h3>
+            </div>
+            <br>
+            <br>
+            <div id="processing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <br>
+            <div id="processing" style="margin-top: 20px"></div>
+        </div>
+
+
+        <div align="center" id="processing-complete" style="display:none">
+            <h3 style="color: {{ summary.color }}">Processing Complete!</h3>
+        </div>
+
+        <script>
+            document.getElementById("myForm").addEventListener("submit", function (e) {
+                e.preventDefault(); // prevent the default form submission behavior
+                // show the processing dialog
+                document.getElementById("processing-complete").style.display = "none";
+                document.getElementById("processing-dialog").style.display = "block";
+                // submit the form data using AJAX
+                var formData = new FormData(this);
+                $.ajax({
+                    url: "{% url 'importStudent' %}",
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (data) {
+                        if (data.success) {
+                            // hide the processing dialog
+                            document.getElementById("processing-dialog").style.display = "none";
+                            // show the processing complete message
+                            document.getElementById("processing-complete").style.display = "block";
+                        }
+                    }
+                });
+            });
+        </script>
+
+    </div>
+
+{% endblock %}

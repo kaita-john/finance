@@ -1,0 +1,19 @@
+MIXED = 'MIXED'
+GIRL = 'GIRL'
+BOY = 'BOY'
+
+BOARDING = 'BOARDING'
+DAY = 'DAY'
+
+MY_GENDER_CHOICES = [
+    (MIXED, 'MIXED'),
+    (GIRL, 'GIRL'),
+    (BOY, 'BOY'),
+]
+
+MY_BOARDING_CHOICES = [
+    (MIXED, 'MIXED'),
+    (BOARDING, 'BOARDING'),
+    (DAY, 'DAY'),
+]
+

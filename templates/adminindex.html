@@ -1,0 +1,145 @@
+{% extends 'adminmenu.html' %}
+{% load static %}
+{% block body %}
+
+    {% if message %}
+        <script>
+            alert('{{message}}')
+        </script>
+    {% endif %}
+
+    <br>
+    <!-- Begin Page Content -->
+    <div class="container-fluid">
+        <!-- Page Heading -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 style="font-size: 23px" class="h3 mb-0 text-gray-800"> ADMIN DASHBOARD </h1>
+            <a href="{% url 'logout' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary
+                       shadow-sm"><i class=""></i> Logout</a>
+        </div>
+        <!-- Content Row -->
+
+
+        <div class="row">
+
+            <div class="col-lg-6">
+                <!-- Circle Buttons -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 align="center" class="m-0 font-weight-bold text-primary">TOKEN CONSUMPTION</h6>
+                    </div>
+                    <div class="card-body">
+                        <div align="center"
+                             class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.totalstandingtokens }}
+                            Tkns
+                        </div>
+                        <!-- Circle Buttons (Default) -->
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary" align="center">RELATIVE TALK TIME</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div align="center"
+                                     class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.totalrelativetalktime }}
+                                    Mins
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 align="center" class="m-0 font-weight-bold text-primary">INCOME THIS MONTH</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div align="center"
+                                     class="h5 mb-0 font-weight-bold text-gray-800">
+                                    KES: {{ summary.thismonthtotalincome }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 align="center" class="m-0 font-weight-bold text-primary">INCOME LAST MONTH</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div align="center"
+                                     class="h5 mb-0 font-weight-bold text-gray-800">
+                                    KES: {{ summary.lastmonthtotalincome }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 align="center" class="m-0 font-weight-bold text-primary">ACTIVE USERS</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div align="center"
+                                     class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.numberofusers }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 align="center" class="m-0 font-weight-bold text-primary">ACTIVE DEVICES</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div align="center"
+                                     class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.activedevices }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+{% endblock %}
