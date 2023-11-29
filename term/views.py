@@ -46,7 +46,7 @@ class TermListView(SchoolIdMixin, generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if not queryset.exists():
-            return JsonResponse({'detail': 'No data found for the specified school_id'}, status=404)
+            return JsonResponse({'detail': {}}, status=200)
         serializer = self.get_serializer(queryset, many=True)
         return JsonResponse(serializer.data, safe=False)
 
