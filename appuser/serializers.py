@@ -67,12 +67,13 @@ class AppUserSerializer(serializers.ModelSerializer):
 
 
     def create(self, validated_data):
-
         school_id = validated_data.pop('school_id', None)
-        school = None
         if school_id:
             school = get_object_or_404(School, id=school_id)
+            print(f"Found School to be {school} and school_id is {school_id}")
             validated_data['school_id'] = school
+        else:
+            print("School ID not passed")
 
         roles_data = validated_data.pop('roles', [])
         roles = FetchRoleSerializer(many=False).to_internal_value(roles_data)
@@ -82,8 +83,6 @@ class AppUserSerializer(serializers.ModelSerializer):
         sender_password ="wwmx vsyr tvwp sfac"
         receiver_email = validated_data.get('email')
         subject  = "PASSWORD"
-
-        details = {'details' : "Succeeded"}
 
         password = validated_data.get('password')
         mypass = None

@@ -75,7 +75,7 @@ class IsSuperUser(permissions.BasePermission):
 
 class IsAdminOrSuperUser(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user and (IsAdminUser().has_permission(request, view) or IsSuperUser().has_permission(request, view))
+        return request.user and (request.user.is_admin or IsAdminUser().has_permission(request, view) or IsSuperUser().has_permission(request, view))
 
 
 def fetchAllRoles():

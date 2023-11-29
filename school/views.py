@@ -38,7 +38,11 @@ class SchoolListView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
+            print("User is superuser")
             return School.objects.all()
+        else:
+            print(f"User is not superuser {user}")
+
         if user.school_id:
             return School.objects.filter(id=user.school_id.id)
         return School.objects.none()

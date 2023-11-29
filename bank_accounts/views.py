@@ -39,13 +39,13 @@ class BankAccountListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return BankAccount.objects.none()
-        queryset = BankAccount.objects.filter(school_id=school_id)
+        queryset = BankAccount.objects.filter(school=school_id)
         return queryset
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if not queryset.exists():
-            return JsonResponse({'detail': {}}, status=200)
+            return JsonResponse({}, status=200)
         serializer = self.get_serializer(queryset, many=True)
         return JsonResponse(serializer.data, safe=False)
 
