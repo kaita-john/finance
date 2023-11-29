@@ -30,6 +30,7 @@ class RoleCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class RoleListView(SchoolIdMixin, generics.ListAPIView):
     serializer_class = RoleSerializer
     permission_classes = [IsAuthenticated]
