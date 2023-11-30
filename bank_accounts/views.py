@@ -2,11 +2,14 @@
 import uuid
 
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from account_types.models import AccountType
+from currencies.models import Currency
 from utils import SchoolIdMixin
 from .models import BankAccount
 from .serializers import BankAccountSerializer
@@ -73,7 +76,16 @@ class BankAccountDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
         if serializer.is_valid():
+            account_type_data = request.data.get('account_type', None)
+            currency = request.data.get('currency', None)
+            if account_type_data:
+                account_type = get_object_or_404(AccountType, id=account_type_data)
+                serializer.validated_data['account_type'] = account_type
+            if currency:
+                get_currency = get_object_or_404(Currency, id=currency)
+                serializer.validated_data['currency'] = get_currency
             serializer.validated_data['school_id'] = school_id
             self.perform_update(serializer)
             return Response({'detail': 'BankAccount updated successfully'}, status=status.HTTP_201_CREATED)
