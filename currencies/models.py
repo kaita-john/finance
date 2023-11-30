@@ -5,7 +5,7 @@ from utils import ParentModel
 
 class Currency(ParentModel):
     currency_name = models.CharField(max_length=255)
-    currency_code = models.CharField(max_length=3, unique=True)
+    currency_code = models.CharField(max_length=255, unique=False)
     is_default = models.BooleanField(default=False)
     school = models.UUIDField(max_length=255, blank=True, null=True)
 
