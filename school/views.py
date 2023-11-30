@@ -75,6 +75,8 @@ class SchoolDetailView(generics.RetrieveUpdateDestroyAPIView):
     def perform_update(self, serializer):
         serializer.save()
 
-    def perform_destroy(self, instance):
-        instance.delete()
-        return Response({'detail': 'Record deleted successfully'}, status=status.HTTP_200_OK)
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({'detail': 'School deleted successfully'}, status=status.HTTP_200_OK)
+

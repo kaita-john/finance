@@ -105,7 +105,7 @@ class AppUserSerializer(serializers.ModelSerializer):
         print(f"Roles are {role_ids}")
         user.roles.set(role_ids)
         user.save()
-        details = {'details': 'Succeeded', 'mypass': mypass}
+        details = {'detail': 'Succeeded', 'mypass': mypass}
         return details
 
 
