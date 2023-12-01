@@ -14,7 +14,7 @@ class FeeStructureItem(ParentModel):
     votehead = models.ForeignKey(VoteHead, on_delete=models.CASCADE, related_name="fee_structures_items")
     boardingStatus = models.CharField(max_length=255, blank=True, null=True)
     school_group = models.ForeignKey(SchoolGroup, on_delete=models.CASCADE, related_name="fee_structures_items")
-    fee_structure_id = models.ForeignKey(FeeStructure, on_delete=models.CASCADE, related_name="fee_structures_items")
+    fee_structure_id = models.ForeignKey(FeeStructure, default=None, blank=True, null=True, on_delete=models.CASCADE, related_name="fee_structures_items")
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     school_id = models.UUIDField(max_length=255)
     def __str__(self):
