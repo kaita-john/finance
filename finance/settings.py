@@ -57,7 +57,10 @@ INSTALLED_APPS = [
     'school_categories',
     'roles',
     'students',
-    'financial_years'
+    'financial_years',
+    'schoolgroups',
+    'fee_structures',
+    'fee_structures_items',
 ]
 
 
