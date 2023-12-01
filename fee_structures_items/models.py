@@ -2,6 +2,7 @@ from django.db import models
 
 from academic_year.models import AcademicYear
 from classes.models import Classes
+from fee_structures.models import FeeStructure
 from schoolgroups.models import SchoolGroup
 from term.models import Term
 from utils import ParentModel
@@ -13,6 +14,7 @@ class FeeStructureItem(ParentModel):
     votehead = models.ForeignKey(VoteHead, on_delete=models.CASCADE, related_name="fee_structures_items")
     boardingStatus = models.CharField(max_length=255, blank=True, null=True)
     school_group = models.ForeignKey(SchoolGroup, on_delete=models.CASCADE, related_name="fee_structures_items")
+    fee_structure_id = models.ForeignKey(FeeStructure, on_delete=models.CASCADE, related_name="fee_structures_items")
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     school_id = models.UUIDField(max_length=255)
     def __str__(self):
