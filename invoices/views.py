@@ -14,14 +14,14 @@ from classes.serializers import ClassesSerializer
 from currencies.models import Currency
 from fee_structures_items.models import FeeStructureItem
 from students.models import Student
-from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey
+from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey, IsAdminOrSuperUser
 from .models import Invoice
 from .serializers import InvoiceSerializer, StructureSerializer
 
 
 class InvoiceCreateView(SchoolIdMixin, generics.CreateAPIView):
     serializer_class = InvoiceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def create(self, request, *args, **kwargs):
         school_id = self.check_school_id(self.request)
@@ -39,7 +39,7 @@ class InvoiceCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
     serializer_class = InvoiceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def get_queryset(self):
         school_id = self.check_school_id(self.request)
@@ -58,7 +58,7 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
 class InvoiceDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def get_object(self):
         primarykey = self.kwargs['pk']
@@ -94,9 +94,6 @@ class InvoiceDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({'detail': 'Record deleted successfully'}, status=status.HTTP_200_OK)
-
-
-
 
 
 
@@ -159,10 +156,16 @@ def createInvoices(students, structure_year, structure_term, structure_class):
 
 
 
-class InvoiceStructureView(generics.GenericAPIView):
+class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
     serializer_class = StructureSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+
 
     def post(self, request, *args, **kwargs):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serialized_data = serializer.data
@@ -176,7 +179,7 @@ class InvoiceStructureView(generics.GenericAPIView):
             student = serialized_data.get('student')
             if not student:
                 return Response({"detail": "Student ID is required for filter_type 'student'"})
-            students = Student.objects.filter(id = student)
+            students = Student.objects.filter(id = student, school_id=school_id)
 
             return createInvoices(students, structure_year, structure_term, structure_class)
 
@@ -185,7 +188,7 @@ class InvoiceStructureView(generics.GenericAPIView):
             class_id = serialized_data.get('classes')
             if not class_id:
                 return Response({"detail": "Class ID is required for filter_type 'class'"})
-            students = Student.objects.filter(current_Class = structure_class)
+            students = Student.objects.filter(current_Class = structure_class, school_id=school_id)
 
             return createInvoices(students, structure_year, structure_term, structure_class)
 
@@ -195,7 +198,7 @@ class InvoiceStructureView(generics.GenericAPIView):
             stream =serialized_data.get('stream')
             if not classes or not stream:
                 return Response({"detail": "Both class ID and stream ID are required for filter_type 'stream'"})
-            students = Student.objects.filter(current_Class = structure_class, current_Stream = stream)
+            students = Student.objects.filter(current_Class = structure_class, current_Stream = stream, school_id=school_id)
 
             return createInvoices(students, structure_year, structure_term, structure_class)
 
@@ -210,7 +213,7 @@ class InvoiceStructureView(generics.GenericAPIView):
 
 class InvoiceClassesListView(SchoolIdMixin, generics.ListAPIView):
     serializer_class = ClassesSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def get_queryset(self):
         school_id = self.check_school_id(self.request)
