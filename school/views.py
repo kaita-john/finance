@@ -7,13 +7,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from school.models import School
-from school.serializer import SchoolSerializer, SchoolCreateSerializer
-from utils import IsAdminOrSuperUser
+from school.serializer import SchoolSerializer
+from utils import IsAdminOrSuperUser, UUID_from_PrimaryKey
 
 
 class SchoolCreateView(generics.CreateAPIView):
     queryset = School.objects.all()
-    serializer_class = SchoolCreateSerializer
+    serializer_class = SchoolSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]  # Use the custom permission class
     #print("Here")
 
@@ -49,13 +49,13 @@ class SchoolListView(generics.ListAPIView):
 
 class SchoolDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = School.objects.all()
-    serializer_class = SchoolCreateSerializer
+    serializer_class = SchoolSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def get_object(self):
         primarykey = self.kwargs['pk']
         try:
-            id = uuid.UUID(primarykey)
+            id = UUID_from_PrimaryKey(primarykey)
             return School.objects.get(id=id)
         except (ValueError, School.DoesNotExist):
             raise NotFound({'detail': 'Record Not Found'})

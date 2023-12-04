@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from appuser.models import AppUser
 from appuser.serializers import AppUserSerializer, UpdateAppUserSerializer
 from finance import settings
-from utils import SchoolIdMixin, IsSuperUser
+from utils import SchoolIdMixin, IsSuperUser, UUID_from_PrimaryKey
 
 
 class AppUserCreateView(generics.CreateAPIView):
@@ -66,7 +66,7 @@ class AppUserDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         primarykey = self.kwargs['pk']
         try:
-            id = uuid.UUID(primarykey)
+            id = UUID_from_PrimaryKey(primarykey)
             return AppUser.objects.get(id=id)
         except (ValueError, AppUser.DoesNotExist):
             raise NotFound({'detail': 'Record Not Found'})

@@ -9,11 +9,11 @@ from rest_framework.response import Response
 
 from utils import SchoolIdMixin, IsAdminOrSuperUser
 from .models import FeeStructureItem
-from .serializers import FeeStructureItemSerializer, FeeStructureItemCreateSerializer
+from .serializers import FeeStructureItemSerializer
 
 
 class FeeStructureItemCreateView(SchoolIdMixin, generics.CreateAPIView):
-    serializer_class = FeeStructureItemCreateSerializer
+    serializer_class = FeeStructureItemSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def create(self, request, *args, **kwargs):
@@ -46,7 +46,7 @@ class FeeStructureItemListView(SchoolIdMixin, generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if not queryset.exists():
-            return JsonResponse([], status=200)
+            return JsonResponse([], safe=False, status=200)
         serializer = self.get_serializer(queryset, many=True)
         return JsonResponse(serializer.data, safe=False)
 
@@ -54,7 +54,7 @@ class FeeStructureItemListView(SchoolIdMixin, generics.ListAPIView):
 
 class FeeStructureItemDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = FeeStructureItem.objects.all()
-    serializer_class = FeeStructureItemCreateSerializer
+    serializer_class = FeeStructureItemSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
 

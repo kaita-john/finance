@@ -1,19 +1,20 @@
 # Create your views here.
-import uuid
 
+from django.db import transaction
 from django.http import JsonResponse
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, IsAdminOrSuperUser
-from fee_structures.models import FeeStructure
-from .serializers import FeeStructureSerializer, FeeStructureCreateSerializer
+from fee_structures_items.serializers import FeeStructureItemSerializer
+from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey
+from .models import FeeStructure
+from .serializers import FeeStructureSerializer
 
 
 class FeeStructureCreateView(SchoolIdMixin, generics.CreateAPIView):
-    serializer_class = FeeStructureCreateSerializer
+    serializer_class = FeeStructureSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def create(self, request, *args, **kwargs):
@@ -24,17 +25,30 @@ class FeeStructureCreateView(SchoolIdMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
-            self.perform_create(serializer)
-            return Response({'detail': 'Fee Structure created successfully'}, status=status.HTTP_201_CREATED)
-        else:
-            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                with transaction.atomic():
+                    fee_structure_items_data = serializer.validated_data.pop('fee_structure_values', [])
+                    fee_structure = serializer.save()
+                    for fee_structure_item_data in fee_structure_items_data:
+                        fee_structure_item_data['school_id'] = fee_structure.school_id
+                        fee_structure_item_data['fee_Structure'] = fee_structure.id
+                        print(f"checking -> {fee_structure_item_data}")
+                        fee_structure_item_serializer = FeeStructureItemSerializer(data=fee_structure_item_data)
+                        fee_structure_item_serializer.is_valid(raise_exception=True)
+                        print(f"checking -> {fee_structure_item_serializer.validated_data}")
+                        fee_structure_item_serializer.save()
 
+                    return Response({'detail': f'FeeStructure created successfully'},status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            print("Here")
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class FeeStructureListView(SchoolIdMixin, generics.ListAPIView):
     serializer_class = FeeStructureSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
-
 
     def get_queryset(self):
         school_id = self.check_school_id(self.request)
@@ -46,7 +60,7 @@ class FeeStructureListView(SchoolIdMixin, generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if not queryset.exists():
-            return JsonResponse([], status=200)
+            return JsonResponse([], safe=False,status=200)
         serializer = self.get_serializer(queryset, many=True)
         return JsonResponse(serializer.data, safe=False)
 
@@ -54,14 +68,13 @@ class FeeStructureListView(SchoolIdMixin, generics.ListAPIView):
 
 class FeeStructureDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = FeeStructure.objects.all()
-    serializer_class = FeeStructureCreateSerializer
+    serializer_class = FeeStructureSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
-
 
     def get_object(self):
         primarykey = self.kwargs['pk']
         try:
-            id =  uuid.UUID(primarykey)
+            id = UUID_from_PrimaryKey(primarykey)
             return FeeStructure.objects.get(id=id)
         except (ValueError, FeeStructure.DoesNotExist):
             raise NotFound({'detail': 'Record Not Found'})
@@ -76,20 +89,31 @@ class FeeStructureDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIVie
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
+
+            # Create or update associated FeeStructureItem instances
+            fee_structure_items_data = serializer.validated_data.get('fee_structure_values', [])
+            fee_structure = serializer.save()
+            for fee_structure_item_data in fee_structure_items_data:
+                fee_structure_item_data['school_id'] = fee_structure.school_id
+                fee_structure_item_data['fee_Structure'] = fee_structure.id
+                fee_structure_item_serializer = FeeStructureItemSerializer(data=fee_structure_item_data)
+                fee_structure_item_serializer.is_valid(raise_exception=True)
+                fee_structure_item_serializer.save()
+
             self.perform_update(serializer)
-            return Response({'detail': 'Fee Structure updated successfully'}, status=status.HTTP_201_CREATED)
+
+            return Response({'detail': 'Fee Structure updated successfully'}, status=status.HTTP_200_OK)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def perform_update(self, serializer):
         serializer.save()
 
-    def destroy(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
 
         instance = self.get_object()
         self.perform_destroy(instance)
-        return Response({'detail': 'Record deleted successfully'}, status=status.HTTP_200_OK)
-
+        return Response({'detail': 'Fee structure item deleted successfully!'}, status=status.HTTP_200_OK)

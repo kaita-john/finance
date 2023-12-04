@@ -13,6 +13,7 @@ api_patterns = [
     path(api_version + 'admin/classes/', include('classes.urls')),
     path(api_version + 'admin/streams/', include('streams.urls')),
     path(api_version + 'admin/currencies/', include('currencies.urls')),
+    path(api_version + 'admin/invoices/', include('invoices.urls')),
     path(api_version + 'admin/feestructures/', include('fee_structures.urls')),
     path(api_version + 'admin/fee-structure-items/', include('fee_structures_items.urls')),
     path(api_version + 'accounting/account-types/', include('account_types.urls')),

@@ -10,7 +10,7 @@ from rest_framework.response import Response
 
 from account_types.models import AccountType
 from currencies.models import Currency
-from utils import SchoolIdMixin
+from utils import SchoolIdMixin, UUID_from_PrimaryKey
 from .models import BankAccount
 from .serializers import BankAccountSerializer
 
@@ -63,7 +63,7 @@ class BankAccountDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView
     def get_object(self):
         primarykey = self.kwargs['pk']
         try:
-            id = uuid.UUID(primarykey)
+            id = UUID_from_PrimaryKey(primarykey)
             return BankAccount.objects.get(id=id)
         except (ValueError, BankAccount.DoesNotExist):
             raise NotFound({'detail': 'Record Not Found'})

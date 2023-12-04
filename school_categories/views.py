@@ -7,7 +7,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, IsSuperUser
+from utils import SchoolIdMixin, IsSuperUser, UUID_from_PrimaryKey
 from .models import SchoolCategory
 from .serializers import SchoolCategorySerializer
 
@@ -30,7 +30,7 @@ class SchoolCategoryListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsSuperUser]
 
 
-class SchoolCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
+class SchoolCategoryDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = SchoolCategory.objects.all()
     serializer_class = SchoolCategorySerializer
     permission_classes = [IsAuthenticated, IsSuperUser]
@@ -38,7 +38,7 @@ class SchoolCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         primarykey = self.kwargs['pk']
         try:
-            id = uuid.UUID(primarykey)
+            id = UUID_from_PrimaryKey(primarykey)
             return SchoolCategory.objects.get(id=id)
         except (ValueError, SchoolCategory.DoesNotExist):
             raise NotFound({'detail': 'Record Not Found'})

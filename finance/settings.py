@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'schoolgroups',
     'fee_structures',
     'fee_structures_items',
+    'invoices',
 ]
 
 

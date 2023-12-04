@@ -9,6 +9,7 @@ from rest_framework.authentication import get_authorization_header
 from rest_framework.exceptions import ValidationError
 from finance.settings import SIMPLE_JWT
 from school.models import School
+import time
 
 
 class ParentModel(models.Model):
@@ -110,3 +111,16 @@ def sendMail(sender_email, sender_password, receiver_email, subject, usermessage
         print('Email has been sent')
     except Exception as ex:
         raise ValidationError({'detail': str(ex)})
+
+
+
+def generate_unique_code(prefix="INV"):
+    timestamp = int(time.time())
+    random_component = uuid.uuid4().hex[:6]
+    unique_code = f"{prefix}{timestamp}{random_component}"
+    return unique_code
+
+
+def UUID_from_PrimaryKey(primarykey):
+    id = uuid.UUID(primarykey)
+    return id

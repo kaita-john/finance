@@ -7,7 +7,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin
+from utils import SchoolIdMixin, UUID_from_PrimaryKey
 from .models import VoteHead
 from .serializers import VoteHeadSerializer, VoteHeadCreateSerializer
 
@@ -55,7 +55,7 @@ class VoteHeadDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         primarykey = self.kwargs['pk']
         try:
-            id = uuid.UUID(primarykey)
+            id = UUID_from_PrimaryKey(primarykey)
             return VoteHead.objects.get(id=id)
         except (ValueError, VoteHead.DoesNotExist):
             raise NotFound({'detail': 'Record Not Found'})

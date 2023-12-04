@@ -7,13 +7,13 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin
+from utils import SchoolIdMixin, UUID_from_PrimaryKey
 from .models import Student
-from .serializers import StudentSerializer, StudentCreateSerializer
+from .serializers import StudentSerializer
 
 
 class StudentCreateView(SchoolIdMixin, generics.CreateAPIView):
-    serializer_class = StudentCreateSerializer
+    serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
@@ -50,13 +50,13 @@ class StudentListView(SchoolIdMixin, generics.ListAPIView):
 
 class StudentDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Student.objects.all()
-    serializer_class = StudentCreateSerializer
+    serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
         primarykey = self.kwargs['pk']
         try:
-            id = uuid.UUID(primarykey)
+            id = UUID_from_PrimaryKey(primarykey)
             return Student.objects.get(id=id)
         except (ValueError, Student.DoesNotExist):
             raise NotFound({'detail': 'Record Not Found'})

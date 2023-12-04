@@ -7,7 +7,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin
+from utils import SchoolIdMixin, UUID_from_PrimaryKey
 from .models import Classes
 from .serializers import ClassesSerializer
 
@@ -56,7 +56,7 @@ class ClassesDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         primarykey = self.kwargs['pk']
         try:
-            id = uuid.UUID(primarykey)
+            id = UUID_from_PrimaryKey(primarykey)
             return Classes.objects.get(id=id)
         except (ValueError, Classes.DoesNotExist):
             raise NotFound({'detail': 'Record Not Found'})

@@ -1,5 +1,7 @@
 from django.db import models
 
+from academic_year.models import AcademicYear
+from classes.models import Classes
 from streams.models import Stream
 from utils import ParentModel
 
@@ -12,9 +14,11 @@ class Student(ParentModel):
     date_of_admission = models.DateField(blank=True, null=True)
     guardian_name = models.CharField(max_length=255)
     guardian_phone = models.CharField(max_length=15)
-    stream = models.ForeignKey(Stream, on_delete=models.CASCADE, related_name="students")
     boarding_status = models.CharField(max_length=255, default="BOARDING")
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
+    current_Stream = models.ForeignKey(Stream, default=None, null=True, on_delete=models.CASCADE, related_name="students")
+    current_Class = models.ForeignKey(Classes, default=None, null=True, on_delete=models.CASCADE, related_name="students")
+    current_Year = models.ForeignKey(AcademicYear, default=None, null=True, on_delete=models.CASCADE, related_name="students")
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.admission_number})"
