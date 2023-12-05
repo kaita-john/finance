@@ -6,7 +6,7 @@ from currencies.serializers import CurrencySerializer
 from streams.serializers import StreamsSerializer
 from students.serializers import StudentSerializer
 from term.serializers import TermSerializer
-from .models import Invoice, Structure
+from .models import Invoice, Structure, Uninvoice
 
 
 class InvoiceSerializer(serializers.ModelSerializer):
@@ -27,4 +27,13 @@ class StructureSerializer(serializers.ModelSerializer):
     stream_details = StreamsSerializer(source='stream', required=False, read_only=True)
     class Meta:
         model = Structure
+        fields = '__all__'
+
+
+class UninvoiceStudentSerializer(serializers.ModelSerializer):
+    structure_year_details = AcademicYearSerializer(source='structure_year', required=False, read_only=True)
+    structure_class_details = ClassesSerializer(source='structure_class', required=False, read_only=True)
+    structure_term_details = TermSerializer(source='structure_term', required=False, read_only=True)
+    class Meta:
+        model = Uninvoice
         fields = '__all__'

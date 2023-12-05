@@ -7,6 +7,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from invoices.views import createInvoices
 from utils import SchoolIdMixin, UUID_from_PrimaryKey
 from .models import Student
 from .serializers import StudentSerializer
@@ -25,7 +26,19 @@ class StudentCreateView(SchoolIdMixin, generics.CreateAPIView):
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
             self.perform_create(serializer)
+
+            created_student = serializer.instance
+            if created_student.invoice_Student:
+                studentList = []
+                studentList.append(created_student)
+
+                try:
+                    return createInvoices(studentList, created_student.current_Year, created_student.current_Term, created_student.current_Class)
+                except Exception as exception:
+                    return Response({'detail': exception}, status=status.HTTP_400_BAD_REQUEST)
+
             return Response({'detail': 'Student created successfully'}, status=status.HTTP_201_CREATED)
+
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 

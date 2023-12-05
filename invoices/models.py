@@ -9,6 +9,13 @@ from term.models import Term
 from utils import ParentModel
 
 
+
+class Uninvoice(models.Model):
+    structure_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
+    structure_term = models.ForeignKey(Term, on_delete=models.CASCADE)
+    structure_class = models.ForeignKey(Classes, on_delete=models.CASCADE)
+
+
 class Structure(models.Model):
     structure_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
     structure_term = models.ForeignKey(Term, on_delete=models.CASCADE)

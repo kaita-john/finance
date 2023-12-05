@@ -16,7 +16,7 @@ from fee_structures_items.models import FeeStructureItem
 from students.models import Student
 from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey, IsAdminOrSuperUser
 from .models import Invoice
-from .serializers import InvoiceSerializer, StructureSerializer
+from .serializers import InvoiceSerializer, StructureSerializer, UninvoiceStudentSerializer
 
 
 class InvoiceCreateView(SchoolIdMixin, generics.CreateAPIView):
@@ -106,6 +106,8 @@ def createInvoices(students, structure_year, structure_term, structure_class):
         currency = Currency.objects.get(is_default=True)
     except Currency.DoesNotExist:
         currency = None
+        return Response({"detail": "Sudent not invoiced! Default Currency not set for this school"}, status=status.HTTP_400_BAD_REQUEST)
+
 
     fee_structures_itemList = FeeStructureItem.objects.filter(
         fee_Structure__academic_year=structure_year,
@@ -150,7 +152,7 @@ def createInvoices(students, structure_year, structure_term, structure_class):
                     errors.append(error_message)
 
     if errors:
-        return Response({"errors": errors}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"detail": errors}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
         return Response({"detail": "Invoicing was successful"}, status=status.HTTP_201_CREATED)
 
@@ -254,3 +256,32 @@ class InvoiceClassesListView(SchoolIdMixin, generics.ListAPIView):
 
         return Response({"detail": serializer.data}, status=200)
 
+
+
+
+
+
+
+class UnInvoiceStudentView(SchoolIdMixin, generics.GenericAPIView):
+    serializer_class = UninvoiceStudentSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+
+    def post(self, request, *args, **kwargs):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serialized_data = serializer.data
+
+        structure_year = serialized_data.get('structure_year')
+        structure_term = serialized_data.get('structure_term')
+        structure_class = serialized_data.get('structure_class')
+
+        invoiceList = Invoice.objects.filter(year=structure_year, term=structure_term, classes=structure_class, school_id=school_id)
+        size = len(invoiceList)
+        for value in invoiceList:
+            value.delete()
+
+        return Response({'detail': f'{size} records were uninvoiced. Successful!'}, status=status.HTTP_201_CREATED)
