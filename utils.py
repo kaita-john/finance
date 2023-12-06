@@ -1,5 +1,7 @@
+import os
 import smtplib
 import uuid
+from datetime import datetime
 
 import jwt
 from django.contrib.auth.models import Group
@@ -124,3 +126,30 @@ def generate_unique_code(prefix="INV"):
 def UUID_from_PrimaryKey(primarykey):
     id = uuid.UUID(primarykey)
     return id
+
+
+def file_upload(instance, filename):
+    ext = filename.split(".")[-1]
+    now = datetime.now()
+
+    if len(str(abs(now.month))) > 1:
+        month = str(now.month)
+    else:
+        month = str(now.month).zfill(2)
+
+    if len(str(abs(now.day))) > 1:
+        day = str(now.day)
+    else:
+        day = str(now.day).zfill(2)
+
+    if len(str(abs(now.hour))) > 1:
+        hour = str(now.hour)
+    else:
+        hour = str(now.hour).zfill(2)
+
+    upload_to = f"{str(now.year)}/{month}/{day}/{hour}"
+    if instance.pk:
+        filename = "{}.{}".format(instance.pk, ext)
+    else:
+        filename = "{}.{}".format(uuid.uuid4().hex, ext)
+    return os.path.join(upload_to, filename)

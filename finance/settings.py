@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     'fee_structures',
     'fee_structures_items',
     'invoices',
+    'file_upload',
+    'web',
 ]
 
 
@@ -289,3 +291,11 @@ EMAIL_PORT = '587'
 EMAIL_HOST_USER = 'kaitaformal@gmail.com'
 EMAIL_HOST_PASSWORD = "wwmx vsyr tvwp sfac"
 EMAIL_USE_TLS = True
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+#FILE UPLOADS
+#https://simpleisbetterthancomplex.com/tutorial/2016/08/01/how-to-upload-files-with-django.html

@@ -30,7 +30,6 @@ class CurrencyCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-from django.http import JsonResponse
 
 class CurrencyListView(SchoolIdMixin, generics.ListAPIView):
     serializer_class = CurrencySerializer

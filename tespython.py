@@ -14,3 +14,14 @@ def transform_phone_number(phone_number):
         return phonenumber
 
 
+
+
+
+import base64
+
+file_path = "C:\\Users\\kaita\\OneDrive\\Desktop\\coatOfArms.png"
+
+with open(file_path, "rb") as file:
+    encoded_content = base64.b64encode(file.read()).decode("utf-8")
+
+print(encoded_content)

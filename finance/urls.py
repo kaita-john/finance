@@ -1,5 +1,8 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.views.static import serve
+
+from finance import settings
 
 api_version = 'api/v1/'
 
@@ -22,8 +25,12 @@ api_patterns = [
     path(api_version + 'master/schoolcategories/', include('school_categories.urls')),
     path(api_version + 'accounting/bank-accounts/', include('bank_accounts.urls')),
     path(api_version + 'superadmin/roles/', include('roles.urls')),
+    path(api_version + 'files/', include('file_upload.urls')),
+    path(api_version + 'web/', include('web.urls')),
     path(api_version + 'students/', include('students.urls')),
     path('accounts/', include('allauth.urls')),
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
     path('', include('appuser.urls')),
 ]
 
