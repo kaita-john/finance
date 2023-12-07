@@ -64,14 +64,16 @@ INSTALLED_APPS = [
     'invoices',
     'file_upload',
     'web',
+    'payment_methods',
+    'appcollections',
+    'receipts',
 ]
-
 
 APPEND_SLASH = False
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    "django.middleware.common.CommonMiddleware", 
+    "django.middleware.common.CommonMiddleware",
     'allauth.account.middleware.AccountMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -81,7 +83,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
-
 
 # CORS_ORIGIN_WHITELIST = [
 #     'http://localhost:8000',
@@ -222,10 +223,12 @@ REST_FRAMEWORK = {
         'review-list': '10/day',
     },
 
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,  # Set the number of items per page
+
 }
 
 AUTH_USER_MODEL = 'appuser.AppUser'
-
 
 MPESA_CONSUMER_KEY = os.environ.get("MPESA_CONSUMER_KEY")
 MPESA_CONSUMER_SECRET = os.environ.get("MPESA_CONSUMER_SECRET")
@@ -283,8 +286,6 @@ LOGGING = {
     },
 }
 
-
-
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = '587'
@@ -292,10 +293,8 @@ EMAIL_HOST_USER = 'kaitaformal@gmail.com'
 EMAIL_HOST_PASSWORD = "wwmx vsyr tvwp sfac"
 EMAIL_USE_TLS = True
 
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
-#FILE UPLOADS
-#https://simpleisbetterthancomplex.com/tutorial/2016/08/01/how-to-upload-files-with-django.html
+# FILE UPLOADS
+# https://simpleisbetterthancomplex.com/tutorial/2016/08/01/how-to-upload-files-with-django.html

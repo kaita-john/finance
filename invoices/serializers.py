@@ -34,6 +34,9 @@ class UninvoiceStudentSerializer(serializers.ModelSerializer):
     structure_year_details = AcademicYearSerializer(source='structure_year', required=False, read_only=True)
     structure_class_details = ClassesSerializer(source='structure_class', required=False, read_only=True)
     structure_term_details = TermSerializer(source='structure_term', required=False, read_only=True)
+    structure_stream_details = StreamsSerializer(source='structure_stream', required=False, read_only=True)  # Corrected here
+    student_details = StudentSerializer(source='student', required=False, read_only=True)
+
     class Meta:
         model = Uninvoice
         fields = '__all__'

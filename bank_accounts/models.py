@@ -2,7 +2,7 @@ from django.db import models
 
 from account_types.models import AccountType
 from currencies.models import Currency
-from utils import ParentModel
+from models import ParentModel
 
 
 class BankAccount(ParentModel):

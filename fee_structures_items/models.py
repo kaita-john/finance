@@ -1,8 +1,8 @@
 from django.db import models
 
 from fee_structures.models import FeeStructure
+from models import ParentModel
 from schoolgroups.models import SchoolGroup
-from utils import ParentModel
 from voteheads.models import VoteHead
 
 

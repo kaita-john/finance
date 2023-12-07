@@ -33,29 +33,28 @@ class VehicleCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def create_fee_structure(self, validated_data):
+        try:
+            with transaction.atomic():
+                fee_structure_items_data = validated_data.pop('fee_structure_items', [])
+                fee_structure = Vehicle.objects.create(**validated_data)
 
-        with transaction.atomic():
-            fee_structure_items_data = validated_data.pop('fee_structure_items', [])
-            fee_structure = Vehicle.objects.create(**validated_data)
+                print(f'The fee structure items is {fee_structure_items_data}')
 
-            print(f'The fee structure items is {fee_structure_items_data}')
+                for fee_structure_item_data in fee_structure_items_data:
+                    fee_structure_item_data['school_id'] = fee_structure.school_id
+                    fee_structure_item_data['fee_structure'] = fee_structure.id
+                    fee_structure_item_serializer = VehicleSerializer(data=fee_structure_item_data)
 
-            for fee_structure_item_data in fee_structure_items_data:
-                fee_structure_item_data['school_id'] = fee_structure.school_id
-                fee_structure_item_data['fee_structure'] = fee_structure.id
-                fee_structure_item_serializer = VehicleSerializer(data=fee_structure_item_data)
+                    if fee_structure_item_serializer.is_valid():
+                        fee_structure_item_serializer.save()
+                        fee_structure.fee_structure_items.add(fee_structure_item_serializer.instance)
+                    else:
+                        print("Found Error")
+                        raise Exception(fee_structure_item_serializer.errors)
 
-                if fee_structure_item_serializer.is_valid():
-                    fee_structure_item_serializer.save()
-                    fee_structure.fee_structure_items.add(fee_structure_item_serializer.instance)
-                else:
-                    print("Found Error")
-                    raise Exception(fee_structure_item_serializer.errors)
-
-        return fee_structure
-
-
-
+            return fee_structure
+        except Exception as exception:
+            return Response({'detail': exception}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class VehicleListView(SchoolIdMixin, generics.ListAPIView):

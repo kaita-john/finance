@@ -9,16 +9,13 @@ from rest_framework import permissions
 from django.db import models
 from rest_framework.authentication import get_authorization_header
 from rest_framework.exceptions import ValidationError
+
+from academic_year.models import AcademicYear
 from finance.settings import SIMPLE_JWT
 from school.models import School
 import time
 
-
-class ParentModel(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    class Meta:
-        abstract = True
+from term.models import Term
 
 
 class BaseUserModel(models.Model):
@@ -153,3 +150,17 @@ def file_upload(instance, filename):
     else:
         filename = "{}.{}".format(uuid.uuid4().hex, ext)
     return os.path.join(upload_to, filename)
+
+
+def currentAcademicYear():
+    try:
+        return AcademicYear.objects.get(is_current=True)
+    except AcademicYear.DoesNotExist:
+        return None
+
+
+def currentTerm():
+    try:
+        return Term.objects.get(is_current=True)
+    except Term.DoesNotExist:
+        return None

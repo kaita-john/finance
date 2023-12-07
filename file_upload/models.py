@@ -1,7 +1,8 @@
 from django.db import models
 
 from appuser.models import AppUser
-from utils import ParentModel, file_upload
+from models import ParentModel
+from utils import file_upload
 
 
 class SchoolImage(ParentModel):

@@ -106,7 +106,7 @@ def createInvoices(students, structure_year, structure_term, structure_class):
         currency = Currency.objects.get(is_default=True)
     except Currency.DoesNotExist:
         currency = None
-        return Response({"detail": "Sudent not invoiced! Default Currency not set for this school"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Student not invoiced! Default Currency not set for this school"}, status=status.HTTP_400_BAD_REQUEST)
 
 
     fee_structures_itemList = FeeStructureItem.objects.filter(
@@ -127,13 +127,14 @@ def createInvoices(students, structure_year, structure_term, structure_class):
                 year = item.fee_Structure.academic_year
                 classes = item.fee_Structure.classes
                 school_id = item.school_id
+                votehead = item.votehead
 
                 # Create the Invoice object
                 invoice = Invoice(
                     issueDate=timezone.now().date(),
                     invoiceNo=invoice_no,
                     amount=amount,
-                    paid=amount,
+                    paid=0.00,
                     due=amount,
                     description=description,
                     student=student,
@@ -141,7 +142,8 @@ def createInvoices(students, structure_year, structure_term, structure_class):
                     year=year,
                     classes=classes,
                     currency=currency,
-                    school_id=school_id
+                    school_id=school_id,
+                    votehead=votehead
                 )
 
                 try:
@@ -278,10 +280,32 @@ class UnInvoiceStudentView(SchoolIdMixin, generics.GenericAPIView):
         structure_year = serialized_data.get('structure_year')
         structure_term = serialized_data.get('structure_term')
         structure_class = serialized_data.get('structure_class')
+        structure_stream = serialized_data.get('structure_stream')
+        student = serialized_data.get('student')
+        invoice_who = serialized_data.get('invoice_who')
 
-        invoiceList = Invoice.objects.filter(year=structure_year, term=structure_term, classes=structure_class, school_id=school_id)
-        size = len(invoiceList)
-        for value in invoiceList:
-            value.delete()
+        invoicetypes = ["class", "student", "stream"]
+        if invoice_who not in invoicetypes:
+            return Response({'detail': "Valid options are class, student and stream"},status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'detail': f'{size} records were uninvoiced. Successful!'}, status=status.HTTP_201_CREATED)
+        if invoice_who == "stream" and structure_class is None or structure_term is None:
+            return Response({'detail': "To uninvoice a stream, enter both Class and Term"},status=status.HTTP_400_BAD_REQUEST)
+
+        size = None
+        if invoice_who == "class":
+            invoiceList = Invoice.objects.filter(year=structure_year, term=structure_term, classes=structure_class, school_id=school_id)
+            size = len(invoiceList)
+            for value in invoiceList:
+                value.delete()
+        elif invoice_who == "stream":
+            invoiceList = Invoice.objects.filter(year=structure_year, term=structure_term, classes=structure_class, student__current_Stream=structure_stream, school_id=school_id)
+            size = len(invoiceList)
+            for value in invoiceList:
+                value.delete()
+        elif invoice_who == "student":
+            invoiceList = Invoice.objects.filter(student=student)
+            size = len(invoiceList)
+            for value in invoiceList:
+                value.delete()
+
+        return Response({'detail': f'{size} records were uninvoiced. Successfully!'}, status=status.HTTP_201_CREATED)

@@ -4,7 +4,7 @@ from academic_year.models import AcademicYear
 from classes.models import Classes
 from streams.models import Stream
 from term.models import Term
-from utils import ParentModel
+from models import ParentModel
 
 
 class Student(ParentModel):

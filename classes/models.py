@@ -1,6 +1,6 @@
 from django.db import models
 
-from utils import ParentModel
+from models import ParentModel
 
 
 class Classes(ParentModel):
