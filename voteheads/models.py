@@ -18,4 +18,4 @@ class VoteHead(ParentModel):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.vote_head_name
+        return f"{self.vote_head_name} - {self.id}"

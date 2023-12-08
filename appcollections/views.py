@@ -56,7 +56,6 @@ class CollectionListView(SchoolIdMixin, generics.ListAPIView):
     serializer_class = CollectionSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
-
     def get_queryset(self):
         school_id = self.check_school_id(self.request)
         if not school_id:
@@ -68,6 +67,12 @@ class CollectionListView(SchoolIdMixin, generics.ListAPIView):
         queryset = self.get_queryset()
         if not queryset.exists():
             return JsonResponse([], safe=False, status=200)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(queryset, many=True)
         return JsonResponse(serializer.data, safe=False)
 
@@ -121,7 +126,6 @@ class OverpaymentCollectionListView(SchoolIdMixin, generics.ListAPIView):
     serializer_class = CollectionSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
     pagination_class = PageNumberPagination
-
 
     def get_queryset(self):
         school_id = self.check_school_id(self.request)
