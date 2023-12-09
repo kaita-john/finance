@@ -6,7 +6,6 @@ from models import ParentModel
 
 class Term(ParentModel):
     term_name = models.CharField(max_length=255)
-    year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE, related_name="terms")
     begin_date = models.DateField()
     end_date = models.DateField()
     is_current = models.BooleanField(default=False, null = True)
