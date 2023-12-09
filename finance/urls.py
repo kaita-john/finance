@@ -31,6 +31,7 @@ api_patterns = [
     path(api_version + 'receipts/', include('receipts.urls')),
     path(api_version + 'receipts/', include('receipts.urls')),
     path(api_version + 'collections/', include('appcollections.urls')),
+    path(api_version + 'paymentinkind/', include('payment_in_kind_Receipt.urls')),
     path(api_version + 'students/', include('students.urls')),
     path('accounts/', include('allauth.urls')),
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),

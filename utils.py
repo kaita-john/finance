@@ -11,6 +11,7 @@ from rest_framework.authentication import get_authorization_header
 from rest_framework.exceptions import ValidationError
 
 from academic_year.models import AcademicYear
+from currencies.models import Currency
 from finance.settings import SIMPLE_JWT
 from school.models import School
 import time
@@ -163,4 +164,10 @@ def currentTerm():
     try:
         return Term.objects.get(is_current=True)
     except Term.DoesNotExist:
+        return None
+
+def defaultCurrency():
+    try:
+        return Currency.objects.get(is_default=True)
+    except Currency.DoesNotExist:
         return None

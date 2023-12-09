@@ -67,6 +67,8 @@ INSTALLED_APPS = [
     'payment_methods',
     'appcollections',
     'receipts',
+    'payment_in_kinds',
+    'payment_in_kind_Receipt',
 ]
 
 APPEND_SLASH = False

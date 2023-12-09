@@ -12,18 +12,18 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from appcollections.models import Collection
-from appcollections.serializers import CollectionSerializer
 from invoices.models import Invoice
+from payment_in_kinds.models import PaymentInKind
+from payment_in_kinds.serializers import PaymentInKindSerializer
 from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, defaultCurrency, currentAcademicYear, \
     currentTerm
 from voteheads.models import VoteHead
-from .models import Receipt
-from .serializers import ReceiptSerializer
+from .models import PIKReceipt
+from .serializers import PIKReceiptSerializer
 
 
-class ReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
-    serializer_class = ReceiptSerializer
+class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
+    serializer_class = PIKReceiptSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def create(self, request, *args, **kwargs):
@@ -40,46 +40,49 @@ class ReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                 if not default_Currency:
                     Response({'detail': "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
                 if not year:
-                    Response({'detail': "Default Academic Year Not Set For This School"},
-                             status=status.HTTP_400_BAD_REQUEST)
+                    Response({'detail': "Default Academic Year Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
                 if not term:
                     Response({'detail': "Default Term Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
 
-                receipt_serializer = self.get_serializer(data=request.data)
-                receipt_serializer.is_valid(raise_exception=True)
-                receipt_serializer.validated_data['school_id'] = school_id
-                receipt_serializer.validated_data['receipt_No'] = receipt_no
-                receipt_serializer.validated_data['currency'] = default_Currency
-                receipt_serializer.validated_data['term'] = term
-                receipt_serializer.validated_data['year'] = year
-                receipt_serializer.validated_data.pop('collections_values', [])
-                receipt_instance = receipt_serializer.save()
+                totalAmount = 0.00
+                pik_values = request.data.get('pik_values', [])
+                if pik_values:
+                    totalAmount = sum(item['unit_cost'] * item['quantity'] for item in pik_values)
 
-                print("Created Receipt")
+                pikreceipt_serializer = self.get_serializer(data=request.data)
+                pikreceipt_serializer.is_valid(raise_exception=True)
+                pikreceipt_serializer.validated_data['school_id'] = school_id
+                pikreceipt_serializer.validated_data['receipt_No'] = receipt_no
+                pikreceipt_serializer.validated_data['currency'] = default_Currency
+                pikreceipt_serializer.validated_data['term'] = term
+                pikreceipt_serializer.validated_data['year'] = year
+                pikreceipt_serializer.validated_data['totalAmount'] = totalAmount
+                pikreceipt_serializer.validated_data.pop('pik_values', [])
+                pikreceipt_instance = pikreceipt_serializer.save()
 
-                collections_data = request.data.get('collections_values', [])
 
                 sum_Invoice_Amount = 0
-                for collection_data in collections_data:
-                    collection_data['receipt'] = receipt_instance.id
-                    collection_data['school_id'] = school_id
-                    collection_data['student'] = receipt_instance.student.id
-                    collection_serializer = CollectionSerializer(data=collection_data)
-                    collection_serializer.is_valid(raise_exception=True)
-                    created_collection = collection_serializer.save()
+                for value in pik_values:
+                    value['receipt'] = pikreceipt_instance.id
+                    value['school_id'] = school_id
+                    value['student'] = pikreceipt_instance.student.id
+                    value['votehead'] = pikreceipt_instance.votehead.id
+                    value['amount'] = value['quantity'] * value['unit_cost']
+                    paymentInKind_serializer = PaymentInKindSerializer(data=value)
+                    paymentInKind_serializer.is_valid(raise_exception=True)
+                    created_Pik = paymentInKind_serializer.save()
 
-                    votehead_instance = created_collection.votehead
-                    term_instance = created_collection.receipt.term
-                    year_instance = created_collection.receipt.year
-                    student = created_collection.receipt.student
+                    term_instance = created_Pik.receipt.term
+                    year_instance = created_Pik.receipt.year
+                    student = created_Pik.receipt.student
 
                     try:
-                        invoice_instance = Invoice.objects.get(votehead=votehead_instance, term=term_instance,year=year_instance, school_id=school_id, student=student)
+                        invoice_instance = Invoice.objects.get(votehead=pikreceipt_instance.votehead, term=term_instance,year=year_instance, school_id=school_id, student=student)
 
-                        if (invoice_instance.paid + created_collection.amount) > invoice_instance.amount:
+                        if (invoice_instance.paid + created_Pik.amount) > invoice_instance.amount:
                             raise ValueError("Transaction 1 cancelled: Total paid amount exceeds total invoice amount")
                         else:
-                            invoice_instance.paid += created_collection.amount
+                            invoice_instance.paid += created_Pik.amount
                             invoice_instance.due = invoice_instance.amount - invoice_instance.paid
                             invoice_instance.save()
 
@@ -90,25 +93,28 @@ class ReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                     except Invoice.MultipleObjectsReturned:
                         raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
 
-                if receipt_instance.totalAmount > sum_Invoice_Amount:
+                if pikreceipt_instance.totalAmount > sum_Invoice_Amount:
 
                     overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
                     if not overpayment_votehead:
                         raise ValueError("No VoteHead found with is_Overpayment_Default set to true")
 
-                    overpayment_Amount = sum_Invoice_Amount - receipt_instance.totalAmount
-                    newCollection = Collection(
-                        student=receipt_instance.student,
-                        receipt=receipt_instance,
+                    overpayment_Amount = sum_Invoice_Amount - pikreceipt_instance.totalAmount
+                    newPIK = PaymentInKind(
+                        student=pikreceipt_instance.student,
+                        receipt=pikreceipt_instance,
                         amount=overpayment_Amount,
                         votehead=overpayment_votehead,
-                        school_id=receipt_instance.school_id
+                        school_id=pikreceipt_instance.school_id
                     )
-                    newCollection.save()
+                    newPIK.save()
 
                     try:
-                        invoice_instance.paid += overpayment_Amount
+                        invoice_instance = Invoice.objects.get(votehead=overpayment_votehead, term=term_instance,year=year_instance, school_id=school_id, student=student)
+                        invoice_instance.paid += overpayment_Amount.amount
                         invoice_instance.save()
+                        sum_Invoice_Amount += invoice_instance.amount
+
                     except Invoice.DoesNotExist:
                         pass
                     except Invoice.MultipleObjectsReturned:
@@ -117,27 +123,27 @@ class ReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'detail': 'Receipt and collections created successfully'}, status=status.HTTP_201_CREATED)
+        return Response({'detail': 'Records created successfully'}, status=status.HTTP_201_CREATED)
 
 
 
-class ReceiptListView(SchoolIdMixin, generics.ListAPIView):
-    serializer_class = ReceiptSerializer
+class PIKReceiptListView(SchoolIdMixin, generics.ListAPIView):
+    serializer_class = PIKReceiptSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
         school_id = self.check_school_id(self.request)
         if not school_id:
-            return Receipt.objects.none()
-        queryset = Receipt.objects.filter(school_id=school_id)
+            return PIKReceipt.objects.none()
+        queryset = PIKReceipt.objects.filter(school_id=school_id)
 
-        is_reversed_param = self.request.query_params.get('reversed', None)
-        if is_reversed_param is not None:
-            queryset = queryset.filter(is_reversed=True)
+        is_posted = self.request.query_params.get('posted', None)
+        if is_posted is not None:
+            queryset = queryset.filter(is_posted=True)
             print("It is reversed")
         else:
-            queryset = queryset.filter(is_reversed=False)
+            queryset = queryset.filter(is_posted=False)
             print("It is not reversed")
 
         return queryset
@@ -157,17 +163,17 @@ class ReceiptListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class ReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
-    queryset = Receipt.objects.all()
-    serializer_class = ReceiptSerializer
+class PIKReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+    queryset = PIKReceipt.objects.all()
+    serializer_class = PIKReceiptSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def get_object(self):
         primarykey = self.kwargs['pk']
         try:
             id = uuid.UUID(primarykey)
-            return Receipt.objects.get(id=id)
-        except (ValueError, Receipt.DoesNotExist):
+            return PIKReceipt.objects.get(id=id)
+        except (ValueError, PIKReceipt.DoesNotExist):
             raise NotFound({'detail': 'Record Not Found'})
 
     def update(self, request, *args, **kwargs):
@@ -178,13 +184,14 @@ class ReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
 
-        if instance.is_reversed:
-            return Response({'detail': "You cannot update a reversed receipt"},status=status.HTTP_400_BAD_REQUEST)
+        if not instance.is_posted:
+            return Response({'detail': "You cannot update this record"},status=status.HTTP_400_BAD_REQUEST)
+
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
             self.perform_update(serializer)
-            return Response({'detail': 'Receipt updated successfully'}, status=status.HTTP_201_CREATED)
+            return Response({'detail': 'PIKReceipt updated successfully'}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -197,25 +204,25 @@ class ReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         term = instance.term
         year = instance.year
 
-        if instance.is_reversed:
-            Response({'detail': "This invoice is already reversed"}, status=status.HTTP_400_BAD_REQUEST)
+        if not instance.is_posted:
+            return Response({'detail': "Item is already unposted"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             with transaction.atomic():
-                collections = Collection.objects.filter(receipt=instance).all()
-                for collection in collections:
-                    collected_amount = collection.amount
-                    votehead = collection.votehead
+                piks = PaymentInKind.objects.filter(receipt=instance).all()
+                for pik_item in piks:
+                    paid_Amount = pik_item.amount
+                    votehead = pik_item.votehead
                     invoicelist = Invoice.objects.filter(school_id=school_id, term=term, year=year,votehead=votehead).all()
                     for invoice in invoicelist:
-                        invoice.paid -= collected_amount
-                        invoice.due += collected_amount
+                        invoice.paid -= paid_Amount
+                        invoice.due += paid_Amount
                         invoice.save()
 
-                instance.is_reversed = True
-                instance.reversal_date = timezone.now()
+                instance.is_posted = False
+                instance.unposted_date = timezone.now()
                 instance.save()
 
-            return Response({'detail': "Receipt Reversed Successfully"}, status=status.HTTP_200_OK)
+            return Response({'detail': "PIKReceipt Reversed Successfully"}, status=status.HTTP_200_OK)
         except Exception as exception:
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
