@@ -258,7 +258,7 @@ class InvoiceClassesListView(SchoolIdMixin, generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if not queryset.exists():
-            return Response([], status=200)
+            return JsonResponse([], safe=False, status=200)
 
         unique_classes = set(queryset.values_list('classes', flat=True))
         class_instances = Classes.objects.filter(id__in=unique_classes)
