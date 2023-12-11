@@ -137,29 +137,37 @@ def createInvoices(students, structure_year, structure_term, structure_class):
                 school_id = item.school_id
                 votehead = item.votehead
 
-                # Create the Invoice object
-                invoice = Invoice(
-                    issueDate=timezone.now().date(),
-                    invoiceNo=invoice_no,
-                    amount=amount,
-                    paid=0.00,
-                    due=amount,
-                    description=description,
-                    student=student,
+                exists_query = Invoice.objects.filter(
+                    votehead__id=votehead.id,
                     term=term,
                     year=year,
-                    classes=classes,
-                    currency=currency,
-                    school_id=school_id,
-                    votehead=votehead
+                    student=student
                 )
 
-                try:
-                    invoice.save()
-                except Exception as e:
-                    error_message = f"An error occurred while saving the invoice for student {student.id}: {e}"
-                    print(error_message)
-                    errors.append(error_message)
+                if exists_query.exists():
+                    pass
+                else:
+                    invoice = Invoice(
+                        issueDate=timezone.now().date(),
+                        invoiceNo=invoice_no,
+                        amount=amount,
+                        paid=0.00,
+                        due=amount,
+                        description=description,
+                        student=student,
+                        term=term,
+                        year=year,
+                        classes=classes,
+                        currency=currency,
+                        school_id=school_id,
+                        votehead=votehead
+                    )
+                    try:
+                        invoice.save()
+                    except Exception as e:
+                        error_message = f"An error occurred while saving the invoice for student {student.id}: {e}"
+                        print(error_message)
+                        errors.append(error_message)
 
     if errors:
         return Response({"detail": errors}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
