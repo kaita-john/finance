@@ -340,21 +340,36 @@ class TotalInvoicedAmount(SchoolIdMixin, generics.GenericAPIView):
     serializer_class = BalanceSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
-    def post(self, request, *args, **kwargs):
-        school_id = self.check_school_id(request)
+    def get_queryset(self):
+        school_id = self.check_school_id(self.request)
         if not school_id:
-            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+            return Invoice.objects.none()
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serialized_data = serializer.data
+        structure_year = self.request.GET.get('structure_year')
+        structure_term = self.request.GET.get('structure_term')
 
-        structure_year = serialized_data.get('structure_year')
-        structure_term = serialized_data.get('structure_term')
+        if not structure_year or not structure_term:
+            return Response({'detail': "Both structure term and structure year required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        exists_query = Invoice.objects.filter(term=structure_term,year=structure_year)
+        if structure_year:
+            try:
+                structure_year = UUID(structure_year)
+                if not Invoice.objects.filter(school_id=school_id, year=structure_year).exists():
+                    raise ValidationError({"detail": "Invalid structure_year"})
+            except ValueError:
+                raise ValidationError({"detail": "Invalid UUID for structure_year"})
+
+        if structure_term:
+            try:
+                structure_term = UUID(structure_term)
+                if not Invoice.objects.filter(school_id=school_id, term=structure_term).exists():
+                    raise ValidationError({"detail": "Invalid structure_term"})
+            except ValueError:
+                raise ValidationError({"detail": "Invalid UUID for structure_term"})
+
+        exists_query = Invoice.objects.filter(term=structure_term, year=structure_year)
         if not exists_query.exists():
-            return Response({"detail": 0.00})
+            return Response({"detail": 0.0})
         else:
             total_sum = exists_query.aggregate(Sum('total'))['total__sum']
-            return Response({"detail": total_sum})
+            return Response({"detail": float(total_sum)})
