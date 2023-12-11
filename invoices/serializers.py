@@ -6,7 +6,14 @@ from currencies.serializers import CurrencySerializer
 from streams.serializers import StreamsSerializer
 from students.serializers import StudentSerializer
 from term.serializers import TermSerializer
-from .models import Invoice, Structure, Uninvoice
+from .models import Invoice, Structure, Uninvoice, Balance
+
+
+class BalanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Balance
+        fields = '__all__'
+
 
 
 class InvoiceSerializer(serializers.ModelSerializer):

@@ -2,6 +2,7 @@
 from uuid import UUID
 
 from django.db import transaction
+from django.db.models import Sum
 from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework import generics, status
@@ -17,7 +18,7 @@ from fee_structures_items.models import FeeStructureItem
 from students.models import Student
 from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey, IsAdminOrSuperUser
 from .models import Invoice
-from .serializers import InvoiceSerializer, StructureSerializer, UninvoiceStudentSerializer
+from .serializers import InvoiceSerializer, StructureSerializer, UninvoiceStudentSerializer, BalanceSerializer
 
 
 class InvoiceCreateView(SchoolIdMixin, generics.CreateAPIView):
@@ -325,3 +326,35 @@ class UnInvoiceStudentView(SchoolIdMixin, generics.GenericAPIView):
                 value.delete()
 
         return Response({'detail': f'{size} records were uninvoiced. Successfully!'}, status=status.HTTP_201_CREATED)
+
+
+
+
+
+
+
+
+
+
+class TotalInvoicedAmount(SchoolIdMixin, generics.GenericAPIView):
+    serializer_class = BalanceSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+
+    def post(self, request, *args, **kwargs):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serialized_data = serializer.data
+
+        structure_year = serialized_data.get('structure_year')
+        structure_term = serialized_data.get('structure_term')
+
+        exists_query = Invoice.objects.filter(term=structure_term,year=structure_year)
+        if not exists_query.exists():
+            return Response({"detail": 0.00})
+        else:
+            total_sum = exists_query.aggregate(Sum('total'))['total__sum']
+            return Response({"detail": total_sum})

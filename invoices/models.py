@@ -9,6 +9,10 @@ from term.models import Term
 from models import ParentModel
 from voteheads.models import VoteHead
 
+class Balance(models.Model):
+    structure_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
+    structure_term = models.ForeignKey(Term, on_delete=models.CASCADE)
+
 
 class Uninvoice(models.Model):
     structure_year = models.ForeignKey(AcademicYear, default=None, null=True, on_delete=models.CASCADE)
