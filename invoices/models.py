@@ -16,7 +16,7 @@ class Uninvoice(models.Model):
     structure_class = models.ForeignKey(Classes, null=True, default=None, on_delete=models.CASCADE)
     structure_stream = models.ForeignKey(Stream, null=True, default=None, on_delete=models.CASCADE)
     student = models.ForeignKey(Student, null=True, default=None, on_delete=models.CASCADE, related_name="innovation_document_creator")
-    invoice_who = models.CharField(max_length=255, null=True, default="class")
+    filter_type = models.CharField(max_length=255, null=True, default="classes")
 
 
 class Structure(models.Model):

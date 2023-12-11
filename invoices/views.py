@@ -298,27 +298,27 @@ class UnInvoiceStudentView(SchoolIdMixin, generics.GenericAPIView):
         structure_class = serialized_data.get('structure_class')
         structure_stream = serialized_data.get('structure_stream')
         student = serialized_data.get('student')
-        invoice_who = serialized_data.get('invoice_who')
+        filter_type = serialized_data.get('filter_type')
 
-        invoicetypes = ["class", "student", "stream"]
-        if invoice_who not in invoicetypes:
+        invoicetypes = ["classes", "student", "stream"]
+        if filter_type not in invoicetypes:
             return Response({'detail': "Valid options are class, student and stream"},status=status.HTTP_400_BAD_REQUEST)
 
-        if invoice_who == "stream" and structure_class is None or structure_term is None:
+        if filter_type == "stream" and structure_class is None or structure_term is None:
             return Response({'detail': "To uninvoice a stream, enter both Class and Term"},status=status.HTTP_400_BAD_REQUEST)
 
         size = None
-        if invoice_who == "class":
+        if filter_type == "classes":
             invoiceList = Invoice.objects.filter(year=structure_year, term=structure_term, classes=structure_class, school_id=school_id)
             size = len(invoiceList)
             for value in invoiceList:
                 value.delete()
-        elif invoice_who == "stream":
+        elif filter_type == "stream":
             invoiceList = Invoice.objects.filter(year=structure_year, term=structure_term, classes=structure_class, student__current_Stream=structure_stream, school_id=school_id)
             size = len(invoiceList)
             for value in invoiceList:
                 value.delete()
-        elif invoice_who == "student":
+        elif filter_type == "student":
             invoiceList = Invoice.objects.filter(student=student)
             size = len(invoiceList)
             for value in invoiceList:
