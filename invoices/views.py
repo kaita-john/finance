@@ -336,7 +336,7 @@ class UnInvoiceStudentView(SchoolIdMixin, generics.GenericAPIView):
 
 
 
-class TotalInvoicedAmount(SchoolIdMixin, generics.GenericAPIView):
+class TotalInvoicedAmount(SchoolIdMixin, generics.ListAPIView):
     serializer_class = BalanceSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
