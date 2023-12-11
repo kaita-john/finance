@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from fee_structures_items.serializers import FeeStructureItemSerializer
-from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey
+from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, currentAcademicYear
 from .models import FeeStructure
 from .serializers import FeeStructureSerializer
 
@@ -25,6 +25,14 @@ class FeeStructureCreateView(SchoolIdMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
+
+            academic_year = serializer.validated_data.get('academic_year', None)
+            if academic_year is None:
+                current_academic_year = currentAcademicYear()
+                if current_academic_year is None:
+                    return Response({'detail': 'Current academic year is not set'}, status=status.HTTP_400_BAD_REQUEST)
+                serializer.validated_data['academic_year'] = current_academic_year
+
             try:
                 with transaction.atomic():
                     fee_structure_items_data = serializer.validated_data.pop('fee_structure_values', [])

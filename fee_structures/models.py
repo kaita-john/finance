@@ -5,11 +5,12 @@ from academic_year.models import AcademicYear
 from classes.models import Classes
 from term.models import Term
 from models import ParentModel
+from utils import currentAcademicYear
 
 
 # models.py
 class FeeStructure(ParentModel):
-    academic_year = models.ForeignKey(AcademicYear, default=None, null=True, on_delete=models.CASCADE, related_name="fee_structures")
+    academic_year = models.ForeignKey(AcademicYear, default=currentAcademicYear, null=True, on_delete=models.CASCADE, related_name="fee_structures")
     classes = models.ForeignKey(Classes, null=True, default=None, on_delete=models.CASCADE, related_name="fee_structures")
     term = models.ForeignKey(Term, null=True, default=None, on_delete=models.CASCADE, related_name="fee_structures")
     instructions = models.CharField(max_length=255, blank=True, null=True)
