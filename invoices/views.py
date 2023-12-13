@@ -129,14 +129,12 @@ class InvoiceDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
 
 
 
-
 def createInvoices(students, structure_year, structure_term, structure_class):
     try:
         currency = Currency.objects.get(is_default=True)
     except Currency.DoesNotExist:
         currency = None
         return Response({"detail": "Student not invoiced! Default Currency not set for this school"}, status=status.HTTP_400_BAD_REQUEST)
-
 
     fee_structures_itemList = FeeStructureItem.objects.filter(
         fee_Structure__academic_year=structure_year,
@@ -145,51 +143,46 @@ def createInvoices(students, structure_year, structure_term, structure_class):
     )
 
     errors = []
-
     invoice_no = generate_unique_code()
 
     with transaction.atomic():
         for student in students:
             for item in fee_structures_itemList:
-                description = item.votehead.vote_head_name
-                amount = item.amount
-                term = item.fee_Structure.term
-                year = item.fee_Structure.academic_year
-                classes = item.fee_Structure.classes
-                school_id = item.school_id
-                votehead = item.votehead
+                try:
+                    if item.votehead:
+                        description = item.votehead.vote_head_name
+                        amount = item.amount
+                        term = item.fee_Structure.term
+                        year = item.fee_Structure.academic_year
+                        classes = item.fee_Structure.classes
+                        school_id = item.school_id
+                        votehead = item.votehead
 
-                exists_query = Invoice.objects.filter(
-                    votehead__id=votehead.id,
-                    term=term,
-                    year=year,
-                    student=student
-                )
+                        exists_query = Invoice.objects.filter(votehead__id=votehead.id, term=term, year=year, student=student)
 
-                if exists_query.exists():
-                    pass
-                else:
-                    invoice = Invoice(
-                        issueDate=timezone.now().date(),
-                        invoiceNo=invoice_no,
-                        amount=amount,
-                        paid=0.00,
-                        due=amount,
-                        description=description,
-                        student=student,
-                        term=term,
-                        year=year,
-                        classes=classes,
-                        currency=currency,
-                        school_id=school_id,
-                        votehead=votehead
-                    )
-                    try:
-                        invoice.save()
-                    except Exception as e:
-                        error_message = f"An error occurred while saving the invoice for student {student.id}: {e}"
-                        print(error_message)
-                        errors.append(error_message)
+                        if exists_query.exists():
+                            pass
+                        else:
+                            invoice = Invoice(
+                                issueDate=timezone.now().date(),
+                                invoiceNo=invoice_no,
+                                amount=amount,
+                                paid=0.00,
+                                due=amount,
+                                description=description,
+                                student=student,
+                                term=term,
+                                year=year,
+                                classes=classes,
+                                currency=currency,
+                                school_id=school_id,
+                                votehead=votehead
+                            )
+                            invoice.save()
+                except Exception as e:
+                    error_message = f"An error occurred while processing item {item.id} for student {student.id}: {e}"
+                    print(error_message)
+                    errors.append(error_message)
 
     if errors:
         return Response({"detail": errors}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

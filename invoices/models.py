@@ -35,7 +35,7 @@ class Structure(models.Model):
 
 class Invoice(ParentModel):
     issueDate = models.CharField(max_length=255)
-    invoiceNo = models.CharField(max_length=255, unique=True)
+    invoiceNo = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     paid = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     due = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
