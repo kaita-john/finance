@@ -66,6 +66,8 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
             student_id = result['student']
             term_id = result['term']
             year_id = result['year']
+            issueDate = result['issueDate']
+            invoiceNo = result['invoiceNo']
 
             try:
                 student = Student.objects.get(id=student_id)
@@ -76,7 +78,7 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
                 term = None
                 year = None
 
-            invoice = Invoice(term=term,year=year,student=student, amount=result['total_amount'], paid=result['total_paid'], due=result['total_due'],)
+            invoice = Invoice(invoiceNo=invoiceNo, issueDate=issueDate, term=term,year=year,student=student, amount=result['total_amount'], paid=result['total_paid'], due=result['total_due'],)
             invoices.append(invoice)
         return invoices
 
