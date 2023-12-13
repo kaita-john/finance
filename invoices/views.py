@@ -20,7 +20,7 @@ from fee_structures_items.models import FeeStructureItem
 from students.models import Student
 from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey, IsAdminOrSuperUser
 from .models import Invoice
-from .serializers import InvoiceSerializer, StructureSerializer, UninvoiceStudentSerializer, BalanceSerializer
+from .serializers import InvoiceSerializer, StructureSerializer, UninvoiceStudentSerializer
 
 
 class InvoiceCreateView(SchoolIdMixin, generics.CreateAPIView):
@@ -50,12 +50,27 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Invoice.objects.none()
-        queryset = Invoice.objects.filter(school_id=school_id)
+
+        common_records = Invoice.objects.filter(school_id=school_id).values('term', 'year', 'student').distinct()
+        term = common_records['term']
+        year = common_records['year']
+        student_id = common_records['student']
+
+        queryset = Invoice.objects.filter(school_id=school_id,term=term,year=year,student=student_id)
         return queryset
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if not queryset.exists():
             return JsonResponse([], safe=False, status=200)
+
+        amount = queryset.aggregate(Sum('amount'))['amount__sum']
+        paid = queryset.aggregate(Sum('paid'))['paid__sum']
+        due = queryset.aggregate(Sum('due'))['due__sum']
+
+        queryset.amount = amount
+        queryset.paid = paid
+        queryset.due = due
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -128,11 +143,12 @@ def createInvoices(students, structure_year, structure_term, structure_class):
 
     errors = []
 
+    invoice_no = generate_unique_code()
+
     with transaction.atomic():
         for student in students:
             for item in fee_structures_itemList:
                 description = item.votehead.vote_head_name
-                invoice_no = generate_unique_code()
                 amount = item.amount
                 term = item.fee_Structure.term
                 year = item.fee_Structure.academic_year
