@@ -63,7 +63,8 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        if not queryset.exists():
+
+        if not queryset or not queryset.exists():
             return JsonResponse([], safe=False, status=200)
 
         amount = queryset.aggregate(Sum('amount'))['amount__sum']
