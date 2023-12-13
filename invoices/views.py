@@ -2,6 +2,7 @@
 import uuid
 from uuid import UUID
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Sum
 from django.http import JsonResponse
@@ -13,11 +14,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from academic_year.models import AcademicYear
 from classes.models import Classes
 from classes.serializers import ClassesSerializer
 from currencies.models import Currency
 from fee_structures_items.models import FeeStructureItem
 from students.models import Student
+from term.models import Term
 from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey, IsAdminOrSuperUser
 from .models import Invoice
 from .serializers import InvoiceSerializer, StructureSerializer, UninvoiceStudentSerializer
@@ -51,29 +54,36 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
         if not school_id:
             return Invoice.objects.none()
 
-        queryset = None
-        common_records = Invoice.objects.filter(school_id=school_id).values('term', 'year', 'student').distinct().first()
-        if common_records:
-            term = common_records['term']
-            year = common_records['year']
-            student_id = common_records['student']
+        queryset = Invoice.objects.filter(school_id=school_id).values('term', 'year', 'student').annotate(
+            total_amount=Sum('amount'),
+            total_paid=Sum('paid'),
+            total_due=Sum('due')
+        )
 
-            queryset = Invoice.objects.filter(school_id=school_id,term=term,year=year,student=student_id)
-        return queryset
+        invoices = []
+        for result in queryset:
+            student_id = result['student']
+            term_id = result['term']
+            year_id = result['year']
+
+            try:
+                student = Student.objects.get(id=student_id)
+                term = Term.objects.get(id=term_id)
+                year = AcademicYear.objects.get(id=year_id)
+            except ObjectDoesNotExist:
+                student = None
+                term = None
+                year = None
+
+            invoice = Invoice(term=term,year=year,student=student, amount=result['total_amount'], paid=result['total_paid'], due=result['total_due'],)
+            invoices.append(invoice)
+        return invoices
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
 
-        if not queryset or not queryset.exists():
+        if not queryset:
             return JsonResponse([], safe=False, status=200)
-
-        amount = queryset.aggregate(Sum('amount'))['amount__sum']
-        paid = queryset.aggregate(Sum('paid'))['paid__sum']
-        due = queryset.aggregate(Sum('due'))['due__sum']
-
-        queryset.amount = amount
-        queryset.paid = paid
-        queryset.due = due
 
         page = self.paginate_queryset(queryset)
         if page is not None:
