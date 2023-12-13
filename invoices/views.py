@@ -51,12 +51,14 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
         if not school_id:
             return Invoice.objects.none()
 
+        queryset = None
         common_records = Invoice.objects.filter(school_id=school_id).values('term', 'year', 'student').distinct().first()
-        term = common_records['term']
-        year = common_records['year']
-        student_id = common_records['student']
+        if common_records:
+            term = common_records['term']
+            year = common_records['year']
+            student_id = common_records['student']
 
-        queryset = Invoice.objects.filter(school_id=school_id,term=term,year=year,student=student_id)
+            queryset = Invoice.objects.filter(school_id=school_id,term=term,year=year,student=student_id)
         return queryset
 
     def list(self, request, *args, **kwargs):
