@@ -55,8 +55,6 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
             return Invoice.objects.none()
 
         queryset = Invoice.objects.filter(school_id=school_id).values('term', 'year', 'student', 'issueDate', 'invoiceNo').annotate(
-            issueDate=F('issueDate'),
-            invoiceNo=F('invoiceNo'),
             total_amount=Sum('amount'),
             total_paid=Sum('paid'),
             total_due=Sum('due')
