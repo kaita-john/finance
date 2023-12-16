@@ -1,15 +1,18 @@
 # Create your views here.
-
+from _decimal import Decimal
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Sum
 from django.http import JsonResponse
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from invoices.models import Invoice
 from invoices.views import createInvoices
-from utils import SchoolIdMixin, UUID_from_PrimaryKey, currentAcademicYear, currentTerm
+from receipts.models import Receipt
+from utils import SchoolIdMixin, UUID_from_PrimaryKey, currentAcademicYear, currentTerm, IsAdminOrSuperUser
 from .models import Student
 from .serializers import StudentSerializer
 
@@ -129,10 +132,68 @@ class StudentBalanceDetailView(SchoolIdMixin, generics.RetrieveAPIView):
             school_id=school_id
         ).aggregate(Sum('due'))['due__sum']
 
-        total_invoice_amount = total_amount or 0.00
+
+        total_amount_required = Invoice.objects.filter(term=current_term, year=current_academic_year,student = student.id).aggregate(total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
+        total_amount_paid = Receipt.objects.filter(student_id=student.id,term=current_term, year=current_academic_year, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
+        balance = total_amount_required - Decimal(total_amount_paid)
+
         response_data = {
             'student_id': student.id,
-            'balance': total_invoice_amount,
+            'balance': balance,
         }
 
         return Response({"detail": response_data})
+
+
+class StudentSearchByAdmissionNumber(APIView, SchoolIdMixin):
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+
+    def get(self, request):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        admissionNumber = request.GET.get('admission')
+
+        if not admissionNumber:
+            return Response({'detail': "Admission Number is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            student = Student.objects.get(admission_number=admissionNumber)
+        except ObjectDoesNotExist:
+            return Response({'detail': "Student with admission number not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = StudentSerializer(student)
+        serialized_data = serializer.data
+
+        return Response({'detail': serialized_data}, status=status.HTTP_200_OK)
+
+
+class GetStudentsByClass(APIView, SchoolIdMixin):
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+
+    def get(self, request):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        currentClass = request.GET.get('currentClass')
+
+        if not currentClass:
+            return Response({'detail': "Current Class is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            students = Student.objects.filter(current_Class=currentClass).all()
+        except Exception as exception:
+            return Response({'detail': f"{exception}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not students:
+            return JsonResponse([], status=200)
+
+        for student in students:
+            student.school_id = school_id
+
+        serializer = StudentSerializer(students, many=True)
+        serialized_data = serializer.data
+
+        return Response({'detail': serialized_data}, status=status.HTTP_200_OK)

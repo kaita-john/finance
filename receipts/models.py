@@ -22,13 +22,15 @@ class Receipt(ParentModel):
     term = models.ForeignKey(Term, null=True, on_delete=models.CASCADE, related_name="receipts")
     year = models.ForeignKey(AcademicYear, null=True, on_delete=models.CASCADE, related_name="receipts")
     currency = models.ForeignKey(Currency, null=True, on_delete=models.CASCADE, related_name="receipts")
-    transaction_code = models.CharField(max_length=255, null=True, unique=True)
+    transaction_code = models.CharField(max_length=255, null=True)
+    transaction_date = models.DateField(null=True, default=None)
     addition_notes = models.TextField(null=True)
     is_reversed = models.BooleanField(default=False, blank=False, null=False)
     reversal_date = models.DateField(null=True)
 
+
     def __str__(self):
-        return f"Receipt #{self.receipt_date} - {self.student.first_name}"
+        return f"{self.id} - {self.receipt_date} - {self.student.first_name}"
 
 
 

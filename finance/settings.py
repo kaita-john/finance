@@ -69,6 +69,8 @@ INSTALLED_APPS = [
     'receipts',
     'payment_in_kinds',
     'payment_in_kind_Receipt',
+    'items',
+    'bursaries',
 ]
 
 APPEND_SLASH = False

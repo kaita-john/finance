@@ -3,6 +3,7 @@ from django.db import models
 from academic_year.models import AcademicYear
 from classes.models import Classes
 from currencies.models import Currency
+from schoolgroups.models import SchoolGroup
 from streams.models import Stream
 from students.models import Student
 from term.models import Term
@@ -31,6 +32,7 @@ class Structure(models.Model):
     student = models.ForeignKey(Student, default=None, null=True, on_delete=models.CASCADE, related_name="structures")
     classes = models.ForeignKey(Classes, default=None, null=True, on_delete=models.CASCADE, related_name="structures")
     stream = models.ForeignKey(Stream, default=None, null=True, on_delete=models.CASCADE, related_name="structures")
+    group = models.ForeignKey(SchoolGroup, default=None, null=True, on_delete=models.CASCADE, related_name="structures")
 
 
 class Invoice(ParentModel):

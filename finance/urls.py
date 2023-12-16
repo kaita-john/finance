@@ -30,6 +30,8 @@ api_patterns = [
     path(api_version + 'web/', include('web.urls')),
     path(api_version + 'receipts/', include('receipts.urls')),
     path(api_version + 'receipts/', include('receipts.urls')),
+    path(api_version + 'bursaries/', include('bursaries.urls')),
+    path(api_version + 'items/', include('items.urls')),
     path(api_version + 'collections/', include('appcollections.urls')),
     path(api_version + 'paymentinkind/', include('payment_in_kind_Receipt.urls')),
     path(api_version + 'students/', include('students.urls')),

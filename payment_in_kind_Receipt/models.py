@@ -1,11 +1,9 @@
 from django.db import models
 
 from academic_year.models import AcademicYear
-from account_types.models import AccountType
 from bank_accounts.models import BankAccount
 from currencies.models import Currency
 from models import ParentModel
-from payment_methods.models import PaymentMethod
 from students.models import Student
 from term.models import Term
 from voteheads.models import VoteHead
@@ -29,7 +27,7 @@ class PIKReceipt(ParentModel):
     unposted_date = models.DateField(null=True)
 
     def __str__(self):
-        return f"PaymentInKind Receipt #{self.receipt_date} - {self.student.first_name}"
+        return f"PaymentInKind Receipt {self.id} - {self.receipt_date} - {self.student.first_name}"
 
 
 

@@ -2,7 +2,9 @@
 
 import uuid
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import F
 from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework import generics
@@ -14,12 +16,243 @@ from rest_framework.response import Response
 
 from appcollections.models import Collection
 from appcollections.serializers import CollectionSerializer
+from constants import MANUAL, AUTO, PRIORITY, RATIO
 from invoices.models import Invoice
+from school import serializer
 from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, defaultCurrency, currentAcademicYear, \
     currentTerm
-from voteheads.models import VoteHead
+from voteheads.models import VoteHead, VoteheadConfiguration
 from .models import Receipt
 from .serializers import ReceiptSerializer
+
+
+def manualCollection(self, request, school_id):
+    try:
+        with transaction.atomic():
+            receipt_no = generate_unique_code("RT")
+            default_Currency = defaultCurrency()
+            year = currentAcademicYear()
+            term = currentTerm()
+            if not default_Currency:
+                Response({'detail': "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
+            if not year:
+                Response({'detail': "Default Academic Year Not Set For This School"},
+                         status=status.HTTP_400_BAD_REQUEST)
+            if not term:
+                Response({'detail': "Default Term Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
+
+            receipt_serializer = self.get_serializer(data=request.data)
+            receipt_serializer.is_valid(raise_exception=True)
+            receipt_serializer.validated_data['school_id'] = school_id
+            receipt_serializer.validated_data['receipt_No'] = receipt_no
+            receipt_serializer.validated_data['currency'] = default_Currency
+            receipt_serializer.validated_data['term'] = term
+            receipt_serializer.validated_data['year'] = year
+
+
+            receipt_serializer.validated_data.pop('collections_values', [])
+            receipt_instance = receipt_serializer.save()
+
+            collections_data = request.data.get('collections_values', [])
+
+            sum_Invoice_Amount = 0
+            for collection_data in collections_data:
+                collection_data['receipt'] = receipt_instance.id
+                collection_data['school_id'] = school_id
+                collection_data['student'] = receipt_instance.student.id
+                collection_serializer = CollectionSerializer(data=collection_data)
+                collection_serializer.is_valid(raise_exception=True)
+                created_collection = collection_serializer.save()
+
+                votehead_instance = created_collection.votehead
+                term_instance = created_collection.receipt.term
+                year_instance = created_collection.receipt.year
+                student = created_collection.receipt.student
+
+                try:
+                    invoice_instance = Invoice.objects.get(votehead=votehead_instance, term=term_instance, year=year_instance, school_id=school_id, student=student)
+
+                    if (invoice_instance.paid + created_collection.amount) > invoice_instance.amount:
+                        raise ValueError("Transaction 1 cancelled: Total paid amount exceeds total invoice amount")
+                    else:
+                        sum_Invoice_Amount += invoice_instance.amount
+
+                except Invoice.DoesNotExist:
+                    print("Invoice does not exist")
+                    pass
+                except Invoice.MultipleObjectsReturned:
+                    raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
+
+            if receipt_instance.totalAmount > sum_Invoice_Amount:
+
+                overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
+                if not overpayment_votehead:
+                    raise ValueError("No VoteHead found with is_Overpayment_Default set to true")
+
+                overpayment_Amount = sum_Invoice_Amount - receipt_instance.totalAmount
+                newCollection = Collection(
+                    student=receipt_instance.student,
+                    receipt=receipt_instance,
+                    amount=overpayment_Amount,
+                    votehead=overpayment_votehead,
+                    school_id=receipt_instance.school_id,
+                    is_overpayment = True
+                )
+                newCollection.save()
+
+
+        return Response({'detail': 'Receipt and collections created successfully'}, status=status.HTTP_201_CREATED)
+    except ValueError as e:
+        return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+def autoCollection(self, request, school_id, auto_configuration_type):
+    try:
+        with transaction.atomic():
+            receipt_no = generate_unique_code("RT")
+            default_Currency = defaultCurrency()
+            year = currentAcademicYear()
+            term = currentTerm()
+            if not default_Currency:
+                Response({'detail': "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
+            if not year:
+                Response({'detail': "Default Academic Year Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
+            if not term:
+                Response({'detail': "Default Term Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
+
+            receipt_serializer = self.get_serializer(data=request.data)
+            receipt_serializer.is_valid(raise_exception=True)
+
+            receipt_serializer.validated_data['school_id'] = school_id
+            receipt_serializer.validated_data['receipt_No'] = receipt_no
+            receipt_serializer.validated_data['currency'] = default_Currency
+            receipt_serializer.validated_data['term'] = term
+            receipt_serializer.validated_data['year'] = year
+            receipt_serializer.validated_data.pop('collections_values', [])
+            receipt_instance = receipt_serializer.save()
+
+            student = receipt_instance.student
+            voteheads = Invoice.objects.filter( term=term, year=year, school_id=school_id, student=student)
+            votehead_ids = voteheads.values('votehead').distinct()
+            votehead_objects = VoteHead.objects.filter(id__in=votehead_ids)
+
+            totalAmount = receipt_instance.totalAmount
+            numberOfVoteheads = len(votehead_objects)
+
+            overpayment = 0
+
+            if auto_configuration_type == RATIO:
+                eachVoteheadWillGet = totalAmount / numberOfVoteheads
+                for votehead in votehead_objects:
+                    try:
+                        invoice_instance = Invoice.objects.get(votehead=votehead, term=term, year=year, school_id=school_id, student=student)
+                        if (invoice_instance.paid + eachVoteheadWillGet) > invoice_instance.amount:
+                            amountRequired = invoice_instance.amount - invoice_instance.paid
+
+                            collection_data = {'student': student.id,'receipt': receipt_instance.id,'amount': amountRequired,'votehead': votehead.id,'school_id': school_id,}
+                            collection_serializer = CollectionSerializer(data=collection_data)
+                            collection_serializer.is_valid(raise_exception=True)
+                            collection_serializer.save()
+
+                            balance = eachVoteheadWillGet - amountRequired
+                            print(f"balance is {balance}")
+
+                            overpayment = overpayment + balance
+
+                        else:
+
+                            collection_data = {
+                                'student': student.id,
+                                'receipt': receipt_instance.id,
+                                'amount': eachVoteheadWillGet,
+                                'votehead': votehead.id,
+                                'school_id': school_id,
+                            }
+
+                            collection_serializer = CollectionSerializer(data=collection_data)
+                            collection_serializer.is_valid(raise_exception=True)
+                            collection_serializer.save()
+
+                    except Invoice.DoesNotExist:
+                        pass
+                    except Invoice.MultipleObjectsReturned:
+                        raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
+
+
+            if auto_configuration_type == PRIORITY:
+                distinct_voteheads = Invoice.objects.filter(term=term, year=year, school_id=school_id, student=student) \
+                    .values_list('votehead', flat=True) \
+                    .distinct()
+                ordered_voteheads = VoteHead.objects.filter(id__in=distinct_voteheads) \
+                    .order_by(F('priority_number').asc(nulls_first=True))
+
+
+                for index, votehead in enumerate(ordered_voteheads):
+                    print(f"Votehead -> {votehead}, Priority -> {votehead.priority_number}")
+                    if not votehead.is_Overpayment_Default:
+                        if totalAmount > 0:
+                            try:
+                                invoice_instance = Invoice.objects.get(votehead=votehead, term=term, year=year, school_id=school_id, student=student)
+
+                                if (invoice_instance.paid + totalAmount) > invoice_instance.amount:
+                                    amountRequired = invoice_instance.amount - invoice_instance.paid
+
+                                    collection_data = {
+                                        'student': student.id,
+                                        'receipt': receipt_instance.id,
+                                        'amount': amountRequired,
+                                        'votehead': votehead.id,
+                                        'school_id': school_id,
+                                    }
+
+                                    collection_serializer = CollectionSerializer(data=collection_data)
+                                    collection_serializer.is_valid(raise_exception=True)
+                                    collection_serializer.save()
+
+                                    totalAmount = totalAmount - amountRequired
+
+                                    if index == len(voteheads) - 1:
+                                        if totalAmount > 0:
+                                            overpayment = overpayment + totalAmount
+
+                                else:
+                                    collectionAmount = totalAmount
+                                    collection = Collection(student = student,receipt=receipt_instance,amount=collectionAmount,votehead=votehead,school_id=school_id)
+                                    collection.save()
+
+                                    totalAmount = 0.00
+
+                            except Invoice.DoesNotExist:
+                                pass
+                            except Invoice.MultipleObjectsReturned:
+                                raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
+
+
+
+
+            if overpayment > 0:
+                overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
+                if not overpayment_votehead:
+                    raise ValueError("Overpayment votehead has not been configured")
+
+                newCollection = Collection(
+                    student=receipt_instance.student,
+                    receipt=receipt_instance,
+                    amount=overpayment,
+                    votehead=overpayment_votehead,
+                    school_id=receipt_instance.school_id,
+                    is_overpayment = True
+                )
+
+                newCollection.save()
+
+        return Response({'detail': 'Receipt and collections created successfully'}, status=status.HTTP_201_CREATED)
+    except ValueError as e:
+        return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
@@ -32,92 +265,20 @@ class ReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
         try:
-            with transaction.atomic():
-                receipt_no = generate_unique_code("RT")
-                default_Currency = defaultCurrency()
-                year = currentAcademicYear()
-                term = currentTerm()
-                if not default_Currency:
-                    Response({'detail': "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
-                if not year:
-                    Response({'detail': "Default Academic Year Not Set For This School"},
-                             status=status.HTTP_400_BAD_REQUEST)
-                if not term:
-                    Response({'detail': "Default Term Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
+            configuration = VoteheadConfiguration.objects.get(school_id=school_id)
+        except ObjectDoesNotExist:
+            return Response({'detail': "Please set up votehead configuration for this school first!"}, status=status.HTTP_400_BAD_REQUEST)
 
-                receipt_serializer = self.get_serializer(data=request.data)
-                receipt_serializer.is_valid(raise_exception=True)
-                receipt_serializer.validated_data['school_id'] = school_id
-                receipt_serializer.validated_data['receipt_No'] = receipt_no
-                receipt_serializer.validated_data['currency'] = default_Currency
-                receipt_serializer.validated_data['term'] = term
-                receipt_serializer.validated_data['year'] = year
-                receipt_serializer.validated_data.pop('collections_values', [])
-                receipt_instance = receipt_serializer.save()
+        configuration_type = configuration.configuration_type
+        auto_configuration_type = configuration.auto_configuration_type
+        if configuration_type == MANUAL:
 
-                print("Created Receipt")
+            return manualCollection(self, request, school_id)
 
-                collections_data = request.data.get('collections_values', [])
+        elif configuration_type == AUTO:
 
-                sum_Invoice_Amount = 0
-                for collection_data in collections_data:
-                    collection_data['receipt'] = receipt_instance.id
-                    collection_data['school_id'] = school_id
-                    collection_data['student'] = receipt_instance.student.id
-                    collection_serializer = CollectionSerializer(data=collection_data)
-                    collection_serializer.is_valid(raise_exception=True)
-                    created_collection = collection_serializer.save()
+            return autoCollection(self, request, school_id, auto_configuration_type)
 
-                    votehead_instance = created_collection.votehead
-                    term_instance = created_collection.receipt.term
-                    year_instance = created_collection.receipt.year
-                    student = created_collection.receipt.student
-
-                    try:
-                        invoice_instance = Invoice.objects.get(votehead=votehead_instance, term=term_instance,year=year_instance, school_id=school_id, student=student)
-
-                        if (invoice_instance.paid + created_collection.amount) > invoice_instance.amount:
-                            raise ValueError("Transaction 1 cancelled: Total paid amount exceeds total invoice amount")
-                        else:
-                            invoice_instance.paid += created_collection.amount
-                            invoice_instance.due = invoice_instance.amount - invoice_instance.paid
-                            invoice_instance.save()
-
-                            sum_Invoice_Amount += invoice_instance.amount
-
-                    except Invoice.DoesNotExist:
-                        pass
-                    except Invoice.MultipleObjectsReturned:
-                        raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
-
-                if receipt_instance.totalAmount > sum_Invoice_Amount:
-
-                    overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
-                    if not overpayment_votehead:
-                        raise ValueError("No VoteHead found with is_Overpayment_Default set to true")
-
-                    overpayment_Amount = sum_Invoice_Amount - receipt_instance.totalAmount
-                    newCollection = Collection(
-                        student=receipt_instance.student,
-                        receipt=receipt_instance,
-                        amount=overpayment_Amount,
-                        votehead=overpayment_votehead,
-                        school_id=receipt_instance.school_id
-                    )
-                    newCollection.save()
-
-                    try:
-                        invoice_instance.paid += overpayment_Amount
-                        invoice_instance.save()
-                    except Invoice.DoesNotExist:
-                        pass
-                    except Invoice.MultipleObjectsReturned:
-                        raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
-
-        except ValueError as e:
-            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response({'detail': 'Receipt and collections created successfully'}, status=status.HTTP_201_CREATED)
 
 
 
@@ -192,26 +353,17 @@ class ReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         serializer.save()
 
     def destroy(self, request, *args, **kwargs):
+        print(f"111111111111111111")
         instance = self.get_object()
         school_id = instance.school_id
         term = instance.term
         year = instance.year
 
         if instance.is_reversed:
-            Response({'detail': "This invoice is already reversed"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': "This receipt is already reversed"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             with transaction.atomic():
-                collections = Collection.objects.filter(receipt=instance).all()
-                for collection in collections:
-                    collected_amount = collection.amount
-                    votehead = collection.votehead
-                    invoicelist = Invoice.objects.filter(school_id=school_id, term=term, year=year,votehead=votehead).all()
-                    for invoice in invoicelist:
-                        invoice.paid -= collected_amount
-                        invoice.due += collected_amount
-                        invoice.save()
-
                 instance.is_reversed = True
                 instance.reversal_date = timezone.now()
                 instance.save()

@@ -1,0 +1,18 @@
+from django.db import models
+
+from bursaries.models import Bursary
+from models import ParentModel
+from students.models import Student
+
+
+class Item(ParentModel):
+    student = models.ForeignKey(Student, default=None, on_delete=models.CASCADE, related_name="items")
+    bursary = models.ForeignKey(Bursary, null=True, default=None, on_delete=models.CASCADE, related_name="items")
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    school_id = models.UUIDField(null=True, blank=True, default=None, max_length=255)
+
+    def __str__(self):
+        return f"{self.id}"
+
+
+

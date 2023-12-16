@@ -11,6 +11,7 @@ from rest_framework.authentication import get_authorization_header
 from rest_framework.exceptions import ValidationError
 
 from academic_year.models import AcademicYear
+from account_types.models import AccountType
 from currencies.models import Currency
 from finance.settings import SIMPLE_JWT
 from school.models import School
@@ -170,4 +171,10 @@ def defaultCurrency():
     try:
         return Currency.objects.get(is_default=True)
     except Currency.DoesNotExist:
+        return None
+
+def defaultAccountType():
+    try:
+        return AccountType.objects.get(is_default=True)
+    except AccountType.DoesNotExist:
         return None

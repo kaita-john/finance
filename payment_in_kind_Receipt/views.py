@@ -2,6 +2,7 @@
 
 import uuid
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import JsonResponse
 from django.utils import timezone
@@ -12,11 +13,13 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from appcollections.models import Collection
 from invoices.models import Invoice
 from payment_in_kinds.models import PaymentInKind
 from payment_in_kinds.serializers import PaymentInKindSerializer
+from receipts.models import Receipt
 from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, defaultCurrency, currentAcademicYear, \
-    currentTerm
+    currentTerm, defaultAccountType
 from voteheads.models import VoteHead
 from .models import PIKReceipt
 from .serializers import PIKReceiptSerializer
@@ -61,7 +64,8 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                 pikreceipt_instance = pikreceipt_serializer.save()
 
 
-                sum_Invoice_Amount = 0
+                overpayment = 0
+
                 for value in pik_values:
                     value['receipt'] = pikreceipt_instance.id
                     value['school_id'] = school_id
@@ -79,46 +83,25 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                     try:
                         invoice_instance = Invoice.objects.get(votehead=pikreceipt_instance.votehead, term=term_instance,year=year_instance, school_id=school_id, student=student)
 
-                        if (invoice_instance.paid + created_Pik.amount) > invoice_instance.amount:
-                            raise ValueError("Transaction 1 cancelled: Total paid amount exceeds total invoice amount")
-                        else:
-                            invoice_instance.paid += created_Pik.amount
-                            invoice_instance.due = invoice_instance.amount - invoice_instance.paid
-                            invoice_instance.save()
-
-                            sum_Invoice_Amount += invoice_instance.amount
+                        requiredAmount = invoice_instance.amount - invoice_instance.paid
+                        if created_Pik.amount > requiredAmount:
+                            #overpayment += created_Pik.amount - requiredAmount
+                            raise ValueError(f"Balance for votehead {pikreceipt_instance.votehead.vote_head_name} is {requiredAmount}")
 
                     except Invoice.DoesNotExist:
                         pass
                     except Invoice.MultipleObjectsReturned:
                         raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
 
-                if pikreceipt_instance.totalAmount > sum_Invoice_Amount:
+                if  overpayment > 0:
 
                     overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
                     if not overpayment_votehead:
                         raise ValueError("No VoteHead found with is_Overpayment_Default set to true")
 
-                    overpayment_Amount = sum_Invoice_Amount - pikreceipt_instance.totalAmount
-                    newPIK = PaymentInKind(
-                        student=pikreceipt_instance.student,
-                        receipt=pikreceipt_instance,
-                        amount=overpayment_Amount,
-                        votehead=overpayment_votehead,
-                        school_id=pikreceipt_instance.school_id
-                    )
-                    newPIK.save()
 
-                    try:
-                        invoice_instance = Invoice.objects.get(votehead=overpayment_votehead, term=term_instance,year=year_instance, school_id=school_id, student=student)
-                        invoice_instance.paid += overpayment_Amount.amount
-                        invoice_instance.save()
-                        sum_Invoice_Amount += invoice_instance.amount
-
-                    except Invoice.DoesNotExist:
-                        pass
-                    except Invoice.MultipleObjectsReturned:
-                        raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
+                else:
+                    print(f"It is not greater than - No overpayment ")
 
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)

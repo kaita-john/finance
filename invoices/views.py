@@ -251,6 +251,15 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
             return createInvoices(students, structure_year, structure_term, structure_class)
 
 
+        elif filter_type == 'group':
+            group =serialized_data.get('group')
+            if not group:
+                return Response({"detail": "Group is require for Group Query"})
+            students = Student.objects.filter(current_Class = structure_class, group = group, school_id=school_id)
+
+            return createInvoices(students, structure_year, structure_term, structure_class)
+
+
         else:
             return Response({"detail": "Invalid filter_type. It should be one of: 'student', 'class', 'stream'"})
 

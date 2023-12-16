@@ -2,6 +2,7 @@ from django.db import models
 
 from academic_year.models import AcademicYear
 from classes.models import Classes
+from schoolgroups.models import SchoolGroup
 from streams.models import Stream
 from term.models import Term
 from models import ParentModel
@@ -21,7 +22,7 @@ class Student(ParentModel):
     current_Class = models.ForeignKey(Classes, default=None, null=True, on_delete=models.CASCADE, related_name="students")
     current_Year = models.ForeignKey(AcademicYear, default=None, null=True, on_delete=models.CASCADE, related_name="students")
     current_Term = models.ForeignKey(Term, default=None, null=True, on_delete=models.CASCADE, related_name="students")
-
+    group = models.ForeignKey(SchoolGroup, default=None, null=True, on_delete=models.CASCADE, related_name="students")
     invoice_Student = models.BooleanField(default=False, null=True)
 
     def __str__(self):

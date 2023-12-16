@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from account_types.models import AccountType
 from account_types.serializers import AccountTypeSerializer
-from voteheads.models import VoteHead
+from voteheads.models import VoteHead, VoteheadConfiguration
 
 
 class VoteHeadSerializer(serializers.ModelSerializer):
@@ -15,4 +15,10 @@ class VoteHeadSerializer(serializers.ModelSerializer):
 class VoteHeadCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = VoteHead
+        fields = '__all__'
+
+
+class VoteheadConfigurationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VoteheadConfiguration
         fields = '__all__'
