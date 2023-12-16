@@ -7,6 +7,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from fee_structures_items.models import FeeStructureItem
 from fee_structures_items.serializers import FeeStructureItemSerializer
 from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, currentAcademicYear
 from .models import FeeStructure
@@ -98,9 +99,10 @@ class FeeStructureDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIVie
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
 
-            # Create or update associated FeeStructureItem instances
+            FeeStructureItem.objects.filter(fee_structure=instance).delete()
             fee_structure_items_data = serializer.validated_data.get('fee_structure_values', [])
             fee_structure = serializer.save()
+
             for fee_structure_item_data in fee_structure_items_data:
                 fee_structure_item_data['school_id'] = fee_structure.school_id
                 fee_structure_item_data['fee_Structure'] = fee_structure.id

@@ -146,7 +146,8 @@ def file_upload(instance, filename):
     else:
         hour = str(now.hour).zfill(2)
 
-    upload_to = f"{str(now.year)}/{month}/{day}/{hour}"
+    #upload_to = f"{str(now.year)}/{month}/{day}/{hour}"
+    upload_to = f"files"
     if instance.pk:
         filename = "{}.{}".format(instance.pk, ext)
     else:

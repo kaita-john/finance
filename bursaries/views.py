@@ -15,6 +15,7 @@ from appcollections.models import Collection
 from appcollections.serializers import CollectionSerializer
 from constants import MANUAL, AUTO, RATIO, PRIORITY
 from invoices.models import Invoice
+from items.models import Item
 from items.serializers import ItemSerializer
 from receipts.models import Receipt
 from students.models import Student
@@ -98,11 +99,14 @@ class BursaryDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
 
-            items_data = serializer.validated_data.get('items_list', [])
+            Item.objects.filter(bursary=instance).delete()
             bursary = serializer.save()
+
+            items_data = serializer.validated_data.get('items_list', [])
             for item in items_data:
                 item['school_id'] = bursary.school_id
                 item['bursary'] = bursary.id

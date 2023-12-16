@@ -32,6 +32,16 @@ api_patterns = [
     path(api_version + 'receipts/', include('receipts.urls')),
     path(api_version + 'bursaries/', include('bursaries.urls')),
     path(api_version + 'items/', include('items.urls')),
+
+
+    path(api_version + 'admin/suppliers/', include('suppliers.urls')),
+    path(api_version + 'admin/staff/', include('staff.urls')),
+    path(api_version + 'admin/expense-categories/', include('expense_categories.urls')),
+
+    path(api_version + 'vouchers/', include('vouchers.urls')),
+    path(api_version + 'vouchers/voucher-items', include('voucher_items.urls')),
+    path(api_version + 'vouchers/voucher-attatchments', include('voucher_attatchments.urls')),
+
     path(api_version + 'collections/', include('appcollections.urls')),
     path(api_version + 'paymentinkind/', include('payment_in_kind_Receipt.urls')),
     path(api_version + 'students/', include('students.urls')),

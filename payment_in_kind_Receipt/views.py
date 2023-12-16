@@ -123,10 +123,12 @@ class PIKReceiptListView(SchoolIdMixin, generics.ListAPIView):
 
         is_posted = self.request.query_params.get('posted', None)
         if is_posted is not None:
-            queryset = queryset.filter(is_posted=True)
-            print("It is reversed")
+            if is_posted:
+                queryset = queryset.filter(is_posted=True)
+            if not is_posted:
+                queryset = queryset.filter(is_posted=False)
         else:
-            queryset = queryset.filter(is_posted=False)
+            queryset = queryset
             print("It is not reversed")
 
         return queryset

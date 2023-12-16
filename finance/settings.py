@@ -71,6 +71,12 @@ INSTALLED_APPS = [
     'payment_in_kind_Receipt',
     'items',
     'bursaries',
+    'suppliers',
+    'staff',
+    'expense_categories',
+    'vouchers',
+    'voucher_items',
+    'voucher_attatchments',
 ]
 
 APPEND_SLASH = False
@@ -97,7 +103,6 @@ MIDDLEWARE = [
 #     'https://localhost:4200',
 #     'https://5904-41-80-112-5.ngrok-free.app',
 # ]
-
 
 X_FRAME_OPTIONS = 'ALLOW-FROM https://127.0.0.1/'
 CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
