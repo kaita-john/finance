@@ -1,6 +1,5 @@
 from django.db import models
 
-from academic_year.models import AcademicYear
 from models import ParentModel
 
 

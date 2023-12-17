@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from bursaries.serializers import BursarySerializer
 from students.serializers import StudentSerializer
 from .models import Item
 

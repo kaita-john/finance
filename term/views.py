@@ -1,7 +1,5 @@
 # Create your views here.
-import uuid
 
-from django.http import JsonResponse
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
