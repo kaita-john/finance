@@ -6,6 +6,7 @@ from students.models import Student
 
 
 class Item(ParentModel):
+    item_date = models.DateField(auto_now_add=True, null=True)
     student = models.ForeignKey(Student, default=None, on_delete=models.CASCADE, related_name="items")
     bursary = models.ForeignKey(Bursary, null=True, default=None, on_delete=models.CASCADE, related_name="items")
     amount = models.DecimalField(max_digits=15, decimal_places=2)

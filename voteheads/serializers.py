@@ -22,3 +22,9 @@ class VoteheadConfigurationSerializer(serializers.ModelSerializer):
     class Meta:
         model = VoteheadConfiguration
         fields = '__all__'
+
+
+class VoteHeadMonoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VoteHead
+        fields = ''

@@ -3,16 +3,22 @@ from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Sum
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from academic_year.models import AcademicYear
+from academic_year.serializers import AcademicYearSerializer
 from invoices.models import Invoice
 from invoices.views import createInvoices
 from receipts.models import Receipt
+from term.models import Term
 from utils import SchoolIdMixin, UUID_from_PrimaryKey, currentAcademicYear, currentTerm, IsAdminOrSuperUser
+from voteheads.models import VoteHead
+from voteheads.serializers import VoteHeadSerializer
 from .models import Student
 from .serializers import StudentSerializer
 
@@ -197,3 +203,44 @@ class GetStudentsByClass(APIView, SchoolIdMixin):
         serialized_data = serializer.data
 
         return Response({'detail': serialized_data}, status=status.HTTP_200_OK)
+
+
+class GetStudentInvoicedVotehead(SchoolIdMixin, generics.RetrieveAPIView):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+    lookup_field = 'pk'
+
+    def get(self, request, *args, **kwargs):
+        student = self.get_object()
+
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        year = request.GET.get('year')
+        term = request.GET.get('term')
+
+        current_academic_year = currentAcademicYear()
+        current_term = currentTerm()
+        if current_academic_year is None or current_term is None:
+            return Response({'detail': 'Both Current Academic Year and Current Term must be set for school first'},
+                            status=status.HTTP_200_OK)
+
+        try:
+            year = get_object_or_404(AcademicYear, id=year) if year else current_academic_year
+            term = get_object_or_404(Term, id=term) if term else current_term
+        except Exception as exception:
+            return Response({'detail': exception}, status=status.HTTP_400_BAD_REQUEST)
+
+        voteheadList = Invoice.objects.filter(
+            student_id=student.id,
+            term=term,
+            year=year,
+            school_id=school_id
+        ).values_list('votehead', flat=True).distinct()
+
+        votehead_objects = VoteHead.objects.filter(id__in=voteheadList)
+        serializer = VoteHeadSerializer(votehead_objects, many=True)
+
+        return Response({"detail": serializer.data})
+

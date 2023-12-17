@@ -77,7 +77,9 @@ INSTALLED_APPS = [
     'vouchers',
     'voucher_items',
     'voucher_attatchments',
+    'reports',
 ]
+
 
 APPEND_SLASH = False
 
