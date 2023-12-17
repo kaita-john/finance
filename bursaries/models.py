@@ -19,6 +19,7 @@ class Bursary(ParentModel):
     school_id = models.UUIDField(max_length=255, default=None, blank=True, null=True)
     posted = models.BooleanField(default=False, null=True)
     unposted_date = models.DateField(null=True)
+    receipt_date = models.DateField(default=None, null=True)
 
 
     def __str__(self):

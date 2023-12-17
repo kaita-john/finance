@@ -18,3 +18,12 @@ class ReportStudentBalance(ParentModel):
         return f"({self.id})"
 
 
+
+class StudentTransactionsPrintView(ParentModel):
+    transactionDate = models.CharField(max_length=20, null=True, blank=True)
+    transactionType = models.CharField(max_length=20, null=True, blank=True)
+    description = models.CharField(max_length=20, null=True, blank=True)
+    expected = models.CharField(max_length=20, null=True, blank=True)
+    paid = models.CharField(max_length=20, null=True, blank=True)
+
+

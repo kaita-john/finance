@@ -63,6 +63,9 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                 pikreceipt_serializer.validated_data.pop('pik_values', [])
                 pikreceipt_instance = pikreceipt_serializer.save()
 
+                pikreceipt_instance.student_class = pikreceipt_instance.student.current_Class
+                pikreceipt_instance.save()
+
 
                 overpayment = 0
 
@@ -185,25 +188,12 @@ class PIKReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        school_id = instance.school_id
-        term = instance.term
-        year = instance.year
 
         if not instance.is_posted:
             return Response({'detail': "Item is already unposted"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             with transaction.atomic():
-                piks = PaymentInKind.objects.filter(receipt=instance).all()
-                for pik_item in piks:
-                    paid_Amount = pik_item.amount
-                    votehead = pik_item.votehead
-                    invoicelist = Invoice.objects.filter(school_id=school_id, term=term, year=year,votehead=votehead).all()
-                    for invoice in invoicelist:
-                        invoice.paid -= paid_Amount
-                        invoice.due += paid_Amount
-                        invoice.save()
-
                 instance.is_posted = False
                 instance.unposted_date = timezone.now()
                 instance.save()

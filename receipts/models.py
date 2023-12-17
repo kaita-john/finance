@@ -3,6 +3,7 @@ from django.db import models
 from academic_year.models import AcademicYear
 from account_types.models import AccountType
 from bank_accounts.models import BankAccount
+from classes.models import Classes
 from currencies.models import Currency
 from models import ParentModel
 from payment_methods.models import PaymentMethod
@@ -27,6 +28,9 @@ class Receipt(ParentModel):
     addition_notes = models.TextField(null=True)
     is_reversed = models.BooleanField(default=False, blank=False, null=False)
     reversal_date = models.DateField(null=True)
+    student_class = models.ForeignKey(Classes, null=True, on_delete=models.CASCADE, related_name="receipts")
+
+
 
 
     def __str__(self):

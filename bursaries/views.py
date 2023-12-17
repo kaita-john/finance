@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
@@ -48,7 +49,13 @@ class BursaryCreateView(SchoolIdMixin, generics.CreateAPIView):
                         item['bursary'] = busary.id
                         itemSerializer = ItemSerializer(data=item)
                         itemSerializer.is_valid(raise_exception=True)
-                        itemSerializer.save()
+                        saved_item = itemSerializer.save()
+
+                        item_instance = get_object_or_404(Item, id=saved_item.id)
+                        student_instance = item_instance.student
+                        if isinstance(student_instance, Student):
+                            item_instance.student_class = student_instance.current_Class
+                            item_instance.save()
 
                     return Response({'detail': f'Bursary created successfully'},status=status.HTTP_201_CREATED)
             except Exception as e:
@@ -112,7 +119,13 @@ class BursaryDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
                 item['bursary'] = bursary.id
                 itemSerializer = ItemSerializer(data=item)
                 itemSerializer.is_valid(raise_exception=True)
-                itemSerializer.save()
+                saved_item = itemSerializer.save()
+
+                item_instance = get_object_or_404(Item, id=saved_item.id)
+                student_instance = item_instance.student
+                if isinstance(student_instance, Student):
+                    item_instance.student_class = student_instance.current_Class
+                    item_instance.save()
 
             self.perform_update(serializer)
 

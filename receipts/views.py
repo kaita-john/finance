@@ -52,6 +52,8 @@ def manualCollection(self, request, school_id):
 
             receipt_serializer.validated_data.pop('collections_values', [])
             receipt_instance = receipt_serializer.save()
+            receipt_instance.student_class = receipt_instance.student.current_Class
+            receipt_instance.save()
 
             collections_data = request.data.get('collections_values', [])
 
@@ -134,6 +136,9 @@ def autoCollection(self, request, school_id, auto_configuration_type):
             receipt_serializer.validated_data['year'] = year
             receipt_serializer.validated_data.pop('collections_values', [])
             receipt_instance = receipt_serializer.save()
+
+            receipt_instance.student_class = receipt_instance.student.current_Class
+            receipt_instance.save()
 
             student = receipt_instance.student
             voteheads = Invoice.objects.filter( term=term, year=year, school_id=school_id, student=student)

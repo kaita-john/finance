@@ -2,6 +2,7 @@ from django.db import models
 
 from academic_year.models import AcademicYear
 from bank_accounts.models import BankAccount
+from classes.models import Classes
 from currencies.models import Currency
 from models import ParentModel
 from students.models import Student
@@ -25,6 +26,8 @@ class PIKReceipt(ParentModel):
 
     is_posted = models.BooleanField(default=True, blank=True, null=False)
     unposted_date = models.DateField(null=True)
+
+    student_class = models.ForeignKey(Classes, null=True, on_delete=models.CASCADE, related_name="pik_receipts")
 
     def __str__(self):
         return f"PaymentInKind Receipt {self.id} - {self.receipt_date} - {self.student.first_name}"
