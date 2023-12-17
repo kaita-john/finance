@@ -345,7 +345,7 @@ class StudentTransactionsPrint(SchoolIdMixin, generics.RetrieveAPIView):
 
 
         for value in studentTransactionList:
-            print(f"{value} - {value.transactionType}")
+            print(f"{value.transactionDate} - {value.transactionType}")
 
         def get_transaction_date(item):
             transaction_date = getattr(item, 'transactionDate', date.max)
