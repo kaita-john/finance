@@ -13,6 +13,7 @@ urlpatterns = [
 
     path('summary/income-summary', IncomeSummaryView.as_view(), name="income-summary"),
     path('summary/expense-summary', ExpenseSummaryView.as_view(), name="expense-summary"),
+    path('summary/received-cheques', ReceivedChequesView.as_view(), name="received-cheques"),
 
 ]
 

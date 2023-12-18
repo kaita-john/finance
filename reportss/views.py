@@ -19,9 +19,9 @@ from payment_in_kinds.models import PaymentInKind
 from payment_methods.models import PaymentMethod
 from receipts.models import Receipt
 from receipts.serializers import ReceiptSerializer
-from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, IncomeSummary
+from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, IncomeSummary, ReceivedCheque
 from reportss.serializers import ReportStudentBalanceSerializer, StudentTransactionsPrintViewSerializer, \
-    IncomeSummarySerializer
+    IncomeSummarySerializer, ReceivedChequeSerializer
 from students.models import Student
 from students.serializers import StudentSerializer
 from term.models import Term
@@ -459,7 +459,7 @@ class IncomeSummaryView(SchoolIdMixin, generics.GenericAPIView):
             incomeSummaryList = []
 
 
-            paymentMethods = PaymentMethod.objects.all()
+            paymentMethods = PaymentMethod.objects.filter(school__id = school_id)
 
             if orderby == "paymentmode":
                 for paymentmode in paymentMethods:
@@ -557,7 +557,7 @@ class ExpenseSummaryView(SchoolIdMixin, generics.GenericAPIView):
 
             incomeSummaryList = []
 
-            paymentMethods = PaymentMethod.objects.all()
+            paymentMethods = PaymentMethod.objects.filter(school__id = school_id)
 
             if orderby == "paymentmode":
                 for paymentmode in paymentMethods:
@@ -614,3 +614,50 @@ class ExpenseSummaryView(SchoolIdMixin, generics.GenericAPIView):
         return Response({"detail": thedata})
 
 
+
+
+
+class ReceivedChequesView(SchoolIdMixin, generics.GenericAPIView):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+
+    def get(self, request, *args, **kwargs):
+
+        try:
+            school_id = self.check_school_id(request)
+            if not school_id:
+                return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+            paymentMethod = request.GET.get('paymentmethod')
+
+            if not paymentMethod:
+                return Response({'detail': f"Payment Method required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            querysetCollections = Collection.objects.filter(school_id=school_id, receipt__payment_method__id = paymentMethod )
+
+            chequeCollectionList = []
+            for collection in querysetCollections:
+                creationdate = collection.receipt.dateofcreation
+                transactiondate = collection.receipt.transaction_date
+                chequeNo = collection.receipt.transaction_code
+                student = collection.student
+                currency = collection.receipt.currency
+                amount = collection.amount
+
+                item = ReceivedCheque(
+                    transactionDate=transactiondate,
+                    dateofcreation=creationdate,
+                    chequeNo=chequeNo,
+                    student=student,
+                    currency=currency,
+                    amount=amount
+                )
+                item.save()
+                chequeCollectionList.append(item)
+
+            serializer = ReceivedChequeSerializer(chequeCollectionList, many=True)
+
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": serializer.data})

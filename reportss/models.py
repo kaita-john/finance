@@ -1,7 +1,9 @@
 from django.db import models
 
 from classes.models import Classes
+from currencies.models import Currency
 from models import ParentModel
+from students.models import Student
 
 
 class ReportStudentBalance(ParentModel):
@@ -28,8 +30,15 @@ class StudentTransactionsPrintView(ParentModel):
 
 
 
-
 class IncomeSummary(ParentModel):
     votehead_name = models.CharField(max_length=20, null=True, blank=True)
     amount = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
 
+
+class ReceivedCheque(ParentModel):
+    transactionDate = models.CharField(max_length=20, null=True, blank=True)
+    dateofcreation = models.CharField(max_length=20, null=True, blank=True)
+    chequeNo = models.CharField(max_length=20, null=True, blank=True)
+    student = models.ForeignKey(Student, default=None, null=True, on_delete=models.CASCADE)
+    currency = models.ForeignKey(Currency, default=None, null=True, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)

@@ -1,7 +1,9 @@
 # Create your views here.
 
 import uuid
+from lib2to3.pgen2.tokenize import Double
 
+from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import JsonResponse
@@ -50,7 +52,7 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                 totalAmount = 0.00
                 pik_values = request.data.get('pik_values', [])
                 if pik_values:
-                    totalAmount = sum(item['unit_cost'] * item['quantity'] for item in pik_values)
+                    totalAmount = sum( Decimal(item['unit_cost']) * Decimal(item['quantity']) for item in pik_values)
 
                 pikreceipt_serializer = self.get_serializer(data=request.data)
                 pikreceipt_serializer.is_valid(raise_exception=True)
