@@ -40,9 +40,22 @@ class BursaryCreateView(SchoolIdMixin, generics.CreateAPIView):
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
 
+            schoolgroup = serializer.validated_data.get('schoolgroup')
+            studentamount = serializer.validated_data.get('studentamount')
+
+            items_data = serializer.validated_data.pop('items_list', [])
+
+            if schoolgroup:
+                if not studentamount:
+                    return Response({'detail': f"Enter amount for each student"}, status=status.HTTP_400_BAD_REQUEST)
+
+                groupStudents = Student.objects.filter(group = schoolgroup)
+                for value in groupStudents:
+                    item = {'amount': studentamount, 'student': value.id}
+                    items_data.append(item)
+
             try:
                 with transaction.atomic():
-                    items_data = serializer.validated_data.pop('items_list', [])
                     busary = serializer.save()
                     for item in items_data:
                         item['school_id'] = busary.school_id

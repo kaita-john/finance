@@ -4,6 +4,7 @@ from academic_year.models import AcademicYear
 from bank_accounts.models import BankAccount
 from models import ParentModel
 from payment_methods.models import PaymentMethod
+from schoolgroups.models import SchoolGroup
 from term.models import Term
 
 
@@ -20,6 +21,8 @@ class Bursary(ParentModel):
     posted = models.BooleanField(default=False, null=True)
     unposted_date = models.DateField(null=True)
     receipt_date = models.DateField(default=None, null=True)
+    schoolgroup = models.ForeignKey(SchoolGroup, default=None, null=True, on_delete=models.CASCADE, related_name="bursaries")
+    studentamount = models.DecimalField(max_digits=15, null=True, default=0.00, decimal_places=2)
 
 
     def __str__(self):
