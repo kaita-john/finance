@@ -11,7 +11,7 @@ class Supplier(ParentModel):
     address = models.CharField(max_length=255, null=True, default=None)
     accountNo = models.CharField(max_length=255, null=True, default=None)
     pinNo = models.CharField(max_length=255, null=True, default=None)
-    notes = models.TextField(max_length=255, null=True, default=None)
+    notes = models.CharField(max_length=7000, blank=True, null=True)
     school = models.UUIDField(max_length=255, blank=True, null=True)
 
     def __str__(self):

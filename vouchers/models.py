@@ -19,7 +19,7 @@ class Voucher(ParentModel):
     referenceNumber = models.CharField(max_length=255, blank=True, null=True)
     paymentDate = models.DateField(null=True)
     paymentVoucherNumber = models.CharField(max_length=255, blank=True, null=True)
-    description = models.TextField(null=True)
+    description = models.CharField(max_length=7000, blank=True, null=True)
     totalAmount = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     deliveryNoteNumber = models.CharField(max_length=255, blank=True, null=True)
 

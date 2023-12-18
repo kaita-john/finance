@@ -25,7 +25,7 @@ class Receipt(ParentModel):
     currency = models.ForeignKey(Currency, null=True, on_delete=models.CASCADE, related_name="receipts")
     transaction_code = models.CharField(max_length=255, null=True)
     transaction_date = models.DateField(null=True, default=None)
-    addition_notes = models.TextField(null=True)
+    addition_notes = models.CharField(max_length=7000, blank=True, null=True)
     is_reversed = models.BooleanField(default=False, blank=False, null=False)
     reversal_date = models.DateField(null=True)
     student_class = models.ForeignKey(Classes, null=True, on_delete=models.CASCADE, related_name="receipts")

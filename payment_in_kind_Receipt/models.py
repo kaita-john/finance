@@ -21,7 +21,7 @@ class PIKReceipt(ParentModel):
 
     totalAmount = models.DecimalField(max_digits=15, null=True, decimal_places=2)
     bank_account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, related_name="pik_receipts")
-    addition_notes = models.TextField(null=True)
+    addition_notes = models.CharField(max_length=7000, blank=True, null=True)
 
     is_posted = models.BooleanField(default=True, blank=True, null=False)
     unposted_date = models.DateField(null=True)
