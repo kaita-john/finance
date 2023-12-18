@@ -54,7 +54,7 @@ class VehicleCreateView(SchoolIdMixin, generics.CreateAPIView):
 
             return fee_structure
         except Exception as exception:
-            return Response({'detail': exception}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class VehicleListView(SchoolIdMixin, generics.ListAPIView):

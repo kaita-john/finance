@@ -73,18 +73,21 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                     value['receipt'] = pikreceipt_instance.id
                     value['school_id'] = school_id
                     value['student'] = pikreceipt_instance.student.id
-                    value['votehead'] = pikreceipt_instance.votehead.id
                     value['amount'] = value['quantity'] * value['unit_cost']
                     paymentInKind_serializer = PaymentInKindSerializer(data=value)
                     paymentInKind_serializer.is_valid(raise_exception=True)
                     created_Pik = paymentInKind_serializer.save()
+
+                    print(f"Votehead is {value['votehead']}")
+                    print(f"Votehead is {value['votehead']}")
+                    print(f"Votehead is {value['votehead']}")
 
                     term_instance = created_Pik.receipt.term
                     year_instance = created_Pik.receipt.year
                     student = created_Pik.receipt.student
 
                     try:
-                        invoice_instance = Invoice.objects.get(votehead=pikreceipt_instance.votehead, term=term_instance,year=year_instance, school_id=school_id, student=student)
+                        invoice_instance = Invoice.objects.get(votehead__id=value['votehead'], term=term_instance,year=year_instance, school_id=school_id, student=student)
 
                         requiredAmount = invoice_instance.amount - invoice_instance.paid
                         if created_Pik.amount > requiredAmount:

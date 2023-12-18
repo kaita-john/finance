@@ -15,6 +15,7 @@ class PaymentInKind(models.Model):
     unit_cost = models.DecimalField(max_digits=15, decimal_places=2)
     votehead = models.ForeignKey(VoteHead, on_delete=models.CASCADE, related_name="paymentinkinds")
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
+    itemName = models.CharField(max_length=255, null=True, default="None", blank=True)
 
     def __str__(self):
         return f"Receipt #{self.receipt.receipt_No} - {self.student.first_name}"

@@ -1,14 +1,7 @@
 from django.db import models
 
-from academic_year.models import AcademicYear
-from account_types.models import AccountType
-from bank_accounts.models import BankAccount
-from currencies.models import Currency
-from payment_in_kind_Receipt.models import PIKReceipt
-from payment_methods.models import PaymentMethod
 from receipts.models import Receipt
 from students.models import Student
-from term.models import Term
 from voteheads.models import VoteHead
 
 

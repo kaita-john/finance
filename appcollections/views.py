@@ -49,7 +49,7 @@ class CollectionCreateView(SchoolIdMixin, generics.CreateAPIView):
                     return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as exception:
-            return Response({'detail': exception}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CollectionListView(SchoolIdMixin, generics.ListAPIView):

@@ -46,7 +46,7 @@ class StudentCreateView(SchoolIdMixin, generics.CreateAPIView):
                     return createInvoices(studentList, created_student.current_Year, created_student.current_Term,
                                           created_student.current_Class)
                 except Exception as exception:
-                    return Response({'detail': exception}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
             return Response({'detail': 'Student created successfully'}, status=status.HTTP_201_CREATED)
 
