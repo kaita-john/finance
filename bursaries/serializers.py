@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from bank_accounts.serializers import BankAccountSerializer
+from currencies.serializers import CurrencySerializer
 from payment_methods.serializers import PaymentMethodSerializer
 from school.serializer import SchoolSerializer
 from term.serializers import TermSerializer
@@ -9,6 +10,7 @@ from .models import Bursary
 
 class BursarySerializer(serializers.ModelSerializer):
     bankAccount_details = BankAccountSerializer(source='bankAccount', required=False, read_only=True, many=False)
+    currency_details = CurrencySerializer(source='currency', required=False, read_only=True, many=False)
     paymentMethod_details = PaymentMethodSerializer(source='paymentMethod', allow_null=True, required=False, read_only=True, many=False)
     term_details = TermSerializer(source='term',required=False, read_only=True, many=False)
     school_details = SchoolSerializer(source='school',required=False, read_only=True, many=False)

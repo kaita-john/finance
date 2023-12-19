@@ -38,6 +38,11 @@ class BursaryCreateView(SchoolIdMixin, generics.CreateAPIView):
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+
+            currency = defaultCurrency()
+            if not currency:
+                return Response({'detail': f"Default Currency has not been set for this school"}, status=status.HTTP_400_BAD_REQUEST)
+
             serializer.validated_data['school_id'] = school_id
 
             schoolgroup = serializer.validated_data.get('schoolgroup')
@@ -57,6 +62,9 @@ class BursaryCreateView(SchoolIdMixin, generics.CreateAPIView):
             try:
                 with transaction.atomic():
                     busary = serializer.save()
+                    busary.currency = currency
+                    busary.save()
+
                     for item in items_data:
                         item['school_id'] = busary.school_id
                         item['bursary'] = busary.id
