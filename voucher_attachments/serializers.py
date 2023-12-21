@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from voteheads.serializers import VoteHeadSerializer
 from vouchers.models import Voucher
-from .models import VoucherAttatchment
+from .models import VoucherAttachment
 
 
 class BasicVoucherSerializer(serializers.ModelSerializer):
@@ -11,9 +11,9 @@ class BasicVoucherSerializer(serializers.ModelSerializer):
         fields = ['id']
 
 
-class VoucherAttatchmentSerializer(serializers.ModelSerializer):
+class Voucherattachmentserializer(serializers.ModelSerializer):
     voucher_details = BasicVoucherSerializer(source='voucher', many=False, read_only=True)
 
     class Meta:
-        model = VoucherAttatchment
+        model = VoucherAttachment
         fields = '__all__'

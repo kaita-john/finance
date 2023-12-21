@@ -76,7 +76,7 @@ INSTALLED_APPS = [
     'expense_categories',
     'vouchers',
     'voucher_items',
-    'voucher_attatchments',
+    'voucher_attachments',
     'reportss',
 ]
 

@@ -8,12 +8,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from utils import SchoolIdMixin, IsAdminOrSuperUser
-from .models import VoucherAttatchment
-from .serializers import VoucherAttatchmentSerializer
+from .models import VoucherAttachment
+from .serializers import Voucherattachmentserializer
 
 
-class VoucherAttatchmentCreateView(SchoolIdMixin, generics.CreateAPIView):
-    serializer_class = VoucherAttatchmentSerializer
+class VoucherAttachmentCreateView(SchoolIdMixin, generics.CreateAPIView):
+    serializer_class = Voucherattachmentserializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def create(self, request, *args, **kwargs):
@@ -31,16 +31,16 @@ class VoucherAttatchmentCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class VoucherAttatchmentListView(SchoolIdMixin, generics.ListAPIView):
-    serializer_class = VoucherAttatchmentSerializer
+class VoucherAttachmentListView(SchoolIdMixin, generics.ListAPIView):
+    serializer_class = Voucherattachmentserializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
 
     def get_queryset(self):
         school_id = self.check_school_id(self.request)
         if not school_id:
-            return VoucherAttatchment.objects.none()
-        queryset = VoucherAttatchment.objects.filter(school_id=school_id)
+            return VoucherAttachment.objects.none()
+        queryset = VoucherAttachment.objects.filter(school_id=school_id)
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -52,9 +52,9 @@ class VoucherAttatchmentListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class VoucherAttatchmentDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
-    queryset = VoucherAttatchment.objects.all()
-    serializer_class = VoucherAttatchmentSerializer
+class VoucherAttachmentDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+    queryset = VoucherAttachment.objects.all()
+    serializer_class = Voucherattachmentserializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
 
@@ -62,8 +62,8 @@ class VoucherAttatchmentDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroy
         primarykey = self.kwargs['pk']
         try:
             id =  uuid.UUID(primarykey)
-            return VoucherAttatchment.objects.get(id=id)
-        except (ValueError, VoucherAttatchment.DoesNotExist):
+            return VoucherAttachment.objects.get(id=id)
+        except (ValueError, VoucherAttachment.DoesNotExist):
             raise NotFound({'detail': 'Record Not Found'})
 
     def update(self, request, *args, **kwargs):

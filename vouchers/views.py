@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey
-from voucher_attatchments.serializers import VoucherAttatchmentSerializer
+from voucher_attachments.serializers import Voucherattachmentserializer
 from voucher_items.models import VoucherItem
 from voucher_items.serializers import VoucherItemSerializer
 from .models import Voucher
@@ -50,10 +50,10 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
                 with transaction.atomic():
 
                     payment_items_data = serializer.validated_data.pop('payment_values', [])
-                    attatchments_values = serializer.validated_data.get('attatchments_values')
+                    attachments_values = serializer.validated_data.get('attachments_values')
 
-                    if attatchments_values:
-                        attatchments_data = serializer.validated_data.pop('attatchments_values', [])
+                    if attachments_values:
+                        attachments_data = serializer.validated_data.pop('attachments_values', [])
 
                     voucher = serializer.save()
 
@@ -66,11 +66,11 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
                         print(f"checking -> {payment_item_serializer.validated_data}")
                         payment_item_serializer.save()
 
-                    if attatchments_values:
-                        for attatchemt in attatchments_data:
+                    if attachments_values:
+                        for attatchemt in attachments_data:
                             attatchemt['school_id'] = voucher.school_id
                             attatchemt['voucher'] = voucher.id
-                            voucherattachmentserializer = VoucherAttatchmentSerializer(data=attatchemt)
+                            voucherattachmentserializer = Voucherattachmentserializer(data=attatchemt)
                             voucherattachmentserializer.is_valid(raise_exception=True)
                             voucherattachmentserializer.save()
 

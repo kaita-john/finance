@@ -6,7 +6,7 @@ from vouchers.models import Voucher
 
 
 # Create your models here.
-class VoucherAttatchment(ParentModel):
+class VoucherAttachment(ParentModel):
     school_id = models.UUIDField(null=True, blank=True, default=None, max_length=255)
     name = models.CharField(max_length=255)
     type = models.CharField(max_length=255)

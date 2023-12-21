@@ -40,7 +40,7 @@ api_patterns = [
 
     path(api_version + 'vouchers/', include('vouchers.urls')),
     path(api_version + 'vouchers/voucher-items', include('voucher_items.urls')),
-    path(api_version + 'vouchers/voucher-attatchments', include('voucher_attatchments.urls')),
+    path(api_version + 'vouchers/voucher-attachments', include('voucher_attachments.urls')),
 
     path(api_version + 'reports/', include('reportss.urls')),
 
