@@ -23,7 +23,7 @@ class VoucherSerializer(serializers.ModelSerializer):
     staff_details = StaffSerializer(source='staff', required=False, read_only=True, many=False)
 
     payment_values = serializers.ListField(child=serializers.DictField(), write_only=True)
-    attatchments_values = serializers.ListField(child=serializers.DictField(), write_only=True)
+    attatchments_values = serializers.ListField(child=serializers.DictField(), allow_null=True, required=False, write_only=True)
 
     payment_items = serializers.SerializerMethodField(read_only=True)
     attachments_items = serializers.SerializerMethodField(read_only=True)

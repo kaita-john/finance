@@ -48,10 +48,15 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
 
             try:
                 with transaction.atomic():
+
                     payment_items_data = serializer.validated_data.pop('payment_values', [])
-                    attatchments_data = serializer.validated_data.pop('attatchments_values', [])
+                    attatchments_values = serializer.validated_data.get('attatchments_values')
+
+                    if attatchments_values:
+                        attatchments_data = serializer.validated_data.pop('attatchments_values', [])
 
                     voucher = serializer.save()
+
                     for payment_item_data in payment_items_data:
                         payment_item_data['school_id'] = voucher.school_id
                         payment_item_data['voucher'] = voucher.id
@@ -61,12 +66,13 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
                         print(f"checking -> {payment_item_serializer.validated_data}")
                         payment_item_serializer.save()
 
-                    for attatchemt in attatchments_data:
-                        attatchemt['school_id'] = voucher.school_id
-                        attatchemt['voucher'] = voucher.id
-                        voucherattachmentserializer = VoucherAttatchmentSerializer(data=attatchemt)
-                        voucherattachmentserializer.is_valid(raise_exception=True)
-                        voucherattachmentserializer.save()
+                    if attatchments_values:
+                        for attatchemt in attatchments_data:
+                            attatchemt['school_id'] = voucher.school_id
+                            attatchemt['voucher'] = voucher.id
+                            voucherattachmentserializer = VoucherAttatchmentSerializer(data=attatchemt)
+                            voucherattachmentserializer.is_valid(raise_exception=True)
+                            voucherattachmentserializer.save()
 
                     return Response({'detail': f'Voucher created successfully'},status=status.HTTP_201_CREATED)
             except Exception as e:
