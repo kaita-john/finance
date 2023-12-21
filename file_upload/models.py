@@ -9,7 +9,7 @@ class SchoolImage(ParentModel):
     creator = models.ForeignKey(AppUser, on_delete=models.CASCADE, related_name="innovation_document_creator")
     document = models.FileField(upload_to=file_upload)
     original_file_name = models.CharField(max_length=255)
-    title = models.CharField(max_length=255, default = "Ttitle", blank=True, null=True, unique=True)
+    title = models.CharField(max_length=255, default = "Ttitle", blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     date_created = models.DateTimeField(auto_now_add=True)
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
