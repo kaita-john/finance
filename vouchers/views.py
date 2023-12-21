@@ -67,10 +67,10 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
                         payment_item_serializer.save()
 
                     if attachments_values:
-                        for attatchemt in attachments_data:
-                            attatchemt['school_id'] = voucher.school_id
-                            attatchemt['voucher'] = voucher.id
-                            voucherattachmentserializer = Voucherattachmentserializer(data=attatchemt)
+                        for attachment in attachments_data:
+                            attachment['school_id'] = voucher.school_id
+                            attachment['voucher'] = voucher.id
+                            voucherattachmentserializer = Voucherattachmentserializer(data=attachment)
                             voucherattachmentserializer.is_valid(raise_exception=True)
                             voucherattachmentserializer.save()
 
