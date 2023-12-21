@@ -17,6 +17,9 @@ class VoucherSerializer(serializers.ModelSerializer):
     payment_Method_details = PaymentMethodSerializer(source='payment_Method', required=False, read_only=True, many=False)
     expenseCategory_details = ExpenseCategorySerializer(source='expenseCategory', required=False, read_only=True, many=False)
 
+    supplier_details = BankAccountSerializer(source='supplier', required=False, read_only=True, many=False)
+    staff_details = BankAccountSerializer(source='staff', required=False, read_only=True, many=False)
+
     payment_values = serializers.ListField(child=serializers.DictField(), write_only=True)
     attatchments_values = serializers.ListField(child=serializers.DictField(), write_only=True)
 

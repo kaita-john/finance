@@ -1,10 +1,8 @@
 # Create your views here.
 
 import uuid
-from lib2to3.pgen2.tokenize import Double
 
 from _decimal import Decimal
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import JsonResponse
 from django.utils import timezone
@@ -15,13 +13,10 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from appcollections.models import Collection
 from invoices.models import Invoice
-from payment_in_kinds.models import PaymentInKind
 from payment_in_kinds.serializers import PaymentInKindSerializer
-from receipts.models import Receipt
 from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, defaultCurrency, currentAcademicYear, \
-    currentTerm, defaultAccountType
+    currentTerm
 from voteheads.models import VoteHead
 from .models import PIKReceipt
 from .serializers import PIKReceiptSerializer

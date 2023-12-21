@@ -4,13 +4,18 @@ from bank_accounts.models import BankAccount
 from expense_categories.models import ExpenseCategory
 from models import ParentModel
 from payment_methods.models import PaymentMethod
+from staff.models import Staff
+from suppliers.models import Supplier
 
 
 # models.py
 class Voucher(ParentModel):
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
+
     recipientType = models.CharField(max_length=255, blank=True, null=True)
-    member = models.CharField(max_length=255, blank=True, null=True)
+    staff = models.ForeignKey(Staff, default=None, null=True, on_delete=models.CASCADE, related_name="vouchers")
+    supplier = models.ForeignKey(Supplier, default=None, null=True, on_delete=models.CASCADE, related_name="vouchers")
+    other = models.CharField(max_length=255, blank=True, null=True)
 
     bank_account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, related_name="vouchers")
     payment_Method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE, related_name="vouchers")

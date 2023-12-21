@@ -8,7 +8,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, currentAcademicYear
+from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey
 from voucher_attatchments.serializers import VoucherAttatchmentSerializer
 from voucher_items.models import VoucherItem
 from voucher_items.serializers import VoucherItemSerializer
@@ -26,8 +26,25 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
         serializer = self.get_serializer(data=request.data)
+
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
+
+            recipientType = serializer.validated_data.get('recipientType')
+            if not recipientType:
+                return Response({'detail': f"Recipient type is a must"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if recipientType == "staff":
+                if not serializer.validated_data.get('staff'):
+                    return Response({'detail': f"Staff is a must"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if recipientType == "supplier":
+                if not serializer.validated_data.get('supplier'):
+                    return Response({'detail': f"Supplier is a must"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if recipientType == "other":
+                if not serializer.validated_data.get('other'):
+                    return Response({'detail': f"Other is a must"}, status=status.HTTP_400_BAD_REQUEST)
 
             try:
                 with transaction.atomic():

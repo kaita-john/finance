@@ -21,13 +21,11 @@ class CollectionSerializer(serializers.ModelSerializer):
         receipt = collection.receipt
 
 
-
         try:
             votehead = collection.votehead
             year = receipt.year
             term = receipt.term
             school_uuid = receipt.school_id
-
             amount_query = Invoice.objects.filter(
                 school_id=school_uuid,
                 term=term,
