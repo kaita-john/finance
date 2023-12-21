@@ -57,7 +57,12 @@ class FileUploadCreateView(SchoolIdMixin, generics.CreateAPIView):
                 {"details": "No files uploaded"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-            return Response({"detail": f"{documents[0]}"}, status=status.HTTP_200_OK)
+
+            details = {
+                "message": "Upload was successful",
+                "id": documents[0]
+            }
+            return Response({"detail": f"{details}"}, status=status.HTTP_200_OK)
 
 
 
