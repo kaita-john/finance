@@ -12,8 +12,10 @@ from rest_framework.views import APIView
 
 from academic_year.models import AcademicYear
 from academic_year.serializers import AcademicYearSerializer
+from appcollections.models import Collection
 from invoices.models import Invoice
 from invoices.views import createInvoices
+from payment_in_kind_Receipt.models import PIKReceipt
 from receipts.models import Receipt
 from term.models import Term
 from utils import SchoolIdMixin, UUID_from_PrimaryKey, currentAcademicYear, currentTerm, IsAdminOrSuperUser
@@ -232,15 +234,36 @@ class GetStudentInvoicedVotehead(SchoolIdMixin, generics.RetrieveAPIView):
         except Exception as exception:
             return Response({'detail': exception}, status=status.HTTP_400_BAD_REQUEST)
 
-        voteheadList = Invoice.objects.filter(
+        payload = []
+
+        invoiceList = Invoice.objects.filter(
             student_id=student.id,
             term=term,
             year=year,
             school_id=school_id
-        ).values_list('votehead', flat=True).distinct()
+        )
 
-        votehead_objects = VoteHead.objects.filter(id__in=voteheadList)
-        serializer = VoteHeadSerializer(votehead_objects, many=True)
+        for invoice in invoiceList:
+            votehead = invoice.votehead
+            receiptAmount = Collection.objects.filter(receipt__term=term, receipt__year=year, votehead=votehead, school_id=school_id,
+                                      student=student).aggregate(Sum('amount'))['amount__sum']
+            pikAmount = PIKReceipt.objects.filter(term=term, year=year, school_id=school_id, student=student).aggregate(
+                Sum('totalAmount'))['totalAmount__sum']
 
-        return Response({"detail": serializer.data})
+            amountpaid = Decimal(pikAmount) + Decimal(receiptAmount)
+            required_amount  = invoice.amount - amountpaid
+            invoiced_amount = invoice.amount
+
+            payload.append(
+                {
+                    "votehead": VoteHeadSerializer(votehead).data,
+                    "name": votehead.vote_head_name,
+                    "amount_paid": amountpaid,
+                    "required_amount": required_amount,
+                    "invoiced_amount": invoiced_amount,
+                }
+            )
+
+
+        return Response({"detail": payload})
 

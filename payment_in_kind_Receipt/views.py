@@ -89,7 +89,7 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                         requiredAmount = invoice_instance.amount - invoice_instance.paid
                         if created_Pik.amount > requiredAmount:
                             #overpayment += created_Pik.amount - requiredAmount
-                            raise ValueError(f"Balance for votehead {pikreceipt_instance.votehead.vote_head_name} is {requiredAmount}")
+                            raise ValueError(f"Amount entered is more than required balance for votehead {invoice_instance.votehead.vote_head_name}")
 
                     except Invoice.DoesNotExist:
                         pass
@@ -101,10 +101,10 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                     overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
                     if not overpayment_votehead:
                         raise ValueError("No VoteHead found with is_Overpayment_Default set to true")
-
-
                 else:
                     print(f"It is not greater than - No overpayment ")
+
+
 
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
