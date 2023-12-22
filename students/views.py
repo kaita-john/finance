@@ -143,7 +143,7 @@ class StudentBalanceDetailView(SchoolIdMixin, generics.RetrieveAPIView):
 
         total_amount_required = Invoice.objects.filter(term=current_term, year=current_academic_year,student = student.id).aggregate(total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
         total_amount_paid = Receipt.objects.filter(student_id=student.id,term=current_term, year=current_academic_year, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
-        balance = total_amount_required - Decimal(total_amount_paid)
+        balance = Decimal(total_amount_required) - Decimal(total_amount_paid)
 
         response_data = {
             'student_id': student.id,
