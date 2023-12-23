@@ -2,6 +2,7 @@
 from datetime import date, datetime
 
 from _decimal import Decimal
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -12,6 +13,8 @@ from rest_framework.views import APIView
 
 from academic_year.models import AcademicYear
 from appcollections.models import Collection
+from classes.models import Classes
+from classes.serializers import ClassesSerializer
 from invoices.models import Invoice
 from items.models import Item
 from payment_in_kind_Receipt.models import PIKReceipt
@@ -96,6 +99,8 @@ class ReportStudentBalanceView(APIView, SchoolIdMixin):
             paid = bursaryItemList.aggregate(result=Sum('amount')).get('result', Decimal('0.0')) or Decimal('0.0')
             totalPaid += paid
 
+            boarding_status = None
+
             reportStudentBalance = ReportStudentBalance(
                 admission_number=student.admission_number,
                 name=f"{student.first_name} {student.last_name}",
@@ -117,7 +122,7 @@ class ReportStudentBalanceView(APIView, SchoolIdMixin):
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
         try:
-            queryset = Student.objects.all()
+            queryset = Student.objects.filter(school_id=school_id)
 
             currentClass = request.GET.get('currentClass')
             stream = request.GET.get('stream')

@@ -1,10 +1,12 @@
 from rest_framework import serializers
 
+from classes.serializers import ClassesSerializer
 from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, IncomeSummary, ReceivedCheque
 from students.serializers import StudentSerializer
 
 
 class ReportStudentBalanceSerializer(serializers.ModelSerializer):
+    current_Class_details = ClassesSerializer(source='current_Class', required=False, read_only=True)
     class Meta:
         model = ReportStudentBalance
         fields = '__all__'
