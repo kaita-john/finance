@@ -122,49 +122,51 @@ class StudentBalanceDetailView(SchoolIdMixin, generics.RetrieveAPIView):
     lookup_field = 'pk'
 
     def get(self, request, *args, **kwargs):
-        student = self.get_object()
+        try:
+            student = self.get_object()
 
-        school_id = self.check_school_id(request)
-        if not school_id:
-            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+            school_id = self.check_school_id(request)
+            if not school_id:
+                return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
-        year = request.GET.get('year')
-        term = request.GET.get('term')
+            year = request.GET.get('year')
+            term = request.GET.get('term')
 
-        if year:
-            if not term:
-                return Response({'detail': f"Both year and term are required"}, status=status.HTTP_400_BAD_REQUEST)
-            try:
-                year = AcademicYear.objects.get(id=year)
-            except ObjectDoesNotExist:
-                year = None
+            if year:
+                if not term:
+                    return Response({'detail': f"Both year and term are required"}, status=status.HTTP_400_BAD_REQUEST)
+                try:
+                    year = AcademicYear.objects.get(id=year)
+                except ObjectDoesNotExist:
+                    year = None
 
-        if term:
-            if not year:
-                return Response({'detail': f"Both year and term are required"}, status=status.HTTP_400_BAD_REQUEST)
-            try:
-                term = Term.objects.get(id=term)
-            except ObjectDoesNotExist:
-                term = None
+            if term:
+                if not year:
+                    return Response({'detail': f"Both year and term are required"}, status=status.HTTP_400_BAD_REQUEST)
+                try:
+                    term = Term.objects.get(id=term)
+                except ObjectDoesNotExist:
+                    term = None
 
-        if not year and not term:
-            total_amount_required = Invoice.objects.filter(school_id=school_id, student=student.id).aggregate(
-                total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
-            total_amount_paid = Receipt.objects.filter(student_id=student.id, school_id=school_id, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))[
-                'total_amount_paid'] or 0.0
-        else:
-            total_amount_required = Invoice.objects.filter(term=term, year=year,student = student.id).aggregate(total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
-            total_amount_paid = Receipt.objects.filter(student_id=student.id,term=term, year=year, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
+            if not year and not term:
+                total_amount_required = Invoice.objects.filter(school_id=school_id, student=student.id).aggregate(
+                    total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
+                total_amount_paid = Receipt.objects.filter(student_id=student.id, school_id=school_id, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))[
+                    'total_amount_paid'] or 0.0
+            else:
+                total_amount_required = Invoice.objects.filter(term=term, year=year,student = student.id).aggregate(total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
+                total_amount_paid = Receipt.objects.filter(student_id=student.id,term=term, year=year, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
 
+            balance = Decimal(total_amount_required) - Decimal(total_amount_paid)
 
-        balance = Decimal(total_amount_required) - Decimal(total_amount_paid)
+            response_data = {
+                'student_id': student.id,
+                'balance': balance,
+            }
 
-        response_data = {
-            'student_id': student.id,
-            'balance': balance,
-        }
-
-        return Response({"detail": response_data})
+            return Response({"detail": response_data})
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class StudentSearchByAdmissionNumber(APIView, SchoolIdMixin):
