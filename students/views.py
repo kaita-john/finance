@@ -149,13 +149,15 @@ class StudentBalanceDetailView(SchoolIdMixin, generics.RetrieveAPIView):
                     term = None
 
             if not year and not term:
-                total_amount_required = Invoice.objects.filter(school_id=school_id, student=student.id).aggregate(
-                    total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
-                total_amount_paid = Receipt.objects.filter(student_id=student.id, school_id=school_id, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))[
-                    'total_amount_paid'] or 0.0
+                total_amount_required = Invoice.objects.filter(school_id=school_id, student=student.id).aggregate(total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
+                total_amount_paid0 = Receipt.objects.filter(student_id=student.id, school_id=school_id, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
+                total_amount_paid1 = PIKReceipt.objects.filter(student_id=student.id, school_id=school_id, is_posted=True).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
+                total_amount_paid = Decimal(total_amount_paid0) + Decimal(total_amount_paid1)
             else:
                 total_amount_required = Invoice.objects.filter(term=term, year=year,student = student.id).aggregate(total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
-                total_amount_paid = Receipt.objects.filter(student_id=student.id,term=term, year=year, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
+                total_amount_paid0 = Receipt.objects.filter(student_id=student.id,term=term, year=year, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
+                total_amount_paid1 = PIKReceipt.objects.filter(student_id=student.id,term=term, year=year, is_posted=True).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
+                total_amount_paid = Decimal(total_amount_paid0) + Decimal(total_amount_paid1)
 
             balance = Decimal(total_amount_required) - Decimal(total_amount_paid)
 
