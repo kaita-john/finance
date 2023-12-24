@@ -138,7 +138,7 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                     print(f"Overpayment is there")
 
                 else:
-                    print(f"It is not greater than - No overpayment ")
+                    print(f"It is not greater than - No overpayment")
 
 
         except ValueError as e:

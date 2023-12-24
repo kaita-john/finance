@@ -128,21 +128,35 @@ class StudentBalanceDetailView(SchoolIdMixin, generics.RetrieveAPIView):
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
-        current_academic_year = currentAcademicYear()
-        current_term = currentTerm()
-        if current_academic_year is None or current_term is None:
-            return Response({'detail': 'Both Current Academic Year and Current Term must be set for school first'}, status=status.HTTP_200_OK)
+        year = request.GET.get('year')
+        term = request.GET.get('term')
 
-        total_amount = Invoice.objects.filter(
-            student_id=student.id,
-            term=current_term,
-            year=current_academic_year,
-            school_id=school_id
-        ).aggregate(Sum('due'))['due__sum']
+        if year:
+            if not term:
+                return Response({'detail': f"Both year and term are required"}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                year = AcademicYear.objects.get(id=year)
+            except ObjectDoesNotExist:
+                year = None
+
+        if term:
+            if not year:
+                return Response({'detail': f"Both year and term are required"}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                term = Term.objects.get(id=term)
+            except ObjectDoesNotExist:
+                term = None
+
+        if not year and not term:
+            total_amount_required = Invoice.objects.filter(school_id=school_id, student=student.id).aggregate(
+                total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
+            total_amount_paid = Receipt.objects.filter(student_id=student.id, school_id=school_id, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))[
+                'total_amount_paid'] or 0.0
+        else:
+            total_amount_required = Invoice.objects.filter(term=term, year=year,student = student.id).aggregate(total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
+            total_amount_paid = Receipt.objects.filter(student_id=student.id,term=term, year=year, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
 
 
-        total_amount_required = Invoice.objects.filter(term=current_term, year=current_academic_year,student = student.id).aggregate(total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
-        total_amount_paid = Receipt.objects.filter(student_id=student.id,term=current_term, year=current_academic_year, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
         balance = Decimal(total_amount_required) - Decimal(total_amount_paid)
 
         response_data = {
