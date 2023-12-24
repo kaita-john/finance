@@ -1,8 +1,10 @@
 # Create your views here.
 
 import uuid
+from datetime import datetime
 
 from _decimal import Decimal
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import JsonResponse
 from django.utils import timezone
@@ -13,8 +15,12 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from account_types.models import AccountType
+from currencies.models import Currency
 from invoices.models import Invoice
 from payment_in_kinds.serializers import PaymentInKindSerializer
+from payment_methods.models import PaymentMethod
+from receipts.models import Receipt
 from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, defaultCurrency, currentAcademicYear, \
     currentTerm
 from voteheads.models import VoteHead
@@ -63,8 +69,11 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                 pikreceipt_instance.student_class = pikreceipt_instance.student.current_Class
                 pikreceipt_instance.save()
 
-
                 overpayment = 0
+                overpayment_amount =  pikreceipt_serializer.validated_data.get('overpayment_amount')
+
+                if overpayment_amount:
+                    overpayment=overpayment_amount
 
                 for value in pik_values:
                     value['receipt'] = pikreceipt_instance.id
@@ -88,7 +97,6 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
 
                         requiredAmount = invoice_instance.amount - invoice_instance.paid
                         if created_Pik.amount > requiredAmount:
-                            #overpayment += created_Pik.amount - requiredAmount
                             raise ValueError(f"Amount entered is more than required balance for votehead {invoice_instance.votehead.vote_head_name}")
 
                     except Invoice.DoesNotExist:
@@ -101,9 +109,36 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                     overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
                     if not overpayment_votehead:
                         raise ValueError("No VoteHead found with is_Overpayment_Default set to true")
+
+                    try:
+                        defaultAccountType = AccountType.objects.get(school = school_id, is_default=True)
+                    except ObjectDoesNotExist:
+                        raise ValueError("Default Account Type Not Set")
+
+
+                    receiptInstance = Receipt.objects.create(
+                        school_id = school_id,
+                        student = student,
+                        receipt_No = generate_unique_code("REC"),
+                        totalAmount = overpayment,
+                        account_type = defaultAccountType,
+                        bank_account=pikreceipt_instance.bank_account,
+                        payment_method=None,
+                        term=term,
+                        year=year,
+                        currency=default_Currency,
+                        transaction_code=generate_unique_code("TRN"),
+                        transaction_date=datetime.now(),
+                        addition_notes="Payment In Kind Receipt",
+                        student_class=student.current_Class,
+                    )
+
+                    receiptInstance.save()
+
+                    print(f"Overpayment is there")
+
                 else:
                     print(f"It is not greater than - No overpayment ")
-
 
 
         except ValueError as e:

@@ -27,6 +27,8 @@ class PIKReceipt(ParentModel):
     unposted_date = models.DateField(null=True)
 
     student_class = models.ForeignKey(Classes, null=True, on_delete=models.CASCADE, related_name="pik_receipts")
+    overpayment_amount = models.DecimalField(max_digits=15, default=0.00, null=True, blank=True, decimal_places=2)
+
 
     def __str__(self):
         return f"PaymentInKind Receipt {self.id} - {self.receipt_date} - {self.student.first_name}"

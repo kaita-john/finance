@@ -19,7 +19,7 @@ class Receipt(ParentModel):
     totalAmount = models.DecimalField(max_digits=15, decimal_places=2)
     account_type = models.ForeignKey(AccountType, on_delete=models.CASCADE, related_name="receipts")
     bank_account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, related_name="receipts")
-    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE, related_name="receipts")
+    payment_method = models.ForeignKey(PaymentMethod, null=True, default=None, on_delete=models.CASCADE, related_name="receipts")
     term = models.ForeignKey(Term, null=True, on_delete=models.CASCADE, related_name="receipts")
     year = models.ForeignKey(AcademicYear, null=True, on_delete=models.CASCADE, related_name="receipts")
     currency = models.ForeignKey(Currency, null=True, on_delete=models.CASCADE, related_name="receipts")
