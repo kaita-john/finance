@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from voteheads.serializers import VoteHeadSerializer
 from vouchers.models import Voucher
 from .models import VoucherAttachment
 

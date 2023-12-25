@@ -1,6 +1,7 @@
 # Create your views here.
 from datetime import datetime
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import JsonResponse
 from rest_framework import generics, status
@@ -8,6 +9,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from financial_years.models import FinancialYear
 from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey
 from voucher_attachments.serializers import Voucherattachmentserializer
 from voucher_items.models import VoucherItem
@@ -24,6 +26,11 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        try:
+            current_financial_year = FinancialYear.objects.get(is_current=True)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"Current Financial Year not set"}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=request.data)
 
@@ -56,6 +63,9 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
                         attachments_data = serializer.validated_data.pop('attachments_values', [])
 
                     voucher = serializer.save()
+
+                    voucher.financial_year = current_financial_year
+                    voucher.save()
 
                     for payment_item_data in payment_items_data:
                         payment_item_data['school_id'] = voucher.school_id

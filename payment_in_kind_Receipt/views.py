@@ -16,7 +16,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from account_types.models import AccountType
+from appcollections.models import Collection
 from currencies.models import Currency
+from financial_years.models import FinancialYear
 from invoices.models import Invoice
 from payment_in_kinds.serializers import PaymentInKindSerializer
 from payment_methods.models import PaymentMethod
@@ -36,6 +38,12 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        try:
+            current_financial_year = FinancialYear.objects.get(is_current=True)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"Current Financial Year not set"}, status=status.HTTP_400_BAD_REQUEST)
+
 
         try:
             with transaction.atomic():
@@ -67,6 +75,7 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                 pikreceipt_instance = pikreceipt_serializer.save()
 
                 pikreceipt_instance.student_class = pikreceipt_instance.student.current_Class
+                pikreceipt_instance.financial_year = current_financial_year
                 pikreceipt_instance.save()
 
                 overpayment = 0
@@ -134,6 +143,17 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                     )
 
                     receiptInstance.save()
+
+                    newCollection = Collection(
+                        student=student,
+                        receipt=receiptInstance,
+                        amount=overpayment,
+                        votehead=overpayment_votehead,
+                        school_id=school_id,
+                        is_overpayment=True
+                    )
+                    newCollection.save()
+
 
                     print(f"Overpayment is there")
 

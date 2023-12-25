@@ -5,6 +5,7 @@ from account_types.models import AccountType
 from bank_accounts.models import BankAccount
 from classes.models import Classes
 from currencies.models import Currency
+from financial_years.models import FinancialYear
 from models import ParentModel
 from payment_methods.models import PaymentMethod
 from students.models import Student
@@ -29,9 +30,15 @@ class Receipt(ParentModel):
     is_reversed = models.BooleanField(default=False, blank=False, null=False)
     reversal_date = models.DateField(null=True)
     student_class = models.ForeignKey(Classes, null=True, on_delete=models.CASCADE, related_name="receipts")
+    financial_year = models.ForeignKey(FinancialYear, null=True, on_delete=models.CASCADE, related_name="receipts")
+    counter = models.FloatField(null=True, default=None)
 
+    def save(self, *args, **kwargs):
+        if not self.counter:
+            max_counter = Receipt.objects.all().aggregate(models.Max('counter'))['counter__max']
+            self.counter = max_counter + 1 if max_counter is not None else 1
 
-
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.id} - {self.receipt_date} - {self.student.first_name}"

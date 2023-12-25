@@ -15,6 +15,7 @@ from rest_framework.response import Response
 from appcollections.models import Collection
 from appcollections.serializers import CollectionSerializer
 from constants import MANUAL, AUTO, RATIO, PRIORITY
+from financial_years.models import FinancialYear
 from invoices.models import Invoice
 from items.models import Item
 from items.serializers import ItemSerializer
@@ -179,7 +180,7 @@ class BursaryDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
 
 
 
-def autoBursary(self, request, school_id, auto_configuration_type, itemamount, bursary, itemstudent):
+def autoBursary(self, request, school_id, auto_configuration_type, itemamount, bursary, itemstudent,current_financial_year):
     try:
         with transaction.atomic():
             receipt_no = generate_unique_code("RT")
@@ -218,6 +219,7 @@ def autoBursary(self, request, school_id, auto_configuration_type, itemamount, b
                 currency=default_Currency,
                 transaction_code=bursary.id,
                 addition_notes="Bursary Payment",
+                financial_year = current_financial_year
             )
 
             voteheads = Invoice.objects.filter( term=term, year=year, school_id=school_id, student=itemstudent)
@@ -382,13 +384,20 @@ class PostBursaryDetailView(SchoolIdMixin, generics.UpdateAPIView):
                 print(f"66666666666")
                 configuration_type = configuration.configuration_type
                 auto_configuration_type = configuration.auto_configuration_type
+
+                try:
+                    current_financial_year = FinancialYear.objects.get(is_current=True)
+                except ObjectDoesNotExist:
+                    return Response({'detail': f"Current Financial Year not set"}, status=status.HTTP_400_BAD_REQUEST)
+
+
                 if configuration_type == MANUAL:
                     print("returning 4")
                     return Response({'detail': "Votehead Configuration set to manual. Change to Auto"}, status=status.HTTP_400_BAD_REQUEST)
                 elif configuration_type == AUTO:
                     print("returning 5")
                     print(f"Item bursary is {bursary}")
-                    return autoBursary(self, request, school_id, auto_configuration_type, itemamount, bursary, itemstudent)
+                    return autoBursary(self, request, school_id, auto_configuration_type, itemamount, bursary, itemstudent, current_financial_year)
 
                 return JsonResponse({'detail': 'Invalid request'}, status=400)
 

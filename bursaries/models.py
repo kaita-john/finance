@@ -3,6 +3,7 @@ from django.db import models
 from academic_year.models import AcademicYear
 from bank_accounts.models import BankAccount
 from currencies.models import Currency
+from financial_years.models import FinancialYear
 from models import ParentModel
 from payment_methods.models import PaymentMethod
 from schoolgroups.models import SchoolGroup
@@ -25,7 +26,6 @@ class Bursary(ParentModel):
     schoolgroup = models.ForeignKey(SchoolGroup, default=None, null=True, on_delete=models.CASCADE, related_name="bursaries")
     currency = models.ForeignKey(Currency, default=None, null=True, on_delete=models.CASCADE, related_name="bursaries")
     studentamount = models.DecimalField(max_digits=15, null=True, default=0.00, decimal_places=2)
-
 
     def __str__(self):
         return f"{self.id}"

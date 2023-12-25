@@ -17,6 +17,7 @@ from rest_framework.response import Response
 from appcollections.models import Collection
 from appcollections.serializers import CollectionSerializer
 from constants import MANUAL, AUTO, PRIORITY, RATIO
+from financial_years.models import FinancialYear
 from invoices.models import Invoice
 from school import serializer
 from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, defaultCurrency, currentAcademicYear, \
@@ -26,7 +27,7 @@ from .models import Receipt
 from .serializers import ReceiptSerializer
 
 
-def manualCollection(self, request, school_id):
+def manualCollection(self, request, school_id, current_financial_year):
     try:
         with transaction.atomic():
             receipt_no = generate_unique_code("RT")
@@ -49,10 +50,10 @@ def manualCollection(self, request, school_id):
             receipt_serializer.validated_data['term'] = term
             receipt_serializer.validated_data['year'] = year
 
-
             receipt_serializer.validated_data.pop('collections_values', [])
             receipt_instance = receipt_serializer.save()
             receipt_instance.student_class = receipt_instance.student.current_Class
+            receipt_instance.financial_year = current_financial_year
             receipt_instance.save()
 
             collections_data = request.data.get('collections_values', [])
@@ -112,7 +113,7 @@ def manualCollection(self, request, school_id):
 
 
 
-def autoCollection(self, request, school_id, auto_configuration_type):
+def autoCollection(self, request, school_id, auto_configuration_type, current_financial_year):
     try:
         with transaction.atomic():
             receipt_no = generate_unique_code("RT")
@@ -138,6 +139,8 @@ def autoCollection(self, request, school_id, auto_configuration_type):
             receipt_instance = receipt_serializer.save()
 
             receipt_instance.student_class = receipt_instance.student.current_Class
+            receipt_instance.financial_year = current_financial_year
+            receipt_instance.financial_year = current_financial_year
             receipt_instance.save()
 
             student = receipt_instance.student
@@ -270,6 +273,12 @@ class ReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
         try:
+            current_financial_year = FinancialYear.objects.get(is_current=True)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"Current Financial Year not set"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        try:
             configuration = VoteheadConfiguration.objects.get(school_id=school_id)
         except ObjectDoesNotExist:
             return Response({'detail': "Please set up votehead configuration for this school first!"}, status=status.HTTP_400_BAD_REQUEST)
@@ -278,11 +287,11 @@ class ReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
         auto_configuration_type = configuration.auto_configuration_type
         if configuration_type == MANUAL:
 
-            return manualCollection(self, request, school_id)
+            return manualCollection(self, request, school_id, current_financial_year)
 
         elif configuration_type == AUTO:
 
-            return autoCollection(self, request, school_id, auto_configuration_type)
+            return autoCollection(self, request, school_id, auto_configuration_type, current_financial_year)
 
 
 

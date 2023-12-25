@@ -11,10 +11,9 @@ class VoucherAttachment(ParentModel):
     name = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
     fileid = models.ForeignKey(SchoolImage, null=True, default=None, on_delete=models.CASCADE, related_name="voucher_attachments")
-    voucher = models.ForeignKey(Voucher, null=True, default=None, on_delete=models.CASCADE, related_name="voucher_attachments")
+    voucher = models.ForeignKey(Voucher, null=True, default=None, on_delete=models.SET_NULL, related_name="attachments")
 
     def __str__(self):
         return f"{self.id}"
-
 
 

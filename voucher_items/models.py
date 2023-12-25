@@ -12,7 +12,7 @@ class VoucherItem(ParentModel):
     amount = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     quantity = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     itemName = models.CharField(max_length=255)
-    voucher = models.ForeignKey(Voucher, null=True, default=None, on_delete=models.CASCADE, related_name="voucher_items")
+    voucher = models.ForeignKey(Voucher, null=True, default=None, on_delete=models.SET_NULL, related_name="voucher_items")
 
     def __str__(self):
         return f"{self.id}"
