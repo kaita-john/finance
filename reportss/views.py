@@ -150,7 +150,7 @@ class ReportStudentBalanceView(APIView, SchoolIdMixin):
 
             if stream:
                 # if not currentClass:
-                #     return Response({'detail': f"Both Class and Stream must be entered to query stream"},status=status.HTTP_400_BAD_REQUEST)
+                # return Response({'detail': f"Both Class and Stream must be entered to query stream"},status=status.HTTP_400_BAD_REQUEST)
                 queryset = queryset.filter(current_Stream=stream)
                 reportsStudentBalanceList = self.calculate(queryset, startdate, enddate, boardingstatus, term, year)
 
