@@ -13,9 +13,6 @@ from rest_framework.views import APIView
 
 from academic_year.models import AcademicYear
 from appcollections.models import Collection
-from classes.models import Classes
-from classes.serializers import ClassesSerializer
-from expense_categories.models import ExpenseCategory
 from invoices.models import Invoice
 from items.models import Item
 from payment_in_kind_Receipt.models import PIKReceipt
@@ -23,7 +20,8 @@ from payment_in_kinds.models import PaymentInKind
 from payment_methods.models import PaymentMethod
 from receipts.models import Receipt
 from receipts.serializers import ReceiptSerializer
-from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, IncomeSummary, ReceivedCheque
+from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, IncomeSummary, ReceivedCheque, \
+    BalanceTracker
 from reportss.serializers import ReportStudentBalanceSerializer, StudentTransactionsPrintViewSerializer, \
     IncomeSummarySerializer, ReceivedChequeSerializer
 from students.models import Student
@@ -31,8 +29,6 @@ from students.serializers import StudentSerializer
 from term.models import Term
 from utils import SchoolIdMixin, currentAcademicYear, currentTerm, IsAdminOrSuperUser
 from voteheads.models import VoteHead
-from voucher_attachments.models import VoucherAttachment
-from voucher_items.models import VoucherItem
 from vouchers.models import Voucher
 
 
@@ -700,24 +696,24 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
             querySetExpenses = Voucher.objects.filter(school_id=school_id)
 
             if bankaccount:
-                querySetReceipts = Receipt.objects.filter(school_id=school_id, bank_account__id = bankaccount)
-                querysetPIK = PIKReceipt.objects.filter(school_id=school_id, bank_account__id = bankaccount)
-                querySetExpenses = Voucher.objects.filter(school_id=school_id, bank_account__id = bankaccount)
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, bank_account__id = bankaccount)
+                querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__id = bankaccount)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id, bank_account__id = bankaccount)
 
             if accounttype:
-                querySetReceipts = Receipt.objects.filter(school_id=school_id, account_type__id=accounttype)
-                querysetPIK = PIKReceipt.objects.filter(school_id=school_id, bank_account__account_type__id=accounttype)
-                querySetExpenses = Voucher.objects.filter(school_id=school_id, bank_account__account_type__id=accounttype)
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, account_type__id=accounttype)
+                querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__account_type__id=accounttype)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id, bank_account__account_type__id=accounttype)
 
             if financialyear:
-                querySetReceipts = Receipt.objects.filter(school_id=school_id, financial_year__id=financialyear)
-                querysetPIK = PIKReceipt.objects.filter(school_id=school_id, financial_year__id=financialyear)
-                querySetExpenses = Voucher.objects.filter(school_id=school_id, financial_year__id=financialyear)
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year__id=financialyear)
+                querysetPIK = querysetPIK.filter(school_id=school_id, financial_year__id=financialyear)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id, financial_year__id=financialyear)
 
             if month:
-                querySetReceipts = Receipt.objects.filter(school_id=school_id, dateofcreation__month=month)
-                querysetPIK = PIKReceipt.objects.filter(school_id=school_id, dateofcreation__month=month)
-                querySetExpenses = Voucher.objects.filter(school_id=school_id, dateofcreation__month=month)
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, dateofcreation__month=month)
+                querysetPIK = querysetPIK.filter(school_id=school_id, dateofcreation__month=month)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id, dateofcreation__month=month)
 
             # if not bankaccount or not accounttype:
             #     return Response({'detail': f"Both orderby and accounttype values must be selected"}, status=status.HTTP_400_BAD_REQUEST)
@@ -885,3 +881,181 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
 
         return Response({"detail": thedata})
 
+
+
+
+
+class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+
+    def get(self, request, *args, **kwargs):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        try:
+            school_id = self.check_school_id(request)
+            if not school_id:
+                return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+            student = request.GET.get('student')
+            financialyear = request.GET.get('financialyear')
+            academicyear = request.GET.get('academicyear')
+            classes = request.GET.get('classes')
+            stream = request.GET.get('stream')
+
+            if not student and not classes and not stream:
+                return Response({'detail': f"Either of Student or Stream or Class should be passed"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                student = Student.objects.get(id=student)
+            except ObjectDoesNotExist:
+                return Response({'detail': f"Invalid Student"}, status=status.HTTP_400_BAD_REQUEST)
+
+            student_List = []
+            if student:
+                student_List.append(student)
+
+            if classes:
+                class_students = Student.objects.filter(current_Class__id = classes)
+                if class_students:
+                    for value in class_students:
+                        student_List.append(value)
+
+            if stream:
+                stream_students = Student.objects.filter(current_Stream__id=classes)
+                if stream_students:
+                    for value in stream_students:
+                        student_List.append(value)
+
+            student_final_output = []
+
+            for student in student_List:
+                student_name = f"{student.first_name} - {student.last_name}"
+                student_admission = student.admission_number
+                student_class = student.current_Class
+                student_stream = student.current_Stream
+
+                querySetReceipts = Receipt.objects.filter(school_id=school_id, student=student)
+                querysetPIK = PIKReceipt.objects.filter(school_id=school_id, student=student)
+
+                if financialyear:
+                    querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year__id=financialyear)
+                    querysetPIK = querysetPIK.filter(school_id=school_id, financial_year__id=financialyear)
+
+                if academicyear:
+                    querySetReceipts = querySetReceipts.filter(school_id=school_id, year__id = academicyear)
+                    querysetPIK = querysetPIK.filter(school_id=school_id, year__id = academicyear)
+
+
+                listofdateofcreations = []
+                listofdateofcreations.extend(querySetReceipts.values_list('dateofcreation', flat=True))
+                listofdateofcreations.extend(querysetPIK.values_list('dateofcreation', flat=True))
+                listofdateofcreations = list(set(listofdateofcreations))
+                listofdateofcreations = list(listofdateofcreations)
+
+                listofreceipts = []
+                universalvoteheadDictionary = {}
+
+
+                dated_instances = []
+
+                for dateinstance in listofdateofcreations:
+
+                    receipts = []
+
+                    for receipt in querySetReceipts:
+                        voteheadDictionary = {}
+                        if receipt.dateofcreation == dateinstance:
+                            receipt_number = receipt.receipt_No
+                            balance_before = "0.0"
+                            amount_paid = "0.0"
+                            balance_after = "0.0"
+
+                            balanceTrackerQuerySet = BalanceTracker.objects.filter(dateofcreation=dateinstance, school_id = school_id, student = student).first()
+                            if balanceTrackerQuerySet:
+                                balance_before = balanceTrackerQuerySet.balanceBefore
+                                balance_after = balanceTrackerQuerySet.balanceAfter
+                                amount_paid = balanceTrackerQuerySet.amountPaid
+
+                            receiptsList = Collection.objects.filter(receipt=receipt)
+                            for collection in receiptsList:
+                                if collection.votehead.vote_head_name not in voteheadDictionary:
+                                    voteheadDictionary[f"{collection.votehead.vote_head_name}"] = collection.amount
+                                else:
+                                    voteheadDictionary[f"{collection.votehead.vote_head_name}"] += collection.amount
+                                if collection.votehead.vote_head_name not in universalvoteheadDictionary:
+                                    universalvoteheadDictionary[f"{collection.votehead.vote_head_name}"] = collection.amount
+                                else:
+                                    universalvoteheadDictionary[f"{collection.votehead.vote_head_name}"] += collection.amount
+
+                            receiptObject = {
+                                "date": dateinstance,
+                                "receipt_number": receipt_number,
+                                "balance_before": balance_before,
+                                "balance_after": balance_after,
+                                "transaction_amount": amount_paid,
+                                "voteheads": voteheadDictionary,
+                            }
+
+                            receipts.append(receiptObject)
+
+                    for pik in querysetPIK:
+                        voteheadDictionary = {}
+                        if pik.dateofcreation == dateinstance:
+                            receipt_number = pik.receipt_No
+                            balance_before = "0.0"
+                            amount_paid = "0.0"
+                            balance_after = "0.0"
+
+                            balanceTrackerQuerySet = BalanceTracker.objects.filter(dateofcreation=dateinstance, school_id = school_id, student = student).first()
+                            if balanceTrackerQuerySet:
+                                balance_before = balanceTrackerQuerySet.balanceBefore
+                                balance_after = balanceTrackerQuerySet.balanceAfter
+                                amount_paid = balanceTrackerQuerySet.amountPaid
+
+                            piks = PaymentInKind.objects.filter(receipt=pik)
+                            for pik in piks:
+                                if pik.votehead.vote_head_name not in voteheadDictionary:
+                                    voteheadDictionary[f"{pik.votehead.vote_head_name}"] = pik.amount
+                                else:
+                                    voteheadDictionary[f"{pik.votehead.vote_head_name}"] += pik.amount
+                                if pik.votehead.vote_head_name not in universalvoteheadDictionary:
+                                    universalvoteheadDictionary[f"{pik.votehead.vote_head_name}"] = pik.amount
+                                else:
+                                    universalvoteheadDictionary[f"{pik.votehead.vote_head_name}"] += pik.amount
+
+                            receiptObject = {
+                                "date": dateinstance,
+                                "receipt_number": receipt_number,
+                                "balance_before": balance_before,
+                                "balance_after": balance_after,
+                                "transaction_amount": amount_paid,
+                                "voteheads": voteheadDictionary,
+                            }
+                            receipts.append(receiptObject)
+
+
+                    output = {
+                        "date": dateinstance,
+                        "receipts": receipts,
+                    }
+
+                    dated_instances.append(output)
+
+
+                student_final_output.append(
+                    {
+                        "dated_student_instances": dated_instances,
+                        "student": StudentSerializer(student).data,
+                        "totals": universalvoteheadDictionary
+                    }
+                )
+
+            thedata = student_final_output
+
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": thedata})

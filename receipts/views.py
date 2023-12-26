@@ -19,6 +19,7 @@ from appcollections.serializers import CollectionSerializer
 from constants import MANUAL, AUTO, PRIORITY, RATIO
 from financial_years.models import FinancialYear
 from invoices.models import Invoice
+from reportss.models import trackBalance
 from school import serializer
 from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, defaultCurrency, currentAcademicYear, \
     currentTerm
@@ -51,10 +52,21 @@ def manualCollection(self, request, school_id, current_financial_year):
             receipt_serializer.validated_data['year'] = year
 
             receipt_serializer.validated_data.pop('collections_values', [])
+
+            trackBalance(
+                receipt_serializer.validated_data['student'],
+                school_id,
+                receipt_serializer.validated_data['totalAmount'],
+                "plus",
+                term,
+                year
+            )
+
             receipt_instance = receipt_serializer.save()
             receipt_instance.student_class = receipt_instance.student.current_Class
             receipt_instance.financial_year = current_financial_year
             receipt_instance.save()
+
 
             collections_data = request.data.get('collections_values', [])
 
@@ -136,7 +148,17 @@ def autoCollection(self, request, school_id, auto_configuration_type, current_fi
             receipt_serializer.validated_data['term'] = term
             receipt_serializer.validated_data['year'] = year
             receipt_serializer.validated_data.pop('collections_values', [])
+
+            trackBalance(
+                receipt_serializer.validated_data['student'],
+                school_id,
+                receipt_serializer.validated_data['totalAmount'],
+                "plus",
+                term,
+                year
+            )
             receipt_instance = receipt_serializer.save()
+
 
             receipt_instance.student_class = receipt_instance.student.current_Class
             receipt_instance.financial_year = current_financial_year
@@ -240,8 +262,6 @@ def autoCollection(self, request, school_id, auto_configuration_type, current_fi
                                 raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
 
 
-
-
             if overpayment > 0:
                 overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
                 if not overpayment_votehead:
@@ -255,8 +275,8 @@ def autoCollection(self, request, school_id, auto_configuration_type, current_fi
                     school_id=receipt_instance.school_id,
                     is_overpayment = True
                 )
-
                 newCollection.save()
+
 
         return Response({'detail': 'Receipt and collections created successfully'}, status=status.HTTP_201_CREATED)
     except ValueError as e:
@@ -367,7 +387,6 @@ class ReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         serializer.save()
 
     def destroy(self, request, *args, **kwargs):
-        print(f"111111111111111111")
         instance = self.get_object()
         school_id = instance.school_id
         term = instance.term
@@ -381,6 +400,16 @@ class ReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
                 instance.is_reversed = True
                 instance.reversal_date = timezone.now()
                 instance.save()
+
+                receipt_instance = instance
+                trackBalance(
+                    receipt_instance.student,
+                    receipt_instance.school_id,
+                    receipt_instance.totalAmount,
+                    "minus",
+                    receipt_instance.term,
+                    receipt_instance.year
+                )
 
             return Response({'detail': "Receipt Reversed Successfully"}, status=status.HTTP_200_OK)
         except Exception as exception:

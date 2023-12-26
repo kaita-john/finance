@@ -17,12 +17,11 @@ from rest_framework.response import Response
 
 from account_types.models import AccountType
 from appcollections.models import Collection
-from currencies.models import Currency
 from financial_years.models import FinancialYear
 from invoices.models import Invoice
 from payment_in_kinds.serializers import PaymentInKindSerializer
-from payment_methods.models import PaymentMethod
 from receipts.models import Receipt
+from reportss.models import trackBalance
 from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, defaultCurrency, currentAcademicYear, \
     currentTerm
 from voteheads.models import VoteHead
@@ -72,6 +71,15 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                 pikreceipt_serializer.validated_data['year'] = year
                 pikreceipt_serializer.validated_data['totalAmount'] = totalAmount
                 pikreceipt_serializer.validated_data.pop('pik_values', [])
+
+                trackBalance(
+                    pikreceipt_serializer.validated_data['student'],
+                    school_id,
+                    pikreceipt_serializer.validated_data['totalAmount'],
+                    "plus",
+                    term,
+                    year
+                )
                 pikreceipt_instance = pikreceipt_serializer.save()
 
                 pikreceipt_instance.student_class = pikreceipt_instance.student.current_Class
@@ -79,7 +87,7 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                 pikreceipt_instance.save()
 
                 overpayment = 0
-                overpayment_amount =  pikreceipt_serializer.validated_data.get('overpayment_amount')
+                overpayment_amount = pikreceipt_serializer.validated_data.get('overpayment_amount')
 
                 if overpayment_amount:
                     overpayment=overpayment_amount
@@ -125,6 +133,7 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                         raise ValueError("Default Account Type Not Set")
 
 
+
                     receiptInstance = Receipt.objects.create(
                         school_id = school_id,
                         student = student,
@@ -142,6 +151,15 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                         student_class=student.current_Class,
                     )
 
+                    trackBalance(
+                        student,
+                        school_id,
+                        overpayment,
+                        "plus",
+                        term,
+                        year
+                    )
+
                     receiptInstance.save()
 
                     newCollection = Collection(
@@ -153,9 +171,8 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                         is_overpayment=True
                     )
                     newCollection.save()
-
-
                     print(f"Overpayment is there")
+
 
                 else:
                     print(f"It is not greater than - No overpayment")
@@ -252,6 +269,16 @@ class PIKReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView)
                 instance.is_posted = False
                 instance.unposted_date = timezone.now()
                 instance.save()
+
+                receipt_instance = instance
+                trackBalance(
+                    receipt_instance.student,
+                    receipt_instance.school_id,
+                    receipt_instance.totalAmount,
+                    "minus",
+                    receipt_instance.term,
+                    receipt_instance.year
+                )
 
             return Response({'detail': "PIKReceipt Reversed Successfully"}, status=status.HTTP_200_OK)
         except Exception as exception:

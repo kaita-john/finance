@@ -20,6 +20,7 @@ from invoices.models import Invoice
 from items.models import Item
 from items.serializers import ItemSerializer
 from receipts.models import Receipt
+from reportss.models import trackBalance
 from students.models import Student
 from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, generate_unique_code, defaultCurrency, \
     currentAcademicYear, currentTerm, defaultAccountType
@@ -221,6 +222,19 @@ def autoBursary(self, request, school_id, auto_configuration_type, itemamount, b
                 addition_notes="Bursary Payment",
                 financial_year = current_financial_year
             )
+
+            trackBalance(
+                receipt_instance.student,
+                receipt_instance.school_id,
+                receipt_instance.totalAmount,
+                "plus",
+                receipt_instance.term,
+                receipt_instance.year
+            )
+
+            receipt_instance.save()
+
+
 
             voteheads = Invoice.objects.filter( term=term, year=year, school_id=school_id, student=itemstudent)
             votehead_ids = voteheads.values('votehead').distinct()
@@ -432,5 +446,14 @@ class UnPostBursaryDetailView(SchoolIdMixin, generics.UpdateAPIView):
                 receipt.reversal_date = datetime.now()
                 receipt.save()
 
+                receipt_instance = receipt
+                trackBalance(
+                    receipt_instance.student,
+                    receipt_instance.school_id,
+                    receipt_instance.totalAmount,
+                    "minus",
+                    receipt_instance.term,
+                    receipt_instance.year
+                )
 
         return Response({'detail': "Bursary has been unposted successfully"}, status=status.HTTP_200_OK)
