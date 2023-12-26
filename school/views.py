@@ -2,7 +2,7 @@
 import uuid
 
 from rest_framework import generics, status
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -44,7 +44,7 @@ class SchoolListView(generics.ListAPIView):
             if user.school_id:
                 return School.objects.filter(id=user.school_id.id)
             else:
-                return Response({'detail': f"School Not Set For Current Admin User"}, status=status.HTTP_400_BAD_REQUEST)
+                raise PermissionDenied(detail=f"School Not Set For Current User")
 
 
 class SchoolDetailView(generics.RetrieveUpdateDestroyAPIView):
