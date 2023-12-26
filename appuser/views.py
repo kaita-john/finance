@@ -95,7 +95,8 @@ class FineAppUserListView(SchoolIdMixin, generics.ListAPIView):
             return JsonResponse({'detail': 'Invalid school in token'}, status=401)
 
         user_id = self.request.user.id
-        queryset = AppUser.objects.filter(school_id=school_id, id=user_id)
+        # queryset = AppUser.objects.filter(school_id=school_id, id=user_id)
+        queryset = AppUser.objects.filter(id=user_id)
         return queryset
 
 
