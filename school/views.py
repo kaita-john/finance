@@ -41,11 +41,11 @@ class SchoolListView(generics.ListAPIView):
             print("User is superuser")
             return School.objects.all()
         else:
-            print(f"User is not superuser {user}")
+            if user.school_id:
+                return School.objects.filter(id=user.school_id.id)
+            else:
+                return Response({'detail': f"School Not Set For Current Admin User"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if user.school_id:
-            return School.objects.filter(id=user.school_id.id)
-        return School.objects.none()
 
 class SchoolDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = School.objects.all()
