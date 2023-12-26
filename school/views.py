@@ -14,7 +14,7 @@ from utils import IsAdminOrSuperUser, UUID_from_PrimaryKey
 class SchoolCreateView(generics.CreateAPIView):
     queryset = School.objects.all()
     serializer_class = SchoolSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]  # Use the custom permission class
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
     #print("Here")
 
     def create(self, request, *args, **kwargs):
@@ -44,7 +44,7 @@ class SchoolListView(generics.ListAPIView):
             if user.school_id:
                 return School.objects.filter(id=user.school_id.id)
             else:
-                raise PermissionDenied(detail=f"School Not Set For Current User")
+                raise PermissionDenied(detail=f"School Not Set For Current Admin User")
 
 
 class SchoolDetailView(generics.RetrieveUpdateDestroyAPIView):

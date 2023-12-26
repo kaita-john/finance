@@ -45,7 +45,6 @@ class AppUser(BaseUserModel, AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-
     def __str__(self):
         return self.username or str(self.id)
 
