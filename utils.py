@@ -1,22 +1,23 @@
 import os
 import smtplib
+import time
 import uuid
 from datetime import datetime
 
 import jwt
 from django.contrib.auth.models import Group
-from rest_framework import permissions
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from rest_framework import permissions, status
 from rest_framework.authentication import get_authorization_header
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
 
 from academic_year.models import AcademicYear
 from account_types.models import AccountType
 from currencies.models import Currency
 from finance.settings import SIMPLE_JWT
 from school.models import School
-import time
-
 from term.models import Term
 
 
@@ -75,9 +76,12 @@ class IsSuperUser(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.roles.filter(name='SUPERUSER').exists()
 
+
 class IsAdminOrSuperUser(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user and (request.user.is_admin or IsAdminUser().has_permission(request, view) or IsSuperUser().has_permission(request, view))
+        return request.user and (request.user.is_admin or IsAdminUser().has_permission(request,
+                                                                                       view) or IsSuperUser().has_permission(
+            request, view))
 
 
 def fetchAllRoles():
@@ -114,7 +118,6 @@ def sendMail(sender_email, sender_password, receiver_email, subject, usermessage
         raise ValidationError({'detail': str(ex)})
 
 
-
 def generate_unique_code(prefix="INV"):
     timestamp = int(time.time())
     random_component = uuid.uuid4().hex[:6]
@@ -146,7 +149,7 @@ def file_upload(instance, filename):
     else:
         hour = str(now.hour).zfill(2)
 
-    #upload_to = f"{str(now.year)}/{month}/{day}/{hour}"
+    # upload_to = f"{str(now.year)}/{month}/{day}/{hour}"
     upload_to = f"files"
     if instance.pk:
         filename = "{}.{}".format(instance.pk, ext)
@@ -168,14 +171,24 @@ def currentTerm():
     except Term.DoesNotExist:
         return None
 
+
 def defaultCurrency():
     try:
         return Currency.objects.get(is_default=True)
     except Currency.DoesNotExist:
         return None
 
+
 def defaultAccountType():
     try:
         return AccountType.objects.get(is_default=True)
     except AccountType.DoesNotExist:
         return None
+
+
+def check_if_object_exists(Model, obj_id):
+    try:
+        instance = Model.objects.get(id=obj_id)
+        return True  # Object with the given ID exists
+    except ObjectDoesNotExist:
+        return Response({'detail': f"{obj_id} is not a valid uuid"}, status=status.HTTP_400_BAD_REQUEST)

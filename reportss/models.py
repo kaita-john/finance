@@ -5,6 +5,7 @@ from django.db.models.functions import Coalesce
 
 from classes.models import Classes
 from currencies.models import Currency
+from financial_years.models import FinancialYear
 from invoices.models import Invoice
 from models import ParentModel
 from payment_in_kind_Receipt.models import PIKReceipt
@@ -105,3 +106,27 @@ def trackBalance(student, school_id, amount, operation, term, year):
 
     except Exception as exception:
         raise ValueError(f"{str(exception)}")
+
+
+
+
+
+
+
+
+class OpeningClosingBalances(ParentModel):
+    school_id = models.UUIDField(max_length=255, blank=True, null=True)
+
+    balanceAfter = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
+    financial_year = models.ForeignKey(FinancialYear, default=None, null=True, on_delete=models.CASCADE)
+
+    opening_cash_at_hand = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
+    opening_cash_at_bank = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
+    opening_balance = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
+
+    closing_cash_at_hand = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
+    closing_cash_at_bank = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
+    closing_balance = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
+
+    def __str__(self):
+        return f"({self.id})"

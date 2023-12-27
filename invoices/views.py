@@ -70,7 +70,7 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
             invoiceNo = result['invoiceNo']
 
             try:
-                student = Student.objects.get(id=student_id)
+                student = Student.objects.get(id=student_id, school_id=school_id)
                 term = Term.objects.get(id=term_id)
                 year = AcademicYear.objects.get(id=year_id)
             except ObjectDoesNotExist:

@@ -185,7 +185,7 @@ class StudentSearchByAdmissionNumber(APIView, SchoolIdMixin):
             return Response({'detail': "Admission Number is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            student = Student.objects.get(admission_number=admissionNumber)
+            student = Student.objects.get(school_id = school_id, admission_number=admissionNumber)
         except ObjectDoesNotExist:
             return Response({'detail': "Student with admission number not found"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -209,7 +209,7 @@ class GetStudentsByClass(APIView, SchoolIdMixin):
             return Response({'detail': "Current Class is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            students = Student.objects.filter(current_Class=currentClass).all()
+            students = Student.objects.filter(school_id=school_id, current_Class=currentClass).all()
         except Exception as exception:
             return Response({'detail': f"{exception}"}, status=status.HTTP_400_BAD_REQUEST)
 

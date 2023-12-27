@@ -15,6 +15,7 @@ class VoteHead(ParentModel):
     is_Overpayment_Default = models.BooleanField(default=False, blank=False, null=False)
     is_Arrears_Default = models.BooleanField(default=False, blank=False, null=False)
     priority_number = models.CharField(max_length=255,  default=1)
+    ledget_folio_number_lf = models.CharField(max_length=255,  default=1)
 
     def save(self, *args, **kwargs):
         if self.is_Overpayment_Default:

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from reportss.models import BalanceTracker
+from reportss.models import BalanceTracker, OpeningClosingBalances
 
-# Register your models here.
 admin.site.register(BalanceTracker)
+admin.site.register(OpeningClosingBalances)

@@ -56,7 +56,7 @@ class BursaryCreateView(SchoolIdMixin, generics.CreateAPIView):
                 if not studentamount:
                     return Response({'detail': f"Enter amount for each student"}, status=status.HTTP_400_BAD_REQUEST)
 
-                groupStudents = Student.objects.filter(group = schoolgroup)
+                groupStudents = Student.objects.filter(group = schoolgroup, school_id=school_id)
                 for value in groupStudents:
                     item = {'amount': studentamount, 'student': value.id}
                     items_data.append(item)
