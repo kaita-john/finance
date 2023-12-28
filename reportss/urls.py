@@ -18,8 +18,8 @@ urlpatterns = [
     path('financial/cash-book', CashBookView.as_view(), name="income-summary"),
     path('financial/fee-register', FeeRegisterView.as_view(), name="income-summary"),
 
-    # path('financial/trial-balance', TrialBalanceView.as_view(), name="income-summary"),
-    # path('financial/ledger', LedgerView.as_view(), name="income-summary"),
+    path('financial/ledger', LedgerView.as_view(), name="income-summary"),
+    path('financial/trial-balance', TrialBalanceView.as_view(), name="income-summary"),
 
 ]
 

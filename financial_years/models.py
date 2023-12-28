@@ -36,9 +36,6 @@ class FinancialYear(ParentModel):
 
             month_info_list.append(month_info)
 
-            print(month_info_list)
-            print("\n")
-
         return month_info_list
 
 
