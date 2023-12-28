@@ -633,14 +633,9 @@ class ReceivedChequesView(SchoolIdMixin, generics.GenericAPIView):
             if not school_id:
                 return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
-            # paymentMethod = request.GET.get('paymentmethod')
-            #
-            # if not paymentMethod:
-            #     return Response({'detail': f"Payment Method required"}, status=status.HTTP_400_BAD_REQUEST)
-
             querysetCollections = Collection.objects.filter(
                 school_id=school_id,
-                receipt__payment_method__is_bank=True
+                receipt__payment_method__is_cheque=True
             )
 
             chequeCollectionList = []

@@ -12,22 +12,13 @@ from .models import PaymentMethod
 from .serializers import PaymentMethodSerializer
 
 
-class PaymentMethodCreateView(SchoolIdMixin, generics.CreateAPIView):
+class PaymentMethodCreateView(generics.CreateAPIView):
     serializer_class = PaymentMethodSerializer
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        school_id = self.check_school_id(self.request)
-        if not school_id:
-            return JsonResponse({'detail': 'Invalid school in token'}, status=401)
-
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            try:
-                theSchool = School.objects.get(id=school_id)
-            except:
-                return Response({'detail': 'School does not exist'}, status=status.HTTP_201_CREATED)
-            serializer.validated_data['school'] = theSchool
             self.perform_create(serializer)
             return Response({'detail': 'PaymentMethod created successfully'}, status=status.HTTP_201_CREATED)
         else:
@@ -35,15 +26,12 @@ class PaymentMethodCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class PaymentMethodListView(SchoolIdMixin, generics.ListAPIView):
+class PaymentMethodListView(generics.ListAPIView):
     serializer_class = PaymentMethodSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        school = self.check_school_id(self.request)
-        if not school:
-            return PaymentMethod.objects.none()
-        queryset = PaymentMethod.objects.filter(school__id =school)
+        queryset = PaymentMethod.objects.all()
         return queryset
 
     def list(self, request, *args, **kwargs):
