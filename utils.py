@@ -260,7 +260,7 @@ def close_financial_year(current_financial_year,new_financial_year, school_id):
                 closing_cash_at_hand=Decimal(0.0),
                 closing_cash_at_bank=Decimal(0.0),
                 closing_balance=Decimal(0.0),
-                balanceAfter = Decimal(0.0)
+                school_id=school_id
             )
             new_year.save()
 

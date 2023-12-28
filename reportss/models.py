@@ -116,8 +116,6 @@ def trackBalance(student, school_id, amount, operation, term, year):
 
 class OpeningClosingBalances(ParentModel):
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
-
-    balanceAfter = models.DecimalField(max_digits=15, default=0.00, null=True, decimal_places=2)
     financial_year = models.ForeignKey(FinancialYear, default=None, null=True, on_delete=models.CASCADE)
 
     opening_cash_at_hand = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
