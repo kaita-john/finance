@@ -3,6 +3,7 @@ from django.db.models import Sum
 
 from appcollections.models import Collection
 from payment_in_kinds.models import PaymentInKind
+from voucher_items.models import VoucherItem
 
 
 def getBalance(account_type, month, financial_year, school_id):
@@ -25,13 +26,19 @@ def getBalance(account_type, month, financial_year, school_id):
         receipt__bank_account__account_type=account_type,
     )
 
+    expensesQuerySet = VoucherItem.objects.filter(
+        school_id=school_id,
+        voucher__paymentDate__month=month,
+        voucher__financial_year=financial_year,
+        voucher__bank_account__account_type=account_type,
+    )
+
     collectionAmount = collectionQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
     pikAmount = pikQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
     total_amount = Decimal(collectionAmount) + Decimal(pikAmount)
 
     collectionQuerySet = list(collectionQuerySet)
     pikQuerySet = list(pikQuerySet)
-
 
     cash_at_hand = Decimal(0.0)
     cash_at_bank = Decimal(0.0)
@@ -45,6 +52,11 @@ def getBalance(account_type, month, financial_year, school_id):
     for pik in pikQuerySet:
         cash_at_hand += Decimal(pik.amoount)
 
+    for voucheritem in expensesQuerySet:
+        if voucheritem.receipt.payment_Method.is_cash == True:
+            cash_at_hand -= Decimal(voucheritem.amount)
+        elif voucheritem.receipt.payment_Method.is_bank == True:
+            cash_at_bank -= Decimal(voucheritem.amount)
 
     return {
         "total": total_amount,

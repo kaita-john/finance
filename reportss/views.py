@@ -719,16 +719,16 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                 querySetExpenses = querySetExpenses.filter(school_id=school_id, financial_year__id=financialyear)
 
             if month:
-                querySetReceipts = querySetReceipts.filter(school_id=school_id, dateofcreation__month=month)
-                querysetPIK = querysetPIK.filter(school_id=school_id, dateofcreation__month=month)
-                querySetExpenses = querySetExpenses.filter(school_id=school_id, dateofcreation__month=month)
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, transaction_date__month=month)
+                querysetPIK = querysetPIK.filter(school_id=school_id, receipt_date__month=month)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id, paymentDate__month=month)
 
             # if not bankaccount or not accounttype:
             #     return Response({'detail': f"Both orderby and accounttype values must be selected"}, status=status.HTTP_400_BAD_REQUEST)
 
             listofdateofcreations = []
-            listofdateofcreations.extend(querySetReceipts.values_list('dateofcreation', flat=True))
-            listofdateofcreations.extend(querysetPIK.values_list('dateofcreation', flat=True))
+            listofdateofcreations.extend(querySetReceipts.values_list('transaction_date', flat=True))
+            listofdateofcreations.extend(querysetPIK.values_list('receipt_date', flat=True))
             listofdateofcreations = list(set(listofdateofcreations))
             listofdateofcreations = list(listofdateofcreations)
 
@@ -751,7 +751,7 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                 inkind = Decimal("0.0")
                 voteheadDictionary = {}
                 for receipt in querySetReceipts:
-                    if receipt.dateofcreation == dateinstance:
+                    if receipt.transaction_date == dateinstance:
                         method = "NONE"
                         if receipt.payment_method:
                             method = "CASH" if receipt.payment_method.is_cash else "BANK" if receipt.payment_method.is_bank else "NONE"
@@ -786,7 +786,7 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
 
 
                 for pikreceipt in querysetPIK:
-                    if pikreceipt.dateofcreation == dateinstance:
+                    if pikreceipt.receipt_date == dateinstance:
                         inkind += Decimal(pikreceipt.totalAmount)
                         counter = pikreceipt.counter
                         amount = Decimal(pikreceipt.totalAmount)
@@ -829,7 +829,7 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
 
             #EXPENSES OR VOUCHERS
             listofVoucherDateCreations = []
-            listofVoucherDateCreations.extend(querySetExpenses.values_list('dateofcreation', flat=True))
+            listofVoucherDateCreations.extend(querySetExpenses.values_list('paymentDate', flat=True))
             listofVoucherDateCreations = list(set(listofVoucherDateCreations))
             listofVoucherDateCreations = list(listofVoucherDateCreations)
 
@@ -843,7 +843,7 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                 bank = Decimal("0.0")
                 voteheadDictionary = {}
                 for voucher in querySetExpenses:
-                    if voucher.dateofcreation == dateinstance:
+                    if voucher.paymentDate == dateinstance:
                         method = "CASH" if voucher.payment_Method.is_cash else "BANK" if voucher.payment_Method.is_bank else "NONE"
                         if method == "CASH":
                             cash += Decimal(voucher.totalAmount)
@@ -1001,8 +1001,8 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
 
 
                 listofdateofcreations = []
-                listofdateofcreations.extend(querySetReceipts.values_list('dateofcreation', flat=True))
-                listofdateofcreations.extend(querysetPIK.values_list('dateofcreation', flat=True))
+                listofdateofcreations.extend(querySetReceipts.values_list('transaction_date', flat=True))
+                listofdateofcreations.extend(querysetPIK.values_list('receipt_date', flat=True))
                 listofdateofcreations = list(set(listofdateofcreations))
                 listofdateofcreations = list(listofdateofcreations)
 
@@ -1018,7 +1018,7 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
 
                     for receipt in querySetReceipts:
                         voteheadDictionary = {}
-                        if receipt.dateofcreation == dateinstance:
+                        if receipt.transaction_date == dateinstance:
                             receipt_number = receipt.receipt_No
                             balance_before = "0.0"
                             amount_paid = "0.0"
@@ -1054,7 +1054,7 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
 
                     for pik in querysetPIK:
                         voteheadDictionary = {}
-                        if pik.dateofcreation == dateinstance:
+                        if pik.receipt_date == dateinstance:
                             receipt_number = pik.receipt_No
                             balance_before = "0.0"
                             amount_paid = "0.0"
