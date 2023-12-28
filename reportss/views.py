@@ -749,7 +749,7 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                     if receipt.transaction_date == dateinstance:
                         method = "NONE"
                         if receipt.payment_method:
-                            method = "CASH" if receipt.payment_method.is_cash else "BANK" if receipt.payment_method.is_bank else "NONE"
+                            method = "BANK" if receipt.payment_method.is_cheque else "CASH" if receipt.payment_method.is_cash else "BANK" if receipt.payment_method.is_bank else "NONE"
                         if method == "CASH":
                             cash += Decimal(receipt.totalAmount)
                         if method == "BANK":
@@ -839,11 +839,13 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                 voteheadDictionary = {}
                 for voucher in querySetExpenses:
                     if voucher.paymentDate == dateinstance:
-                        method = "CASH" if voucher.payment_Method.is_cash else "BANK" if voucher.payment_Method.is_bank else "NONE"
+                        method = "BANK" if voucher.payment_method.is_cheque else "CASH" if voucher.payment_Method.is_cash else "BANK" if voucher.payment_Method.is_bank else "NONE"
                         if method == "CASH":
                             cash += Decimal(voucher.totalAmount)
                         if method == "BANK":
                             bank += Decimal(voucher.totalAmount)
+                        if method == "NONE":
+                            cash += Decimal(voucher.totalAmount)
 
                         counter = voucher.counter
                         amount = Decimal(voucher.totalAmount)
@@ -1338,7 +1340,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
                     receipt = collection.receipt
                     method = "NONE"
                     if receipt.payment_method:
-                        method = "CASH" if receipt.payment_method.is_cash else "BANK" if receipt.payment_method.is_bank else "NONE"
+                        method = "BANK" if receipt.payment_method.is_cheque else "CASH" if receipt.payment_method.is_cash else "BANK" if receipt.payment_method.is_bank else "NONE"
                     if method == "CASH":
                         total_cash += Decimal(collection.amount)
                     if method == "BANK":
