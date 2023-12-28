@@ -252,10 +252,12 @@ class StudentTransactionsPrint(SchoolIdMixin, generics.RetrieveAPIView):
 
             querysetReceipts = Receipt.objects.filter(
                 student_id=student.id,
-                school_id=school_id
+                school_id=school_id,
+                is_reversed=False,
             )
 
             querysetPIKReceipts = PIKReceipt.objects.filter(
+                is_posted=True,
                 student_id=student.id,
                 school_id=school_id
             )
@@ -401,6 +403,7 @@ class StudentCollectionListView(SchoolIdMixin, generics.RetrieveAPIView):
             academicYear = request.GET.get('academicYear')
 
             queryset = Receipt.objects.filter(
+                is_reversed = False,
                 student_id=student.id,
                 school_id=school_id
             )
@@ -443,10 +446,12 @@ class IncomeSummaryView(SchoolIdMixin, generics.GenericAPIView):
             enddate = request.GET.get('enddate')
 
             querysetCollections = Collection.objects.filter(
+                receipt__is_reversed = False,
                 school_id=school_id
             )
 
             querysetPIK = PaymentInKind.objects.filter(
+                receipt__is_posted = True,
                 school_id=school_id
             )
 
@@ -546,6 +551,7 @@ class ExpenseSummaryView(SchoolIdMixin, generics.GenericAPIView):
             enddate = request.GET.get('enddate')
 
             querysetExpenses = Voucher.objects.filter(
+                is_deleted=False,
                 school_id=school_id
             )
 
@@ -634,6 +640,7 @@ class ReceivedChequesView(SchoolIdMixin, generics.GenericAPIView):
                 return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
             querysetCollections = Collection.objects.filter(
+                receipt__is_reversed=False,
                 school_id=school_id,
                 receipt__payment_method__is_cheque=True
             )
@@ -692,9 +699,9 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
             financialyear = request.GET.get('financialyear')
             month = request.GET.get('month')
 
-            querySetReceipts = Receipt.objects.filter(school_id=school_id)
-            querysetPIK = PIKReceipt.objects.filter(school_id=school_id)
-            querySetExpenses = Voucher.objects.filter(school_id=school_id)
+            querySetReceipts = Receipt.objects.filter(school_id=school_id, is_reversed = False)
+            querysetPIK = PIKReceipt.objects.filter(school_id=school_id, is_posted=True)
+            querySetExpenses = Voucher.objects.filter(school_id=school_id, is_deleted=False)
 
             if bankaccount:
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, bank_account__id = bankaccount)
@@ -985,8 +992,8 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
                 student_class = student.current_Class
                 student_stream = student.current_Stream
 
-                querySetReceipts = Receipt.objects.filter(school_id=school_id, student=student)
-                querysetPIK = PIKReceipt.objects.filter(school_id=school_id, student=student)
+                querySetReceipts = Receipt.objects.filter(school_id=school_id, student=student, is_reversed = False)
+                querysetPIK = PIKReceipt.objects.filter(school_id=school_id, student=student, is_posted=True)
 
                 if financialyear:
                     querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year__id=financialyear)
@@ -1116,9 +1123,9 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
 def getMonthly_Balances(month, school_Id):
     themonth = month - 1
 
-    collectionsAmount = Collection.objects.filter(transaction_date__month=themonth, school_id = school_Id).aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
-    piksAmount = PaymentInKind.objects.filter(transaction_date__month=themonth,school_id = school_Id).aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
-    expensesAmount = Voucher.objects.filter(paymentDate__month=themonth,school_id = school_Id).aggregate(Sum('totalAmount'))['totalAmount__sum'] or Decimal(0.0)
+    collectionsAmount = Collection.objects.filter(receipt__is_reversed=False, transaction_date__month=themonth, school_id = school_Id).aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
+    piksAmount = PaymentInKind.objects.filter(receipt__is_posted = True, transaction_date__month=themonth,school_id = school_Id).aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
+    expensesAmount = Voucher.objects.filter(is_deleted=False, paymentDate__month=themonth,school_id = school_Id).aggregate(Sum('totalAmount'))['totalAmount__sum'] or Decimal(0.0)
 
     totalCollections = Decimal(collectionsAmount) + Decimal(piksAmount)
     totalExpenses = Decimal(expensesAmount)
@@ -1153,16 +1160,19 @@ class LedgerView(SchoolIdMixin, generics.GenericAPIView):
         check_if_object_exists(FinancialYear, financialyear)
 
         collectionQuerySet = Collection.objects.filter(
+            receipt__is_reversed=False,
             school_id=school_id,
             receipt__financial_year__id=financialyear
         )
 
         pikQuerySet = PaymentInKind.objects.filter(
+            receipt__is_posted=True,
             school_id=school_id,
             receipt__financial_year__id=financialyear
         )
 
         voucherQuerySet = Voucher.objects.filter(
+            is_deleted=False,
             school_id=school_id,
             financial_year__id=financialyear
         )
@@ -1303,6 +1313,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
         for votehead in votehead_list:
 
             piks = PaymentInKind.objects.filter(
+                receipt__is_posted=True,
                 school_id=school_id,
                 receipt__financial_year=financialyear,
                 transaction_date__month__lte=month
@@ -1320,6 +1331,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
                     collectionvoteheadDictionary[f"{pik.votehead.vote_head_name}"]["amount"] += pik.amount
 
             collections = Collection.objects.filter(
+                receipt__is_reversed=False,
                 school_id=school_id,
                 receipt__financial_year=financialyear,
                 transaction_date__month__lte=month
@@ -1351,6 +1363,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
 
 
             expenses = VoucherItem.objects.filter(
+                voucher__is_deleted=False,
                 school_id=school_id,
                 voucher__financial_year=financialyear,
                 voucher__paymentDate__month__lte=month

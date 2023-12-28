@@ -71,6 +71,18 @@ class StudentListView(SchoolIdMixin, generics.ListAPIView):
         queryset = self.get_queryset()
         if not queryset.exists():
             return JsonResponse({}, status=200)
+
+        current_class = request.GET.get('current_class')
+        current_stream = request.GET.get('current_stream')
+        student_id = request.GET.get('student_id')
+
+        if current_class:
+            queryset = queryset.filter(current_Class = current_class)
+        if current_stream:
+            queryset = queryset.filter(current_Stream = current_stream)
+        if student_id:
+            queryset = queryset.filter(id = student_id)
+
         serializer = self.get_serializer(queryset, many=True)
         return JsonResponse(serializer.data, safe=False)
 

@@ -6,8 +6,9 @@ from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from utils import SchoolIdMixin
+from utils import SchoolIdMixin, IsAdminOrSuperUser, close_financial_year
 from financial_years.models import FinancialYear
 from .serializers import FinancialYearSerializer
 
@@ -90,3 +91,27 @@ class FinancialYearDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIVi
         self.perform_destroy(instance)
         return Response({'detail': 'Record deleted successfully'}, status=status.HTTP_200_OK)
 
+
+class CloseFinancialYearView(APIView, SchoolIdMixin):
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+
+    def get(self, request):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        current_financial_year = request.GET.get('current_financial_year')
+        new_financial_year = request.GET.get('new_financial_year')
+
+        if not current_financial_year or not new_financial_year:
+            return Response({'detail': "Both current and new financial years are required"},status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            school_id = uuid.UUID(school_id)
+            current_financial_year = FinancialYear.objects.get(id = current_financial_year)
+            new_financial_year = FinancialYear.objects.get(id = new_financial_year)
+            close_financial_year(current_financial_year, new_financial_year, school_id)
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'detail': "Year Closed Successfully"}, status=status.HTTP_200_OK)

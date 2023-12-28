@@ -5,9 +5,10 @@ import uuid
 from datetime import datetime
 
 import jwt
+from _decimal import Decimal
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
+from django.db import models, transaction
 from rest_framework import permissions, status
 from rest_framework.authentication import get_authorization_header
 from rest_framework.exceptions import ValidationError
@@ -15,10 +16,14 @@ from rest_framework.response import Response
 
 from academic_year.models import AcademicYear
 from account_types.models import AccountType
+from appcollections.models import Collection
 from currencies.models import Currency
 from finance.settings import SIMPLE_JWT
+from payment_in_kinds.models import PaymentInKind
+from reportss.models import OpeningClosingBalances
 from school.models import School
 from term.models import Term
+from voucher_items.models import VoucherItem
 
 
 class BaseUserModel(models.Model):
@@ -189,6 +194,77 @@ def defaultAccountType():
 def check_if_object_exists(Model, obj_id):
     try:
         instance = Model.objects.get(id=obj_id)
-        return True  # Object with the given ID exists
+        return True
     except ObjectDoesNotExist:
         return Response({'detail': f"{obj_id} is not a valid uuid"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+def close_financial_year(current_financial_year,new_financial_year, school_id):
+
+    collectionQuerySet = Collection.objects.filter(
+        school_id=school_id,
+        receipt__financial_year=current_financial_year,
+        receipt__is_reversed=False
+    )
+
+    pikQuerySet = PaymentInKind.objects.filter(
+        receipt__is_posted=True,
+        school_id=school_id,
+        receipt__financial_year=current_financial_year,
+    )
+
+    expensesQuerySet = VoucherItem.objects.filter(
+        voucher__is_deleted=False,
+        school_id=school_id,
+        voucher__financial_year=current_financial_year,
+    )
+
+    closing_cash_at_hand = Decimal(0.0)
+    closing_cash_at_bank = Decimal(0.0)
+
+    for collection in collectionQuerySet:
+        if collection.receipt.payment_method.is_cash == True:
+            closing_cash_at_hand += Decimal(collection.amount)
+        elif collection.receipt.payment_method.is_bank == True:
+            closing_cash_at_bank += Decimal(collection.amount)
+        elif collection.receipt.payment_method.is_cheque == True:
+            closing_cash_at_bank += Decimal(collection.amount)
+
+    for pik in pikQuerySet:
+        closing_cash_at_hand += Decimal(pik.amoount)
+
+    for voucheritem in expensesQuerySet:
+        if voucheritem.receipt.payment_Method.is_cash == True:
+            closing_cash_at_hand -= Decimal(voucheritem.amount)
+        elif voucheritem.receipt.payment_Method.is_bank == True:
+            closing_cash_at_bank -= Decimal(voucheritem.amount)
+        elif voucheritem.receipt.payment_method.is_cheque == True:
+            closing_cash_at_bank -= Decimal(voucheritem.amount)
+
+    try:
+        with transaction.atomic():
+            openingClosingBalances_Instance = OpeningClosingBalances.objects.get(financial_year=current_financial_year)
+            openingClosingBalances_Instance.closing_cash_at_hand = closing_cash_at_hand
+            openingClosingBalances_Instance.closing_cash_at_bank = closing_cash_at_bank
+            openingClosingBalances_Instance.closing_balance = Decimal(closing_cash_at_hand) + Decimal(closing_cash_at_bank)
+            openingClosingBalances_Instance.save()
+
+            new_year = OpeningClosingBalances.objects.create(
+                financial_year = new_financial_year,
+                opening_cash_at_hand=closing_cash_at_hand,
+                opening_cash_at_bank=closing_cash_at_bank,
+                opening_balance=Decimal(closing_cash_at_hand) + Decimal(closing_cash_at_bank),
+                closing_cash_at_hand=Decimal(0.0),
+                closing_cash_at_bank=Decimal(0.0),
+                closing_balance=Decimal(0.0),
+                balanceAfter = Decimal(0.0)
+            )
+            new_year.save()
+
+    except Exception as exception:
+        return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+
+

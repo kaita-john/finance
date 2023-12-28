@@ -17,9 +17,11 @@ def getBalance(account_type, month, financial_year, school_id):
         receipt__transaction_date__month=month,
         receipt__financial_year=financial_year,
         receipt__account_type=account_type,
+        receipt__is_reversed=False
     )
 
     pikQuerySet = PaymentInKind.objects.filter(
+        receipt__is_posted=True,
         school_id=school_id,
         transaction_date__month=month,
         receipt__financial_year=financial_year,
@@ -27,6 +29,7 @@ def getBalance(account_type, month, financial_year, school_id):
     )
 
     expensesQuerySet = VoucherItem.objects.filter(
+        voucher__is_deleted=False,
         school_id=school_id,
         voucher__paymentDate__month=month,
         voucher__financial_year=financial_year,
@@ -48,6 +51,8 @@ def getBalance(account_type, month, financial_year, school_id):
             cash_at_hand += Decimal(collection.amount)
         elif collection.receipt.payment_method.is_bank == True:
             cash_at_bank += Decimal(collection.amount)
+        elif collection.receipt.payment_method.is_cheque == True:
+            cash_at_bank += Decimal(collection.amount)
 
     for pik in pikQuerySet:
         cash_at_hand += Decimal(pik.amoount)
@@ -56,6 +61,8 @@ def getBalance(account_type, month, financial_year, school_id):
         if voucheritem.receipt.payment_Method.is_cash == True:
             cash_at_hand -= Decimal(voucheritem.amount)
         elif voucheritem.receipt.payment_Method.is_bank == True:
+            cash_at_bank -= Decimal(voucheritem.amount)
+        elif voucheritem.receipt.payment_method.is_cheque == True:
             cash_at_bank -= Decimal(voucheritem.amount)
 
     return {
