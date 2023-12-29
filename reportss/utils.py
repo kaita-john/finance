@@ -57,11 +57,11 @@ def getBalance(account_type, month, financial_year, school_id):
         cash_at_hand += Decimal(pik.amoount)
 
     for voucheritem in expensesQuerySet:
-        if voucheritem.receipt.payment_Method.is_cash == True:
+        if voucheritem.voucher.payment_Method.is_cash == True:
             cash_at_hand -= Decimal(voucheritem.amount)
-        elif voucheritem.receipt.payment_Method.is_bank == True:
+        elif voucheritem.voucher.payment_Method.is_bank == True:
             cash_at_bank -= Decimal(voucheritem.amount)
-        elif voucheritem.receipt.payment_method.is_cheque == True:
+        elif voucheritem.voucher.payment_method.is_cheque == True:
             cash_at_bank -= Decimal(voucheritem.amount)
 
     return {
