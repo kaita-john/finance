@@ -78,7 +78,7 @@ class AppUserSerializer(serializers.ModelSerializer):
         roles_data = validated_data.pop('roles', [])
         roles = FetchRoleSerializer(many=False).to_internal_value(roles_data)
 
-        name = validated_data.pop('first_name', "User")
+        name = validated_data.get('first_name', "User")
         sender_email = "kaitaformal@gmail.com"
         sender_password ="wwmx vsyr tvwp sfac"
         receiver_email = validated_data.get('email')
@@ -97,6 +97,8 @@ class AppUserSerializer(serializers.ModelSerializer):
                 sendMail(sender_email, sender_password, receiver_email, subject, usermessage)
             validated_data['password'] = password
             mypass = password
+
+        print(f"Validated_data is {validated_data}")
 
         user = AppUser.objects.create(**validated_data)
         user.set_password(validated_data['password'])
@@ -128,7 +130,6 @@ class UpdateAppUserSerializer(serializers.ModelSerializer):
 
         instance.phone = validated_data.get('phone', instance.phone)
         instance.first_name = validated_data.get('first_name', instance.first_name)
-        instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.phone = validated_data.get('phone', instance.phone)
         instance.is_admin = validated_data.get('is_admin', instance.is_admin)
