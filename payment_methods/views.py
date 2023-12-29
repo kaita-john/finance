@@ -42,7 +42,7 @@ class PaymentMethodListView(generics.ListAPIView):
         return JsonResponse(serializer.data, safe=False)
 
 
-class PaymentMethodDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class PaymentMethodDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = PaymentMethod.objects.all()
     serializer_class = PaymentMethodSerializer
     permission_classes = [IsAuthenticated]
