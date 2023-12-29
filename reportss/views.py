@@ -848,14 +848,14 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                 if voucher.voucher.paymentDate == dateinstance:
                     method = "BANK" if voucher.voucher.payment_Method.is_cheque else "CASH" if voucher.voucher.payment_Method.is_cash else "BANK" if voucher.voucher.payment_Method.is_bank else "NONE"
                     if method == "CASH":
-                        cash += Decimal(voucher.totalAmount)
+                        cash += Decimal(voucher.amount)
                     if method == "BANK":
-                        bank += Decimal(voucher.totalAmount)
+                        bank += Decimal(voucher.amount)
                     if method == "NONE":
-                        cash += Decimal(voucher.totalAmount)
+                        cash += Decimal(voucher.amount)
 
                     counter = voucher.counter
-                    amount = Decimal(voucher.totalAmount)
+                    amount = Decimal(voucher.amount)
                     receipt_range.append(counter)
                     total_amount += amount
                     if "total_amount" not in universal:
@@ -864,14 +864,14 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                         universal[f"total_amount"] += Decimal(amount)
 
                     if voucher.expenseCategory.name not in voteheadDictionary:
-                        voteheadDictionary[f"{voucher.expenseCategory.name}"] = Decimal(voucher.totalAmount)
+                        voteheadDictionary[f"{voucher.expenseCategory.name}"] = Decimal(voucher.amount)
                     else:
-                        voteheadDictionary[f"{voucher.expenseCategory.name}"] += Decimal(voucher.totalAmount)
+                        voteheadDictionary[f"{voucher.expenseCategory.name}"] += Decimal(voucher.amount)
 
                     if voucher.expenseCategory.name not in universal:
-                        universal[f"{voucher.expenseCategory.name}"] = Decimal(voucher.totalAmount)
+                        universal[f"{voucher.expenseCategory.name}"] = Decimal(voucher.amount)
                     else:
-                        universal[f"{voucher.expenseCategory.name}"] += Decimal(voucher.totalAmount)
+                        universal[f"{voucher.expenseCategory.name}"] += Decimal(voucher.amount)
 
 
 
