@@ -706,12 +706,12 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
         if bankaccount and bankaccount != "":
             querySetReceipts = querySetReceipts.filter(school_id=school_id, bank_account__id = bankaccount)
             querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__id = bankaccount)
-            querySetExpenses = querySetExpenses.filter(school_id=school_id, bank_account__id = bankaccount)
+            querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__bank_account__id = bankaccount)
 
         if accounttype and accounttype != "":
             querySetReceipts = querySetReceipts.filter(school_id=school_id, account_type__id=accounttype)
             querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__account_type__id=accounttype)
-            querySetExpenses = querySetExpenses.filter(school_id=school_id, bank_account__account_type__id=accounttype)
+            querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__bank_account__account_type__id=accounttype)
         else:
             return Response({'detail': f"Account Type is required"}, status=status.HTTP_400_BAD_REQUEST)
 
