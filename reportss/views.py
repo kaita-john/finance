@@ -701,7 +701,7 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
 
         querySetReceipts = Receipt.objects.filter(school_id=school_id, is_reversed = False)
         querysetPIK = PIKReceipt.objects.filter(school_id=school_id, is_posted=True)
-        querySetExpenses = Voucher.objects.filter(school_id=school_id, is_deleted=False)
+        querySetExpenses = VoucherItem.objects.filter(school_id=school_id, voucher__is_deleted=False)
 
         if bankaccount and bankaccount != "":
             querySetReceipts = querySetReceipts.filter(school_id=school_id, bank_account__id = bankaccount)
@@ -831,7 +831,7 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
 
         #EXPENSES OR VOUCHERS
         listofVoucherDateCreations = []
-        listofVoucherDateCreations.extend(querySetExpenses.values_list('paymentDate', flat=True))
+        listofVoucherDateCreations.extend(querySetExpenses.values_list('voucher__paymentDate', flat=True))
         listofVoucherDateCreations = list(set(listofVoucherDateCreations))
         listofVoucherDateCreations = list(listofVoucherDateCreations)
 
