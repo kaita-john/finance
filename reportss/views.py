@@ -845,7 +845,7 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
             bank = Decimal("0.0")
             voteheadDictionary = {}
             for voucher in querySetExpenses:
-                if voucher.paymentDate == dateinstance:
+                if voucher.voucher.paymentDate == dateinstance:
                     method = "BANK" if voucher.payment_method.is_cheque else "CASH" if voucher.payment_Method.is_cash else "BANK" if voucher.payment_Method.is_bank else "NONE"
                     if method == "CASH":
                         cash += Decimal(voucher.totalAmount)
