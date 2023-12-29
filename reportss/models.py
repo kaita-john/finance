@@ -1,6 +1,6 @@
 from _decimal import Decimal
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, DO_NOTHING
 from django.db.models.functions import Coalesce
 
 from classes.models import Classes
@@ -17,7 +17,7 @@ from django.db.models import Sum, Value, DecimalField
 class ReportStudentBalance(ParentModel):
     admission_number = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=255)
-    current_Class = models.ForeignKey(Classes, default=None, null=True, on_delete=models.CASCADE, related_name="reportStudentBalance")
+    current_Class = models.ForeignKey(Classes, default=None, null=True, on_delete=DO_NOTHING, related_name="reportStudentBalance")
     boarding_status = models.CharField(max_length=255, default="BOARDING")
     expected = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     paid = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
@@ -47,8 +47,8 @@ class ReceivedCheque(ParentModel):
     transactionDate = models.CharField(max_length=20, null=True, blank=True)
     dateofcreation = models.CharField(max_length=20, null=True, blank=True)
     chequeNo = models.CharField(max_length=20, null=True, blank=True)
-    student = models.ForeignKey(Student, default=None, null=True, on_delete=models.CASCADE)
-    currency = models.ForeignKey(Currency, default=None, null=True, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, default=None, null=True, on_delete=DO_NOTHING)
+    currency = models.ForeignKey(Currency, default=None, null=True, on_delete=DO_NOTHING)
     amount = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
 
 
@@ -60,7 +60,7 @@ class BalanceTracker(ParentModel):
     balanceBefore = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     amountPaid = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     balanceAfter = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
-    student = models.ForeignKey(Student, default=None, null=True, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, default=None, null=True, on_delete=DO_NOTHING)
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -116,7 +116,7 @@ def trackBalance(student, school_id, amount, operation, term, year):
 
 class OpeningClosingBalances(ParentModel):
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
-    financial_year = models.ForeignKey(FinancialYear, default=None, null=True, on_delete=models.CASCADE)
+    financial_year = models.ForeignKey(FinancialYear, default=None, null=True, on_delete=DO_NOTHING)
 
     opening_cash_at_hand = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     opening_cash_at_bank = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)

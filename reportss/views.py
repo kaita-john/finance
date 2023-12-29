@@ -703,24 +703,24 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
             querysetPIK = PIKReceipt.objects.filter(school_id=school_id, is_posted=True)
             querySetExpenses = Voucher.objects.filter(school_id=school_id, is_deleted=False)
 
-            if bankaccount:
+            if bankaccount and bankaccount != "":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, bank_account__id = bankaccount)
                 querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__id = bankaccount)
                 querySetExpenses = querySetExpenses.filter(school_id=school_id, bank_account__id = bankaccount)
 
-            if accounttype:
+            if accounttype and accounttype != "":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, account_type__id=accounttype)
                 querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__account_type__id=accounttype)
                 querySetExpenses = querySetExpenses.filter(school_id=school_id, bank_account__account_type__id=accounttype)
             else:
                 return Response({'detail': f"Account Type is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-            if financialyear:
+            if financialyear and financialyear != "":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year__id=financialyear)
                 querysetPIK = querysetPIK.filter(school_id=school_id, financial_year__id=financialyear)
                 querySetExpenses = querySetExpenses.filter(school_id=school_id, financial_year__id=financialyear)
 
-            if month:
+            if month and month != "":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, transaction_date__month=month)
                 querysetPIK = querysetPIK.filter(school_id=school_id, receipt_date__month=month)
                 querySetExpenses = querySetExpenses.filter(school_id=school_id, paymentDate__month=month)
@@ -1153,7 +1153,7 @@ class LedgerView(SchoolIdMixin, generics.GenericAPIView):
         financialyear = request.GET.get('financialyear')
         votehead = request.GET.get('votehead')
 
-        if not financialyear or not votehead:
+        if not financialyear or financialyear == "" or not votehead:
             return Response({'detail': f"Both financial year and votehead are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         check_if_object_exists(VoteHead, votehead)
@@ -1285,7 +1285,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
         accounttype = request.GET.get('accounttype')
         month = request.GET.get('month')
 
-        if not financialyear and not accounttype and not month:
+        if not financialyear or financialyear=="" and not accounttype or accounttype == "" and not month or month == "":
             return Response({'detail': f"Account Type, Financial Year and Month are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:

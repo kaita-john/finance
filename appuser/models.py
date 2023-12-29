@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin, Group
 from django.db import models
+from django.db.models import DO_NOTHING
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
@@ -35,7 +36,7 @@ class AppUser(BaseUserModel, AbstractBaseUser, PermissionsMixin):
     password = models.CharField(max_length=255, blank=True, null=True)
     confirmpassword = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=255, blank=True, null=True)
-    school_id = models.ForeignKey(School, on_delete=models.CASCADE, related_name="school_id", null=True)
+    school_id = models.ForeignKey(School, on_delete=DO_NOTHING, related_name="school_id", null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
     roles = models.ManyToManyField(Group, related_name='users', blank=True)
 

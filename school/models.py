@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django.db.models import DO_NOTHING
 
 from school_categories.models import SchoolCategory
 from school_types.models import SchoolType
@@ -37,8 +38,8 @@ class School(models.Model):
     schoolgender = models.CharField(max_length=255, default="MIXED")
     boardingstatus = models.CharField(max_length=255, default="MIXED")
 
-    school_type = models.ForeignKey(SchoolType, on_delete=models.CASCADE, related_name="schools", null=True)
-    school_category = models.ForeignKey(SchoolCategory, on_delete=models.CASCADE, related_name="schools", null=True)
+    school_type = models.ForeignKey(SchoolType, on_delete=DO_NOTHING, related_name="schools", null=True)
+    school_category = models.ForeignKey(SchoolCategory, on_delete=DO_NOTHING, related_name="schools", null=True)
 
     def __str__(self):
         return f"{self.name} - {self.id}"

@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import DO_NOTHING
 from rest_framework.exceptions import ValidationError
 
 from account_types.models import AccountType
@@ -10,7 +11,7 @@ class VoteHead(ParentModel):
     vote_head_name = models.CharField(max_length=255)
     folio_number = models.CharField(max_length=255, null=True, default=1)
     exempted = models.BooleanField(default=False, blank=False, null=False)
-    account_type = models.ForeignKey(AccountType, on_delete=models.CASCADE, related_name='voteheads')
+    account_type = models.ForeignKey(AccountType, on_delete=DO_NOTHING, related_name='voteheads')
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
     is_Overpayment_Default = models.BooleanField(default=False, blank=False, null=False)
     is_Arrears_Default = models.BooleanField(default=False, blank=False, null=False)

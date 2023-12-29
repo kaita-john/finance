@@ -9,9 +9,9 @@ from models import ParentModel
 
 # models.py
 class Vehicle(ParentModel):
-    academic_year = models.ForeignKey(AcademicYear, default=None, on_delete=models.CASCADE, related_name="fee_structures")
-    classes = models.ForeignKey(Classes, default=None, on_delete=models.CASCADE, related_name="fee_structures")
-    term = models.ForeignKey(Term, default=None, on_delete=models.CASCADE, related_name="fee_structures")
+    academic_year = models.ForeignKey(AcademicYear, default=None, on_delete=DO_NOTHING, related_name="fee_structures")
+    classes = models.ForeignKey(Classes, default=None, on_delete=DO_NOTHING, related_name="fee_structures")
+    term = models.ForeignKey(Term, default=None, on_delete=DO_NOTHING, related_name="fee_structures")
     instructions = models.CharField(max_length=255, blank=True, null=True)
     fee_structure_items = models.ManyToManyField(FeeStructureItem, related_name="fee_structures", blank=True)
     school_id = models.UUIDField(max_length=255, blank=True, null=True)

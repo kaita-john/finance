@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import DO_NOTHING
 
 from models import ParentModel
 from voteheads.models import VoteHead
@@ -8,7 +9,7 @@ from vouchers.models import Voucher
 # Create your models here.
 class VoucherItem(ParentModel):
     school_id = models.UUIDField(null=True, blank=True, default=None, max_length=255)
-    votehead = models.ForeignKey(VoteHead, null=True, default=None, on_delete=models.CASCADE, related_name="voucher_items")
+    votehead = models.ForeignKey(VoteHead, null=True, default=None, on_delete=DO_NOTHING, related_name="voucher_items")
     amount = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     quantity = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     itemName = models.CharField(max_length=255)
