@@ -56,19 +56,10 @@ class PaymentMethodDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise NotFound({'detail': 'Record Not Found'})
 
     def update(self, request, *args, **kwargs):
-        school_id = self.check_school_id(request)
-        if not school_id:
-            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
-
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
-            try:
-                theSchool = School.objects.get(id=school_id)
-            except:
-                return Response({'detail': 'School does not exist'}, status=status.HTTP_201_CREATED)
-            serializer.validated_data['school'] = theSchool
             self.perform_update(serializer)
             return Response({'detail': 'PaymentMethod updated successfully'}, status=status.HTTP_201_CREATED)
         else:
@@ -78,10 +69,6 @@ class PaymentMethodDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer.save()
 
     def destroy(self, request, *args, **kwargs):
-        school_id = self.check_school_id(request)
-        if not school_id:
-            return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
-
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({'detail': 'Record deleted successfully'}, status=status.HTTP_200_OK)

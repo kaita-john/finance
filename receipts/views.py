@@ -352,7 +352,7 @@ class ReceiptListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class ReceiptDetailView(generics.RetrieveUpdateDestroyAPIView):
+class ReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Receipt.objects.all()
     serializer_class = ReceiptSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -366,6 +366,10 @@ class ReceiptDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise NotFound({'detail': 'Record Not Found'})
 
     def update(self, request, *args, **kwargs):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
 
@@ -373,6 +377,7 @@ class ReceiptDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Response({'detail': "You cannot update a reversed receipt"},status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
+            serializer.validated_data['school_id'] = school_id
             self.perform_update(serializer)
             return Response({'detail': 'Receipt updated successfully'}, status=status.HTTP_201_CREATED)
         else:
