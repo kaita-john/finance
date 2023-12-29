@@ -854,7 +854,7 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                     if method == "NONE":
                         cash += Decimal(voucher.amount)
 
-                    counter = voucher.counter
+                    counter = voucher.voucher.counter
                     amount = Decimal(voucher.amount)
                     receipt_range.append(counter)
                     total_amount += amount
