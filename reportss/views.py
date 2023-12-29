@@ -718,12 +718,12 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
         if financialyear and financialyear != "":
             querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year__id=financialyear)
             querysetPIK = querysetPIK.filter(school_id=school_id, financial_year__id=financialyear)
-            querySetExpenses = querySetExpenses.filter(school_id=school_id, financial_year__id=financialyear)
+            querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__financial_year__id=financialyear)
 
         if month and month != "":
             querySetReceipts = querySetReceipts.filter(school_id=school_id, transaction_date__month=month)
             querysetPIK = querysetPIK.filter(school_id=school_id, receipt_date__month=month)
-            querySetExpenses = querySetExpenses.filter(school_id=school_id, paymentDate__month=month)
+            querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__paymentDate__month=month)
 
         # if not bankaccount or not accounttype:
         #     return Response({'detail': f"Both orderby and accounttype values must be selected"}, status=status.HTTP_400_BAD_REQUEST)
