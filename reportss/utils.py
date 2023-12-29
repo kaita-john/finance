@@ -15,8 +15,6 @@ def getBalance(account_type, month, financial_year, school_id):
     collectionQuerySet = Collection.objects.filter(
         school_id=school_id,
         receipt__transaction_date__month=month,
-        receipt__financial_year=financial_year,
-        receipt__account_type=account_type,
         receipt__is_reversed=False
     )
 
@@ -24,17 +22,18 @@ def getBalance(account_type, month, financial_year, school_id):
         receipt__is_posted=True,
         school_id=school_id,
         transaction_date__month=month,
-        receipt__financial_year=financial_year,
-        receipt__bank_account__account_type=account_type,
     )
 
     expensesQuerySet = VoucherItem.objects.filter(
         voucher__is_deleted=False,
         school_id=school_id,
         voucher__paymentDate__month=month,
-        voucher__financial_year=financial_year,
-        voucher__bank_account__account_type=account_type,
     )
+
+    if financial_year and financial_year != "":
+        collectionQuerySet = collectionQuerySet.filter(receipt__financial_year=financial_year)
+        pikQuerySet = pikQuerySet.filter(receipt__financial_year=financial_year)
+        expensesQuerySet = expensesQuerySet.filter(voucher__financial_year=financial_year)
 
     collectionAmount = collectionQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
     pikAmount = pikQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
