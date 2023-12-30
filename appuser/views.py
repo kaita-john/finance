@@ -84,6 +84,14 @@ class AppUserDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, *args, **kwargs):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school in token'}, status=401)
+
+        instance = self.get_object()
+        instance.delete()
+        return Response({'detail': 'User deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 class FineAppUserListView(SchoolIdMixin, generics.ListAPIView):
     serializer_class = AppUserSerializer
