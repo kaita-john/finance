@@ -88,6 +88,7 @@ class AppUserDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        print(f"Today")
 
         instance = self.get_object()
         self.perform_destroy(instance)
