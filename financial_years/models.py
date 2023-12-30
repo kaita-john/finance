@@ -11,6 +11,7 @@ class FinancialYear(ParentModel):
     start_date = models.DateField()
     end_date = models.DateField()
     school = models.UUIDField(max_length=255, blank=True, null=True)
+    previous_financial_year = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True)
     is_current = models.BooleanField(default=False, null=True)
 
     def __str__(self):
