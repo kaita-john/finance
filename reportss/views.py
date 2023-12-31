@@ -880,10 +880,10 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                         else:
                             voteheadDictionary[f"{voucher.votehead}"] += Decimal(voucher.amount)
 
-                        if voucher.voucher.expenseCategory.name not in universal:
-                            universal[f"{voucher.voucher.expenseCategory.name}"] = Decimal(voucher.amount)
+                        if voucher.votehead not in universal:
+                            universal[f"{voucher.votehead}"] = Decimal(voucher.amount)
                         else:
-                            universal[f"{voucher.voucher.expenseCategory.name}"] += Decimal(voucher.amount)
+                            universal[f"{voucher.votehead}"] += Decimal(voucher.amount)
 
                 total_expenses_cash += cash
                 total_expenses_bank += bank
