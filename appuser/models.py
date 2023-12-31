@@ -58,6 +58,7 @@ class AppUser(BaseUserModel, AbstractBaseUser, PermissionsMixin):
         super().save(*args, **kwargs)
 
         if self.is_superuser:
+            admin_group, admin_created = Group.objects.get_or_create(name='ADMIN')
             superuser_group, created = Group.objects.get_or_create(name='SUPERUSER')
             self.roles.add(superuser_group)
 
