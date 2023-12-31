@@ -945,8 +945,11 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
 
                 "total_collectioncash": total_collectioncash,
                 "total_collectionbank": total_collectionbank,
+                "total_total_collection": Decimal(total_collectioncash) + Decimal(total_collectionbank),
+
                 "total_expensecash": total_expensecash,
-                "total_expensebank": total_expensebank
+                "total_expensebank": total_expensebank,
+                "total_total_expense": Decimal(total_expensecash) + Decimal(total_expensebank),
 
             }
 
