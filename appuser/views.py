@@ -94,6 +94,7 @@ class AppUserDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         print(f"Today")
         print(f"Today")
         print(f"Today")
+        print(f"Today")
 
         instance = self.get_object()
         self.perform_destroy(instance)
