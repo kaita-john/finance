@@ -826,7 +826,8 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                 total_receipt_cash += cash
                 total_receipt_bank += bank
 
-                mydict = {
+                listofreceipts.append(
+                    {
                         "date" : dateinstance,
                         "description": "Income",
                         "receipt_range": result,
@@ -835,12 +836,8 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                         "inkind": inkind,
                         "total_amount": total_amount,
                         "voteheads": voteheadDictionary,
+                        "summary": universalvoteheadDictionary,
                     }
-
-                mydict.update(universalvoteheadDictionary)
-
-                listofreceipts.append(
-                    mydict
                 )
 
             #EXPENSES OR VOUCHERS
@@ -895,7 +892,8 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                 if receipt_range:
                     result = f"{min(receipt_range)} - {max(receipt_range)}"
 
-                mydict = {
+                listofVouchers.append(
+                    {
                         "date": dateinstance,
                         "description": "Expense",
                         "receipt_range": result,
@@ -903,11 +901,8 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                         "bank": bank,
                         "total_amount": total_amount,
                         "voteheads": voteheadDictionary,
+                        "summary": universal
                     }
-                mydict.update(universal)
-
-                listofVouchers.append(
-                    mydict
                 )
 
             if not month:
