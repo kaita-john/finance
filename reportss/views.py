@@ -1427,7 +1427,8 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
         collection_voteheads_list = [
             {
                 "votehead": votehead,
-                "amount": data["amount"],
+                "cramount": data["cramount"],
+                "dramount": data["dramount"],
                 "lf_number": data["lf_number"]
             }
             for votehead, data in collectionvoteheadDictionary.items()
