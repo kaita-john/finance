@@ -1350,15 +1350,21 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
             print(f"pik {len(piks)}")
 
             for pik in piks:
-                if not collectionvoteheadDictionary.get(pik.votehead.id):
-                    collectionvoteheadDictionary[pik.votehead.id] = {
+                votehead_id = pik.votehead.id
+
+                if not collectionvoteheadDictionary.get(votehead_id):
+                    collectionvoteheadDictionary[votehead_id] = {
                         "vote_head_name": pik.votehead.vote_head_name,
                         "cramount": Decimal(0.0),
                         "lf_number": pik.votehead.ledget_folio_number_lf
                     }
                 if pik.votehead == votehead:
                     total_cash += pik.amount
-                    collectionvoteheadDictionary[pik.votehead.id]["cramount"] += pik.amount
+                    print(f"Before accessing 'cramount' for {votehead_id}: {collectionvoteheadDictionary.get(votehead_id)}")
+                    if 'cramount' not in collectionvoteheadDictionary[votehead_id]:
+                        collectionvoteheadDictionary[votehead_id]['cramount'] = Decimal(0.0)
+
+                    collectionvoteheadDictionary[votehead_id]['cramount'] += pik.amount
 
             collections = Collection.objects.filter(
                 receipt__is_reversed=False,
