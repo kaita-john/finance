@@ -1309,7 +1309,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
         accounttype = request.GET.get('accounttype')
         month = request.GET.get('month')
 
-        if not financialyear or financialyear=="" and not accounttype or accounttype == "" and not month or month == "":
+        if not financialyear or financialyear=="" or not accounttype or accounttype == "" or not month or month == "":
             return Response({'detail': f"Account Type, Financial Year and Month are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -1407,11 +1407,30 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
 
 
         overall_total = Decimal(cash_at_hand) + Decimal(cash_at_bank) + Decimal(total_cash) + Decimal(total_bank)
+
+        collection_voteheads_list = [
+            {
+                "votehead": votehead,
+                "amount": data["amount"],
+                "lf_number": data["lf_number"]
+            }
+            for votehead, data in collectionvoteheadDictionary.items()
+        ]
+
+        expenses_voteheads_list = [
+            {
+                "votehead": votehead,
+                "amount": data["amount"],
+                "lf_number": data["lf_number"]
+            }
+            for votehead, data in expensevoteheadDictionary.items()
+        ]
+
         save_object = {
             "cash_at_hand": cash_at_hand,
             "cash_at_bank": cash_at_bank,
-            "collection_voteheads": collectionvoteheadDictionary,
-            "expense_voteheads": expensevoteheadDictionary,
+            "collection_voteheads": collection_voteheads_list,
+            "expense_voteheads": expenses_voteheads_list,
             "closing_cash": total_cash,
             "closing_bank": total_bank,
             "overall_total": overall_total
