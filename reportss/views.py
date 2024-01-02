@@ -25,7 +25,7 @@ from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, 
     BalanceTracker, OpeningClosingBalances
 from reportss.serializers import ReportStudentBalanceSerializer, StudentTransactionsPrintViewSerializer, \
     IncomeSummarySerializer, ReceivedChequeSerializer
-from reportss.utils import getBalance
+from reportss.utils import getBalance, getBalancesByAccount
 from students.models import Student
 from students.serializers import StudentSerializer
 from term.models import Term
@@ -1349,11 +1349,16 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
                 if not collectionvoteheadDictionary.get(f"{pik.votehead.id}"):
                     collectionvoteheadDictionary[f"{pik.votehead.id}"] = {}
                     collectionvoteheadDictionary[f"{pik.votehead.id}"]["name"] = pik.votehead.vote_head_name
-                    collectionvoteheadDictionary[f"{pik.votehead.id}"]["amount"] = Decimal(0.0)
+
+                    if not collectionvoteheadDictionary.get(f"{pik.votehead.id}").get("cramount"):
+                        collectionvoteheadDictionary[f"{pik.votehead.id}"]["cramount"] = Decimal(0.0)
+                    if not collectionvoteheadDictionary.get(f"{pik.votehead.id}").get("dramount"):
+                        collectionvoteheadDictionary[f"{pik.votehead.id}"]["dramount"] = Decimal(0.0)
+
                     collectionvoteheadDictionary[f"{pik.votehead.id}"]["lf_number"] = pik.votehead.ledget_folio_number_lf
                 if pik.votehead == votehead:
                     total_cash += pik.amount
-                    collectionvoteheadDictionary[f"{pik.votehead.id}"]["amount"] += pik.amount
+                    collectionvoteheadDictionary[f"{pik.votehead.id}"]["cramount"] += pik.amount
 
             collections = Collection.objects.filter(
                 receipt__is_reversed=False,
@@ -1369,7 +1374,12 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
             for collection in collections:
                 if not collectionvoteheadDictionary.get(f"{collection.votehead.id}"):
                     collectionvoteheadDictionary[f"{collection.votehead.id}"] = {}
-                    collectionvoteheadDictionary[f"{collection.votehead.id}"]["amount"] = Decimal(0.0)
+
+                    if not collectionvoteheadDictionary.get(f"{collection.votehead.id}").get("cramount"):
+                     collectionvoteheadDictionary[f"{collection.votehead.id}"]["cramount"] = Decimal(0.0)
+                    if not collectionvoteheadDictionary.get(f"{collection.votehead.id}").get("dramount"):
+                      collectionvoteheadDictionary[f"{collection.votehead.id}"]["dramount"] = Decimal(0.0)
+
                     collectionvoteheadDictionary[f"{collection.votehead.id}"]["name"] = collection.votehead.vote_head_name
                     collectionvoteheadDictionary[f"{collection.votehead.id}"]["lf_number"] = collection.votehead.ledget_folio_number_lf
 
@@ -1384,7 +1394,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
                         total_bank += Decimal(collection.amount)
                     if method == "NONE":
                         total_cash += Decimal(collection.amount)
-                    collectionvoteheadDictionary[f"{collection.votehead.id}"]["amount"] += collection.amount
+                    collectionvoteheadDictionary[f"{collection.votehead.id}"]["cramount"] += collection.amount
 
 
             expenses = VoucherItem.objects.filter(
@@ -1397,15 +1407,19 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
             print(f"{expenses}")
 
             for voucher_item in expenses:
-                collectionvoteheadDictionary[f"{voucher_item.votehead.id}"] = {}
-                collectionvoteheadDictionary[f"{voucher_item.votehead.id}"]["name"] = voucher_item.votehead.vote_head_name
-                collectionvoteheadDictionary[f"{voucher_item.votehead.id}"]["amount"] = Decimal(0.0)
-                collectionvoteheadDictionary[f"{voucher_item.votehead.id}"]["lf_number"] = voucher_item.votehead.ledget_folio_number_lf
+                if not collectionvoteheadDictionary.get(f"{voucher_item.votehead.id}"):
+                    collectionvoteheadDictionary[f"{voucher_item.votehead.id}"] = {}
+                    collectionvoteheadDictionary[f"{voucher_item.votehead.id}"]["name"] = voucher_item.votehead.vote_head_name
+                    if not collectionvoteheadDictionary.get(f"{voucher_item.votehead.id}").get("cramount"):
+                     collectionvoteheadDictionary[f"{voucher_item.votehead.id}"]["cramount"] = Decimal(0.0)
+                    if not collectionvoteheadDictionary.get(f"{voucher_item.votehead.id}").get("dramount"):
+                      collectionvoteheadDictionary[f"{voucher_item.votehead.id}"]["dramount"] = Decimal(0.0)
+                    collectionvoteheadDictionary[f"{voucher_item.votehead.id}"]["lf_number"] = voucher_item.votehead.ledget_folio_number_lf
 
                 if voucher_item.votehead == votehead:
                     total_expense += Decimal(voucher_item.amount)
 
-                    collectionvoteheadDictionary[f"{voucher_item.votehead.id}"]["amount"] += voucher_item.amount
+                    collectionvoteheadDictionary[f"{voucher_item.votehead.id}"]["dramount"] += voucher_item.amount
 
 
         overall_total = Decimal(cash_at_hand) + Decimal(cash_at_bank) + Decimal(total_cash) + Decimal(total_bank)
