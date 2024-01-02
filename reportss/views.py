@@ -950,8 +950,8 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                 "total_expensebank": total_expensebank,
                 "total_total_expense": Decimal(total_expensecash) + Decimal(total_expensebank),
 
-                "universalvoteheadDictionary_payment_voteheads": universalvoteheadDictionary_payment_voteheads,
-                "universalvoteheadDictionary_collection_voteheads": universalvoteheadDictionary_collection_voteheads,
+                "total_payment_voteheads": universalvoteheadDictionary_payment_voteheads,
+                "total_collection_voteheads": universalvoteheadDictionary_collection_voteheads,
 
             }
 
