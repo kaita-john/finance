@@ -1391,7 +1391,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
                         total_bank += Decimal(collection.amount)
                     if method == "NONE":
                         total_cash += Decimal(collection.amount)
-                    collectionvoteheadDictionary[f"{collection.votehead.id}"]["cramount"] += collection.amount
+                    collectionvoteheadDictionary[collection.votehead.id]["cramount"] += collection.amount
 
 
             expenses = VoucherItem.objects.filter(
@@ -1412,7 +1412,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
                 if voucher_item.votehead == votehead:
                     total_expense += Decimal(voucher_item.amount)
 
-                    collectionvoteheadDictionary[f"{voucher_item.votehead.vote_head_name}"]["dramount"] += voucher_item.amount
+                    collectionvoteheadDictionary[voucher_item.votehead.vote_head_name]["dramount"] += voucher_item.amount
 
 
         overall_total = Decimal(cash_at_hand) + Decimal(cash_at_bank) + Decimal(total_cash) + Decimal(total_bank)
