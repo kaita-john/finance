@@ -1177,113 +1177,115 @@ class LedgerView(SchoolIdMixin, generics.GenericAPIView):
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
-        financialyear = request.GET.get('financialyear')
-        votehead = request.GET.get('votehead')
+        try:
+            financialyear = request.GET.get('financialyear')
+            votehead = request.GET.get('votehead')
 
-        if not financialyear or financialyear == "" or not votehead:
-            return Response({'detail': f"Both financial year and votehead are required"}, status=status.HTTP_400_BAD_REQUEST)
+            if not financialyear or financialyear == "" or not votehead:
+                return Response({'detail': f"Both financial year and votehead are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        check_if_object_exists(VoteHead, votehead)
-        check_if_object_exists(FinancialYear, financialyear)
+            check_if_object_exists(VoteHead, votehead)
+            check_if_object_exists(FinancialYear, financialyear)
 
-        collectionQuerySet = Collection.objects.filter(
-            receipt__is_reversed=False,
-            school_id=school_id,
-            receipt__financial_year__id=financialyear
-        )
+            collectionQuerySet = Collection.objects.filter(
+                receipt__is_reversed=False,
+                school_id=school_id,
+                receipt__financial_year__id=financialyear
+            )
 
-        pikQuerySet = PaymentInKind.objects.filter(
-            receipt__is_posted=True,
-            school_id=school_id,
-            receipt__financial_year__id=financialyear
-        )
+            pikQuerySet = PaymentInKind.objects.filter(
+                receipt__is_posted=True,
+                school_id=school_id,
+                receipt__financial_year__id=financialyear
+            )
 
-        voucherQuerySet = Voucher.objects.filter(
-            is_deleted=False,
-            school_id=school_id,
-            financial_year__id=financialyear
-        )
+            voucherQuerySet = Voucher.objects.filter(
+                is_deleted=False,
+                school_id=school_id,
+                financial_year__id=financialyear
+            )
 
-        collectionQuerySet = collectionQuerySet if collectionQuerySet.exists() else Collection.objects.none()
-        pikQuerySet = pikQuerySet if pikQuerySet.exists() else PaymentInKind.objects.none()
-        voucherQuerySet = voucherQuerySet if voucherQuerySet.exists() else Voucher.objects.none()
+            collectionQuerySet = collectionQuerySet if collectionQuerySet.exists() else Collection.objects.none()
+            pikQuerySet = pikQuerySet if pikQuerySet.exists() else PaymentInKind.objects.none()
+            voucherQuerySet = voucherQuerySet if voucherQuerySet.exists() else Voucher.objects.none()
 
-        print(f"{len(collectionQuerySet)}")
-        print(f"{len(pikQuerySet)}")
-        print(f"{len(voucherQuerySet)}")
+            print(f"{len(collectionQuerySet)}")
+            print(f"{len(pikQuerySet)}")
+            print(f"{len(voucherQuerySet)}")
 
-        date_list = []
+            date_list = []
 
-        unique_collection_dates = collectionQuerySet.values_list('transaction_date', flat=True).distinct()
-        unique_pik_dates = pikQuerySet.values_list('transaction_date', flat=True).distinct()
-        unique_voucher_dates = voucherQuerySet.values_list('paymentDate', flat=True).distinct()
+            unique_collection_dates = collectionQuerySet.values_list('transaction_date', flat=True).distinct()
+            unique_pik_dates = pikQuerySet.values_list('transaction_date', flat=True).distinct()
+            unique_voucher_dates = voucherQuerySet.values_list('paymentDate', flat=True).distinct()
 
-        date_list.extend(unique_collection_dates)
-        date_list.extend(unique_pik_dates)
-        date_list.extend(unique_voucher_dates)
+            date_list.extend(unique_collection_dates)
+            date_list.extend(unique_pik_dates)
+            date_list.extend(unique_voucher_dates)
 
-        date_list = list(set(date_list))
+            date_list = list(set(date_list))
 
-        actualFinancialYear = FinancialYear.objects.get(id = financialyear)
-        monthlist  = FinancialYear.get_month_info(actualFinancialYear)
+            actualFinancialYear = FinancialYear.objects.get(id = financialyear)
+            monthlist  = FinancialYear.get_month_info(actualFinancialYear)
 
-        print(f"{monthlist}")
+            print(f"{monthlist}")
+
+            response_object = []
+
+            for position, month in enumerate(monthlist):
+                startdate = month['start_date']
+                enddate = month['end_date']
+                monthnumber = month['month_number']
+
+                total_month_collection_amount = Decimal(0.0)
+
+                for collection in collectionQuerySet:
+                    if str(collection.votehead.id) == votehead:
+                        if collection.transaction_date.month == monthnumber:
+                            collection_amount = collection.amount
+                            total_month_collection_amount += collection_amount
+
+                for pik in pikQuerySet:
+                    if str(pik.votehead.id) == votehead:
+                        if pik.transaction_date.month == monthnumber:
+                            pik_amount = pik.amount
+                            total_month_collection_amount += pik_amount
+
+                total_month_expenses_amount = Decimal(0.0)
 
 
-        response_object = []
+                for voucher in voucherQuerySet:
+                    items = VoucherItem.objects.filter(school_id = school_id)
+                    for item in items:
+                        if item.voucher == voucher:
+                            print(f"Item voucher is same. Item votehead is {str(item.votehead.id)} and votehead sent is {votehead}")
+                            if str(item.votehead.id) == votehead:
+                                print(f"Voteheads are the same")
+                                if item.voucher.paymentDate.month == monthnumber:
+                                    print(f"Item voucher month is same as month in search")
+                                    item_amount = item.amount
+                                    total_month_expenses_amount += item_amount
 
-        for position, month in enumerate(monthlist):
-            startdate = month['start_date']
-            enddate = month['end_date']
-            monthnumber = month['month_number']
+                if position == 0:
+                    previous_total_cr = total_month_collection_amount
+                    previous_total_dr = total_month_expenses_amount
+                else:
+                    previous_month_balances = getMonthly_Balances(monthnumber, school_id)
+                    previous_total_cr = previous_month_balances['totalCollections']
+                    previous_total_dr = previous_month_balances['totalExpenses']
 
-            total_month_collection_amount = Decimal(0.0)
+                response_object.append({
+                    "start_date": startdate,
+                    "month": monthnumber,
+                    "cr": total_month_collection_amount,
+                    "dr": total_month_expenses_amount,
+                    "previous_total_cr": previous_total_cr,
+                    "previous_total_dr": previous_total_dr
+                })
 
-            for collection in collectionQuerySet:
-                if str(collection.votehead.id) == votehead:
-                    if collection.transaction_date.month == monthnumber:
-                        collection_amount = collection.amount
-                        total_month_collection_amount += collection_amount
-
-            for pik in pikQuerySet:
-                if str(pik.votehead.id) == votehead:
-                    if pik.transaction_date.month == monthnumber:
-                        pik_amount = pik.amount
-                        total_month_collection_amount += pik_amount
-
-            total_month_expenses_amount = Decimal(0.0)
-
-
-            for voucher in voucherQuerySet:
-                items = VoucherItem.objects.filter(school_id = school_id)
-                for item in items:
-                    if item.voucher == voucher:
-                        print(f"Item voucher is same. Item votehead is {str(item.votehead.id)} and votehead sent is {votehead}")
-                        if str(item.votehead.id) == votehead:
-                            print(f"Voteheads are the same")
-                            if item.voucher.paymentDate.month == monthnumber:
-                                print(f"Item voucher month is same as month in search")
-                                item_amount = item.amount
-                                total_month_expenses_amount += item_amount
-
-            if position == 0:
-                previous_total_cr = total_month_collection_amount
-                previous_total_dr = total_month_expenses_amount
-            else:
-                previous_month_balances = getMonthly_Balances(monthnumber, school_id)
-                previous_total_cr = previous_month_balances['totalCollections']
-                previous_total_dr = previous_month_balances['totalExpenses']
-
-            response_object.append({
-                "start_date": startdate,
-                "month": monthnumber,
-                "cr": total_month_collection_amount,
-                "dr": total_month_expenses_amount,
-                "previous_total_cr": previous_total_cr,
-                "previous_total_dr": previous_total_dr
-            })
-
-        thedata = response_object
+            thedata = response_object
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"detail": thedata})
 
