@@ -1376,6 +1376,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
 
                 if not collectionvoteheadDictionary.get(votehead_id):
                     print(f"Creating dictionary for votehead_id: {votehead_id}")
+                    print(f"Creating dictionary for votehead_id: {votehead_id}")
                     collectionvoteheadDictionary[votehead_id] = {
                         "vote_head_name": collection.votehead.vote_head_name,
                         "cramount": Decimal(0.0),
