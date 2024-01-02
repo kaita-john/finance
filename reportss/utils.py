@@ -78,24 +78,24 @@ def getBalance(account_type, month, financial_year, school_id):
 
 
 
-def getBalancesByBank(bank_account, financial_year, school_id):
+def getBalancesByAccount(accounttype, financial_year, school_id):
 
     collectionQuerySet = Collection.objects.filter(
         school_id=school_id,
-        receipt__bank_account=bank_account,
+        receipt__bank_account__account_type=accounttype,
         receipt__is_reversed=False
     )
 
     pikQuerySet = PaymentInKind.objects.filter(
         receipt__is_posted=True,
         school_id=school_id,
-        receipt__bank_account=bank_account,
+        receipt__bank_account__account_type=accounttype,
     )
 
     expensesQuerySet = VoucherItem.objects.filter(
         voucher__is_deleted=False,
         school_id=school_id,
-        voucher__bank_account=bank_account,
+        voucher__bank_account__account_type=accounttype,
     )
 
     if financial_year and financial_year != "":

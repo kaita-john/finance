@@ -27,7 +27,7 @@ from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, 
     BalanceTracker, OpeningClosingBalances
 from reportss.serializers import ReportStudentBalanceSerializer, StudentTransactionsPrintViewSerializer, \
     IncomeSummarySerializer, ReceivedChequeSerializer
-from reportss.utils import getBalance
+from reportss.utils import getBalance, getBalancesByAccount
 from students.models import Student
 from students.serializers import StudentSerializer
 from term.models import Term
@@ -1447,397 +1447,297 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
 
 
 
-# class NotesView(SchoolIdMixin, generics.GenericAPIView):
-#     queryset = Student.objects.all()
-#     serializer_class = StudentSerializer
-#
-#     def get(self, request, *args, **kwargs):
-#         school_id = self.check_school_id(request)
-#         if not school_id:
-#             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
-#
-#         school_id = self.check_school_id(request)
-#         if not school_id:
-#             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
-#
-#         financialyear = request.GET.get('financialyear')
-#
-#         if not financialyear or financialyear=="":
-#             return Response({'detail': f"Financial Year is required"}, status=status.HTTP_400_BAD_REQUEST)
-#
-#         accountTypeList = AccountType.objects.filter(school_id=school_id) or []
-#         votehead_list = VoteHead.objects.filter(school_id=school_id)
-#
-#
-#
-#
-#         try:
-#             current_financial_year = FinancialYear.objects.get(school_id = school_id, is_current = True)
-#         except ObjectDoesNotExist:
-#             return Response({'detail': f"Current financial year has not been set for this school"}, status=status.HTTP_400_BAD_REQUEST)
-#
-#         financial_year_list = FinancialYear.objects.filter(school_id=school_id).order_by('dateofcreation')
-#         current_financial_year_index = financial_year_list.index(current_financial_year)
-#         if current_financial_year_index > 0:
-#             previous_year = financial_year_list[current_financial_year_index - 1]
-#         else:
-#             previous_year = None
-#
-#
-#         collections_list = []
-#         expenses_list = []
-#         bank_account_list = []
-#
-#
-#         #COLLECTIONS
-#         for accountType in accountTypeList:
-#             accountype_name  = accountType.account_type_name
-#
-#             collection_votehead = {}
-#             current_collection_total = Decimal(0.0)
-#             previous_collection_total = Decimal(0.0)
-#
-#             #COLLECTION - COLLECTIONS
-#             current_collections = Receipt.objects.filter(school_id = school_id, is_reversed = False, account_type = accountType, financial_year__id = financialyear) or []
-#             for collection in current_collections:
-#                 amount = collection.totalAmount
-#                 for votehead in votehead_list:
-#                     votehead_name = votehead.vote_head_name
-#                     if not collection_votehead.get(votehead_name):
-#                         collection_votehead[votehead_name]["name"] = votehead_name
-#                         collection_votehead[votehead_name]["amount"] = Decimal(amount)
-#                         current_collection_total += Decimal(amount)
-#                     else:
-#                         collection_votehead[votehead_name]["amount"] += Decimal(amount)
-#                         current_collection_total += Decimal(amount)
-#
-#             if previous_year:
-#                 previous_year_collections = Receipt.objects.filter(school_id=school_id, is_reversed = False, account_type = accountType, financial_year = previous_year) or []
-#                 for collection in previous_year_collections:
-#                     amount = collection.totalAmount
-#                     for votehead in votehead_list:
-#                         votehead_name = votehead.vote_head_name
-#                         if not collection_votehead.get(votehead_name):
-#                             collection_votehead[votehead_name]["name"] = votehead_name
-#                             collection_votehead[votehead_name]["previous_amount"] = Decimal(amount)
-#                             previous_collection_total += Decimal(amount)
-#
-#                         else:
-#                             collection_votehead[votehead_name]["previous_amount"] += Decimal(amount)
-#                             previous_collection_total += Decimal(amount)
-#
-#             #COLLECTION - PIKS
-#             current_PIKS = PIKReceipt.objects.filter(is_posted=True, school_id=school_id,
-#                                                          bank_account__account_type=accountType,
-#                                                          financial_year__id=financialyear) or []
-#             for pik in current_PIKS:
-#                 amount = pik.totalAmount
-#                 for votehead in votehead_list:
-#                     votehead_name = votehead.vote_head_name
-#                     if not collection_votehead.get(votehead_name):
-#                         collection_votehead[votehead_name]["name"] = votehead_name
-#                         collection_votehead[votehead_name]["amount"] = Decimal(amount)
-#                         current_collection_total += Decimal(amount)
-#                     else:
-#                         collection_votehead[votehead_name]["amount"] += Decimal(amount)
-#                         current_collection_total += Decimal(amount)
-#
-#             if previous_year:
-#                 previous_year_piks = PIKReceipt.objects.filter(account_type=accountType, school_id=school_id,
-#                                                                    financial_year=previous_year) or []
-#                 for pik in previous_year_piks:
-#                     amount = pik.totalAmount
-#                     for votehead in votehead_list:
-#                         votehead_name = votehead.vote_head_name
-#                         if not collection_votehead.get(votehead_name):
-#                             collection_votehead[votehead_name]["name"] = votehead_name
-#                             collection_votehead[votehead_name]["amount"] = Decimal(amount)
-#                             previous_collection_total += Decimal(amount)
-#                         else:
-#                             collection_votehead[votehead_name]["amount"] += Decimal(amount)
-#                             previous_collection_total += Decimal(amount)
-#
-#             send = {
-#                 "account_type_name" : accountype_name,
-#                 "current_collection_total": current_collection_total,
-#                 "previous_collection_total" : previous_collection_total,
-#                 "collection_votehead" : collection_votehead,
-#             }
-#             collections_list.append(send)
-#
-#
-#
-#         #EXPENSES
-#         for accountType in accountTypeList:
-#             accountype_name = accountType.account_type_name
-#             expenses_votehead = {}
-#             current_expenses_total = Decimal(0.0)
-#             previous_expenses_total = Decimal(0.0)
-#
-#             current_expenses = Voucher.objects.filter(is_deleted=False, school_id = school_id, bank_account__account_type = accountType, financial_year__id = financialyear) or []
-#             for expense in current_expenses:
-#                 amount = expense.totalAmount
-#                 for votehead in votehead_list:
-#                     votehead_name = votehead.vote_head_name
-#                     if not expenses_votehead.get(votehead_name):
-#                         expenses_votehead[votehead_name]["name"] = votehead_name
-#                         expenses_votehead[votehead_name]["amount"] = Decimal(amount)
-#                         current_expenses_total += Decimal(amount)
-#                     else:
-#                         expenses_votehead[votehead_name]["amount"] += Decimal(amount)
-#                         current_expenses_total += Decimal(amount)
-#
-#             if previous_year:
-#                 previous_year_expenses = Voucher.objects.filter(is_deleted=False, account_type = accountType, school_id = school_id, financial_year = previous_year) or []
-#                 for expense in previous_year_expenses:
-#                     amount = expense.totalAmount
-#                     for votehead in votehead_list:
-#                         votehead_name = votehead.vote_head_name
-#                         if not expenses_votehead.get(votehead_name):
-#                             expenses_votehead[votehead_name]["name"] = votehead_name
-#                             expenses_votehead[votehead_name]["previous_amount"] = Decimal(amount)
-#                             previous_expenses_total += Decimal(amount)
-#
-#                         else:
-#                             expenses_votehead[votehead_name]["previous_amount"] += Decimal(amount)
-#                             previous_expenses_total += Decimal(amount)
-#
-#                 send = {
-#                     "account_type_name": accountype_name,
-#                     "current_expenses_total": current_expenses_total,
-#                     "previous_expenses_total": previous_expenses_total,
-#                     "expenses_votehead": expenses_votehead,
-#                 }
-#                 expenses_list.append(send)
-#
-#
-#
-#         #BANK ACCOUNTS
-#         for accountType in accountTypeList:
-#             accountype_name = accountType.account_type_name
-#             expenses_votehead = {}
-#             current_bank_total = Decimal(0.0)
-#             previous_bank_total = Decimal(0.0)
-#
-#             small = []
-#             bank_account_list = BankAccount.objects.filter(school=school_id) or []
-#
-#             for bank_account in bank_account_list:
-#                 bank_account_name = bank_account.account_name
-#                 bank_account_number = bank_account.account_number
-#                 bank_account_currency = bank_account.currency
-#
-#                 receiptsQuerySet = Receipt.objects.filter(
-#                     account_type=accountType,
-#                     bank_account=bank_account,
-#                     financial_year=financialyear
-#                 ).aggregate(result=Sum('totalAmount'))
-#
-#                 receipt_amount_sum = receiptsQuerySet.get('result', Decimal('0.0')) if receiptsQuerySet is not None else Decimal('0.0')
-#
-#                 pikQuerySet = PIKReceipt.objects.filter(
-#                     bank_account__account_type=accountType,
-#                     bank_account=bank_account,
-#                     financial_year=financialyear
-#                 ).aggregate(result=Sum('totalAmount'))
-#
-#                 pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
-#                 current_bank_total =  Decimal(receipt_amount_sum) +  Decimal(pik_receipt_sum)
-#
-#
-#                 if previous_year:
-#                     receiptsQuerySet = Receipt.objects.filter(
-#                         account_type=accountType,
-#                         bank_account=bank_account,
-#                         financial_year=previous_year
-#                     ).aggregate(result=Sum('totalAmount'))
-#
-#                     receipt_amount_sum = receiptsQuerySet.get('result', Decimal(
-#                         '0.0')) if receiptsQuerySet is not None else Decimal('0.0')
-#
-#                     pikQuerySet = PIKReceipt.objects.filter(
-#                         bank_account__account_type=accountType,
-#                         bank_account=bank_account,
-#                         financial_year=previous_year
-#                     ).aggregate(result=Sum('totalAmount'))
-#
-#                     pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
-#                     previous_bank_total = Decimal(receipt_amount_sum) + Decimal(pik_receipt_sum)
-#
-#
-#                     send = {
-#                             "account_type_name": accountype_name,
-#                             "bank_account_name": bank_account_name,
-#                             "bank_account_number": bank_account_number,
-#                             "bank_account_currency": bank_account_currency,
-#                             "expenses_votehead": expenses_votehead,
-#                         }
-#                     bank_account_list.append(send)
-#
-#
-#
-#
-#         #CASH IN HAND
-#         for accountType in accountTypeList:
-#             accountype_name = accountType.account_type_name
-#             expenses_votehead = {}
-#             current_bank_total = Decimal(0.0)
-#             previous_bank_total = Decimal(0.0)
-#
-#             small = []
-#             bank_account_list = BankAccount.objects.filter(school=school_id) or []
-#
-#             for bank_account in bank_account_list:
-#                 bank_account_name = bank_account.account_name
-#                 bank_account_number = bank_account.account_number
-#                 bank_account_currency = bank_account.currency
-#
-#                 receiptsQuerySet = Receipt.objects.filter(
-#                     account_type=accountType,
-#                     bank_account=bank_account,
-#                     financial_year=financialyear
-#                 ).aggregate(result=Sum('totalAmount'))
-#
-#                 receipt_amount_sum = receiptsQuerySet.get('result', Decimal('0.0')) if receiptsQuerySet is not None else Decimal('0.0')
-#
-#                 pikQuerySet = PIKReceipt.objects.filter(
-#                     bank_account__account_type=accountType,
-#                     bank_account=bank_account,
-#                     financial_year=financialyear
-#                 ).aggregate(result=Sum('totalAmount'))
-#
-#                 pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
-#                 current_bank_total =  Decimal(receipt_amount_sum) +  Decimal(pik_receipt_sum)
-#
-#
-#                 if previous_year:
-#                     receiptsQuerySet = Receipt.objects.filter(
-#                         account_type=accountType,
-#                         bank_account=bank_account,
-#                         financial_year=previous_year
-#                     ).aggregate(result=Sum('totalAmount'))
-#
-#                     receipt_amount_sum = receiptsQuerySet.get('result', Decimal(
-#                         '0.0')) if receiptsQuerySet is not None else Decimal('0.0')
-#
-#                     pikQuerySet = PIKReceipt.objects.filter(
-#                         bank_account__account_type=accountType,
-#                         bank_account=bank_account,
-#                         financial_year=previous_year
-#                     ).aggregate(result=Sum('totalAmount'))
-#
-#                     pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
-#                     previous_bank_total = Decimal(receipt_amount_sum) + Decimal(pik_receipt_sum)
-#
-#
-#                     send = {
-#                             "account_type_name": accountype_name,
-#                             "bank_account_name": bank_account_name,
-#                             "bank_account_number": bank_account_number,
-#                             "bank_account_currency": bank_account_currency,
-#                             "expenses_votehead": expenses_votehead,
-#                         }
-#                     bank_account_list.append(send)
-#
-#
-#         cash_at_hand  = Decimal(0.0)
-#         cash_at_bank  = Decimal(0.0)
-#
-#         if openingObject:
-#             cash_at_hand = openingObject.opening_cash_at_hand
-#             cash_at_bank = openingObject.opening_cash_at_bank
-#
-#         votehead_list = VoteHead.objects.filter(school_id=school_id)
-#
-#         print(f"Votehead list is {votehead_list}")
-#         collectionvoteheadDictionary = {}
-#         expensevoteheadDictionary = {}
-#
-#         total_cash = Decimal(0.0)
-#         total_bank = Decimal(0.0)
-#         total_expense = Decimal(0.0)
-#
-#         for votehead in votehead_list:
-#
-#             piks = PaymentInKind.objects.filter(
-#                 receipt__is_posted=True,
-#                 school_id=school_id,
-#                 receipt__financial_year=financialyear,
-#                 transaction_date__month__lte=month
-#             )
-#
-#             print(f"pik {len(piks)}")
-#
-#             for pik in piks:
-#                 if not collectionvoteheadDictionary.get(f"{pik.votehead.vote_head_name}"):
-#                     collectionvoteheadDictionary[f"{pik.votehead.vote_head_name}"] = {}
-#                     collectionvoteheadDictionary[f"{pik.votehead.vote_head_name}"]["amount"] = Decimal(0.0)
-#                     collectionvoteheadDictionary[f"{pik.votehead.vote_head_name}"]["lf_number"] = pik.votehead.ledget_folio_number_lf
-#                 if pik.votehead == votehead:
-#                     total_cash += pik.amount
-#                     collectionvoteheadDictionary[f"{pik.votehead.vote_head_name}"]["amount"] += pik.amount
-#
-#             collections = Collection.objects.filter(
-#                 receipt__is_reversed=False,
-#                 school_id=school_id,
-#                 receipt__financial_year=financialyear,
-#                 transaction_date__month__lte=month
-#             )
-#
-#             print(f"{school_id}")
-#             print(f"Collections {len(collections)}")
-#
-#
-#             for collection in collections:
-#
-#                 if not collectionvoteheadDictionary.get(f"{collection.votehead.vote_head_name}"):
-#                     collectionvoteheadDictionary[f"{collection.votehead.vote_head_name}"] = {}
-#                     collectionvoteheadDictionary[f"{collection.votehead.vote_head_name}"]["amount"] = Decimal(0.0)
-#                     collectionvoteheadDictionary[f"{collection.votehead.vote_head_name}"]["lf_number"] = collection.votehead.ledget_folio_number_lf
-#
-#                 if collection.votehead == votehead:
-#                     receipt = collection.receipt
-#                     method = "NONE"
-#                     if receipt.payment_method:
-#                         method = "BANK" if receipt.payment_method.is_cheque else "CASH" if receipt.payment_method.is_cash else "BANK" if receipt.payment_method.is_bank else "NONE"
-#                     if method == "CASH":
-#                         total_cash += Decimal(collection.amount)
-#                     if method == "BANK":
-#                         total_bank += Decimal(collection.amount)
-#                     if method == "NONE":
-#                         total_cash += Decimal(collection.amount)
-#                     collectionvoteheadDictionary[f"{collection.votehead.vote_head_name}"]["amount"] += collection.amount
-#
-#
-#             expenses = VoucherItem.objects.filter(
-#                 voucher__is_deleted=False,
-#                 school_id=school_id,
-#                 voucher__financial_year=financialyear,
-#                 voucher__paymentDate__month__lte=month
-#             )
-#
-#             print(f"{expenses}")
-#
-#             for voucher_item in expenses:
-#                 expensevoteheadDictionary[f"{voucher_item.votehead.vote_head_name}"] = {}
-#                 expensevoteheadDictionary[f"{voucher_item.votehead.vote_head_name}"]["amount"] = Decimal(0.0)
-#                 expensevoteheadDictionary[f"{voucher_item.votehead.vote_head_name}"]["lf_number"] = voucher_item.votehead.ledget_folio_number_lf
-#
-#                 if voucher_item.votehead == votehead:
-#                     total_expense += Decimal(voucher_item.amount)
-#
-#                     expensevoteheadDictionary[f"{voucher_item.votehead.vote_head_name}"]["amount"] += voucher_item.amount
-#
-#
-#         overall_total = Decimal(cash_at_hand) + Decimal(cash_at_bank) + Decimal(total_cash) + Decimal(total_bank)
-#         save_object = {
-#             "cash_at_hand": cash_at_hand,
-#             "cash_at_bank": cash_at_bank,
-#             "collection_voteheads": collectionvoteheadDictionary,
-#             "expense_voteheads": expensevoteheadDictionary,
-#             "closing_cash": total_cash,
-#             "closing_bank": total_bank,
-#             "overall_total": overall_total
-#         }
-#
-#         return Response({"detail": save_object})
+class NotesView(SchoolIdMixin, generics.GenericAPIView):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+
+    def get(self, request, *args, **kwargs):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        financialyear = request.GET.get('financialyear')
+
+        if not financialyear or financialyear=="":
+            return Response({'detail': f"Financial Year is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        accountTypeList = AccountType.objects.filter(school_id=school_id) or []
+        votehead_list = VoteHead.objects.filter(school_id=school_id)
+
+
+
+
+        try:
+            current_financial_year = FinancialYear.objects.get(school_id = school_id, is_current = True)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"Current financial year has not been set for this school"}, status=status.HTTP_400_BAD_REQUEST)
+
+        financial_year_list = FinancialYear.objects.filter(school_id=school_id).order_by('dateofcreation')
+        current_financial_year_index = financial_year_list.index(current_financial_year)
+        if current_financial_year_index > 0:
+            previous_year = financial_year_list[current_financial_year_index - 1]
+        else:
+            previous_year = None
+
+
+        collections_list = []
+        expenses_list = []
+        my_bank_account_list = []
+        cash_in_hand_list = []
+
+
+        #COLLECTIONS
+        for accountType in accountTypeList:
+            accountype_name  = accountType.account_type_name
+
+            collection_votehead = {}
+            current_collection_total = Decimal(0.0)
+            previous_collection_total = Decimal(0.0)
+
+            #COLLECTION - COLLECTIONS
+            current_collections = Receipt.objects.filter(school_id = school_id, is_reversed = False, account_type = accountType, financial_year__id = financialyear) or []
+            for collection in current_collections:
+                amount = collection.totalAmount
+                for votehead in votehead_list:
+                    votehead_name = votehead.vote_head_name
+                    if not collection_votehead.get(votehead_name):
+                        collection_votehead[votehead_name]["name"] = votehead_name
+                        collection_votehead[votehead_name]["amount"] = Decimal(amount)
+                        current_collection_total += Decimal(amount)
+                    else:
+                        collection_votehead[votehead_name]["amount"] += Decimal(amount)
+                        current_collection_total += Decimal(amount)
+
+            if previous_year:
+                previous_year_collections = Receipt.objects.filter(school_id=school_id, is_reversed = False, account_type = accountType, financial_year = previous_year) or []
+                for collection in previous_year_collections:
+                    amount = collection.totalAmount
+                    for votehead in votehead_list:
+                        votehead_name = votehead.vote_head_name
+                        if not collection_votehead.get(votehead_name):
+                            collection_votehead[votehead_name]["name"] = votehead_name
+                            collection_votehead[votehead_name]["previous_amount"] = Decimal(amount)
+                            previous_collection_total += Decimal(amount)
+
+                        else:
+                            collection_votehead[votehead_name]["previous_amount"] += Decimal(amount)
+                            previous_collection_total += Decimal(amount)
+
+            #COLLECTION - PIKS
+            current_PIKS = PIKReceipt.objects.filter(is_posted=True, school_id=school_id,
+                                                         bank_account__account_type=accountType,
+                                                         financial_year__id=financialyear) or []
+            for pik in current_PIKS:
+                amount = pik.totalAmount
+                for votehead in votehead_list:
+                    votehead_name = votehead.vote_head_name
+                    if not collection_votehead.get(votehead_name):
+                        collection_votehead[votehead_name]["name"] = votehead_name
+                        collection_votehead[votehead_name]["amount"] = Decimal(amount)
+                        current_collection_total += Decimal(amount)
+                    else:
+                        collection_votehead[votehead_name]["amount"] += Decimal(amount)
+                        current_collection_total += Decimal(amount)
+
+            if previous_year:
+                previous_year_piks = PIKReceipt.objects.filter(account_type=accountType, school_id=school_id,
+                                                                   financial_year=previous_year) or []
+                for pik in previous_year_piks:
+                    amount = pik.totalAmount
+                    for votehead in votehead_list:
+                        votehead_name = votehead.vote_head_name
+                        if not collection_votehead.get(votehead_name):
+                            collection_votehead[votehead_name]["name"] = votehead_name
+                            collection_votehead[votehead_name]["amount"] = Decimal(amount)
+                            previous_collection_total += Decimal(amount)
+                        else:
+                            collection_votehead[votehead_name]["amount"] += Decimal(amount)
+                            previous_collection_total += Decimal(amount)
+
+            send = {
+                "account_type_name" : accountype_name,
+                "current_collection_total": current_collection_total,
+                "previous_collection_total" : previous_collection_total,
+                "collection_votehead" : collection_votehead,
+            }
+            collections_list.append(send)
+
+
+
+        #EXPENSES
+        for accountType in accountTypeList:
+            accountype_name = accountType.account_type_name
+            expenses_votehead = {}
+            current_expenses_total = Decimal(0.0)
+            previous_expenses_total = Decimal(0.0)
+
+            current_expenses = Voucher.objects.filter(is_deleted=False, school_id = school_id, bank_account__account_type = accountType, financial_year__id = financialyear) or []
+            for expense in current_expenses:
+                amount = expense.totalAmount
+                for votehead in votehead_list:
+                    votehead_name = votehead.vote_head_name
+                    if not expenses_votehead.get(votehead_name):
+                        expenses_votehead[votehead_name]["name"] = votehead_name
+                        expenses_votehead[votehead_name]["amount"] = Decimal(amount)
+                        current_expenses_total += Decimal(amount)
+                    else:
+                        expenses_votehead[votehead_name]["amount"] += Decimal(amount)
+                        current_expenses_total += Decimal(amount)
+
+            if previous_year:
+                previous_year_expenses = Voucher.objects.filter(is_deleted=False, account_type = accountType, school_id = school_id, financial_year = previous_year) or []
+                for expense in previous_year_expenses:
+                    amount = expense.totalAmount
+                    for votehead in votehead_list:
+                        votehead_name = votehead.vote_head_name
+                        if not expenses_votehead.get(votehead_name):
+                            expenses_votehead[votehead_name]["name"] = votehead_name
+                            expenses_votehead[votehead_name]["previous_amount"] = Decimal(amount)
+                            previous_expenses_total += Decimal(amount)
+
+                        else:
+                            expenses_votehead[votehead_name]["previous_amount"] += Decimal(amount)
+                            previous_expenses_total += Decimal(amount)
+
+                send = {
+                    "account_type_name": accountype_name,
+                    "current_expenses_total": current_expenses_total,
+                    "previous_expenses_total": previous_expenses_total,
+                    "expenses_votehead": expenses_votehead,
+                }
+                expenses_list.append(send)
+
+
+
+        #BANK ACCOUNTS
+        for accountType in accountTypeList:
+            accountype_name = accountType.account_type_name
+            current_bank_total = Decimal(0.0)
+            previous_bank_total = Decimal(0.0)
+
+            small = []
+            bank_account_list = BankAccount.objects.filter(school=school_id) or []
+
+            for bank_account in bank_account_list:
+                bank_account_name = bank_account.account_name
+                bank_account_number = bank_account.account_number
+                bank_account_currency = bank_account.currency
+
+                receiptsQuerySet = Receipt.objects.filter(
+                    account_type=accountType,
+                    bank_account=bank_account,
+                    financial_year=financialyear
+                ).aggregate(result=Sum('totalAmount'))
+
+                receipt_amount_sum = receiptsQuerySet.get('result', Decimal('0.0')) if receiptsQuerySet is not None else Decimal('0.0')
+
+                pikQuerySet = PIKReceipt.objects.filter(
+                    bank_account__account_type=accountType,
+                    bank_account=bank_account,
+                    financial_year=financialyear
+                ).aggregate(result=Sum('totalAmount'))
+
+                pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
+                current_bank_total =  Decimal(receipt_amount_sum) +  Decimal(pik_receipt_sum)
+
+
+                if previous_year:
+                    receiptsQuerySet = Receipt.objects.filter(
+                        account_type=accountType,
+                        bank_account=bank_account,
+                        financial_year=previous_year
+                    ).aggregate(result=Sum('totalAmount'))
+
+                    receipt_amount_sum = receiptsQuerySet.get('result', Decimal(
+                        '0.0')) if receiptsQuerySet is not None else Decimal('0.0')
+
+                    pikQuerySet = PIKReceipt.objects.filter(
+                        bank_account__account_type=accountType,
+                        bank_account=bank_account,
+                        financial_year=previous_year
+                    ).aggregate(result=Sum('totalAmount'))
+
+                    pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
+                    previous_bank_total = Decimal(receipt_amount_sum) + Decimal(pik_receipt_sum)
+
+
+                    send = {
+                            "account_type_name": accountype_name,
+                            "bank_account_name": bank_account_name,
+                            "bank_account_number": bank_account_number,
+                            "bank_account_currency": bank_account_currency,
+                            "current_bank_total": current_bank_total,
+                            "previous_bank_total": previous_bank_total,
+                        }
+                    my_bank_account_list.append(send)
+
+
+
+
+        #CASH IN HAND
+        for accountType in accountTypeList:
+            accountype_name = accountType.account_type_name
+
+            current_cash_in_hand = getBalancesByAccount(accountType, financialyear, school_id)['cash']
+            previous_cash_in_hand = getBalancesByAccount(accountType, previous_year, school_id)['cash']
+
+            send = {
+                    "account_type_name": accountype_name,
+                    "current_cash_in_hand": current_cash_in_hand,
+                    "previous_cash_in_hand": previous_cash_in_hand,
+                }
+
+            cash_in_hand_list.append(send)
+
+
+
+
+        #FINANCIAL
+        for accountType in accountTypeList:
+            accountype_name = accountType.account_type_name
+            expenses_votehead = {}
+            current_expenses_total = Decimal(0.0)
+            previous_expenses_total = Decimal(0.0)
+
+            current_expenses = Voucher.objects.filter(is_deleted=False, school_id = school_id, bank_account__account_type = accountType, financial_year__id = financialyear) or []
+            for expense in current_expenses:
+                amount = expense.totalAmount
+                for votehead in votehead_list:
+                    votehead_name = votehead.vote_head_name
+                    if not expenses_votehead.get(votehead_name):
+                        expenses_votehead[votehead_name]["name"] = votehead_name
+                        expenses_votehead[votehead_name]["amount"] = Decimal(amount)
+                        current_expenses_total += Decimal(amount)
+                    else:
+                        expenses_votehead[votehead_name]["amount"] += Decimal(amount)
+                        current_expenses_total += Decimal(amount)
+
+            if previous_year:
+                previous_year_expenses = Voucher.objects.filter(is_deleted=False, account_type = accountType, school_id = school_id, financial_year = previous_year) or []
+                for expense in previous_year_expenses:
+                    amount = expense.totalAmount
+                    for votehead in votehead_list:
+                        votehead_name = votehead.vote_head_name
+                        if not expenses_votehead.get(votehead_name):
+                            expenses_votehead[votehead_name]["name"] = votehead_name
+                            expenses_votehead[votehead_name]["previous_amount"] = Decimal(amount)
+                            previous_expenses_total += Decimal(amount)
+
+                        else:
+                            expenses_votehead[votehead_name]["previous_amount"] += Decimal(amount)
+                            previous_expenses_total += Decimal(amount)
+
+                send = {
+                    "account_type_name": accountype_name,
+                    "current_expenses_total": current_expenses_total,
+                    "previous_expenses_total": previous_expenses_total,
+                    "expenses_votehead": expenses_votehead,
+                }
+                expenses_list.append(send)
+
+
+        return Response({"detail": "save_object"})
