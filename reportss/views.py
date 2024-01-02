@@ -1333,7 +1333,6 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
 
         print(f"Votehead list is {votehead_list}")
         collectionvoteheadDictionary = {}
-        expensevoteheadDictionary = {}
 
         total_cash = Decimal(0.0)
         total_bank = Decimal(0.0)
