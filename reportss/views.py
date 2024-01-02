@@ -905,11 +905,11 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
                 )
 
             if not month:
-                opening_balance = Decimal(0.0)
+                total_opening_balance = Decimal(0.0)
                 opening_cash = Decimal(0.0)
                 opening_bank = Decimal(0.0)
             else:
-                opening_balance = getBalance(accounttype, month, financialyear, school_id)["total"]
+                total_opening_balance = getBalance(accounttype, month, financialyear, school_id)["total"]
                 opening_cash = getBalance(accounttype, month, financialyear, school_id)["cash"]
                 opening_bank = getBalance(accounttype, month, financialyear, school_id)["bank"]
 
@@ -921,7 +921,10 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
             total_expensecash = sum(collection.get("cash", 0) for collection in listofVouchers)
             total_expensebank = sum(collection.get("bank", 0) for collection in listofVouchers)
 
-            total_closing_balance = (Decimal(opening_balance) + Decimal(total_collection)) - Decimal(total_expense)
+            total_total_expense =  Decimal(total_expensecash) + Decimal(total_expensebank),
+
+            total_total_collection = Decimal(total_collectioncash) + Decimal(total_collectionbank)
+            total_closing_balance = (Decimal(total_opening_balance) + Decimal(total_total_collection)) - Decimal(total_expense)
 
             closing_cash = Decimal(opening_cash) + Decimal(total_collectioncash) - Decimal(total_expensecash)
             closing_bank = Decimal(opening_cash) + Decimal(total_collectionbank) - Decimal(total_expensebank)
@@ -933,9 +936,9 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
 
                 "opening_cash": opening_cash,
                 "opening_bank": opening_bank,
-                "total_opening_balance": opening_balance,
+                "total_opening_balance": total_opening_balance,
 
-                "total_expense": total_expense,
+                "total_expense": total_total_expense,
                 "total_collection": total_collection,
 
                 "closing_cash": closing_cash,
@@ -944,11 +947,11 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
 
                 "total_collectioncash": total_collectioncash,
                 "total_collectionbank": total_collectionbank,
-                "total_total_collection": Decimal(total_collectioncash) + Decimal(total_collectionbank),
+                "total_total_collection": total_total_collection,
 
                 "total_expensecash": total_expensecash,
                 "total_expensebank": total_expensebank,
-                "total_total_expense": Decimal(total_expensecash) + Decimal(total_expensebank),
+                "total_total_expense": total_total_expense,
 
                 "total_payment_voteheads": universalvoteheadDictionary_payment_voteheads,
                 "total_collection_voteheads": universalvoteheadDictionary_collection_voteheads,
