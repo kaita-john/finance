@@ -1415,12 +1415,19 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
 
             print(f"{expenses}")
 
-            for voucher_item in expenses:
-                collectionvoteheadDictionary[voucher_item.votehead.id] = {}
-                collectionvoteheadDictionary[voucher_item.votehead.id]["name"] = voucher_item.votehead.vote_head_name
-                collectionvoteheadDictionary[voucher_item.votehead.id]["dramount"] = Decimal(0.0)
-                collectionvoteheadDictionary[voucher_item.votehead.id]["lf_number"] = voucher_item.votehead.ledget_folio_number_lf
 
+
+            for voucher_item in expenses:
+                votehead_id = voucher_item.votehead.id
+
+                if not collectionvoteheadDictionary.get(votehead_id):
+                    print(f"Creating dictionary for votehead_id: {votehead_id}")
+                    print(f"Creating dictionary for votehead_id: {votehead_id}")
+                    collectionvoteheadDictionary[votehead_id] = {
+                        "vote_head_name": voucher_item.votehead.vote_head_name,
+                        "dramount": Decimal(0.0),
+                        "lf_number": voucher_item.votehead.ledget_folio_number_lf
+                    }
                 if voucher_item.votehead == votehead:
                     total_expense += Decimal(voucher_item.amount)
 
@@ -1432,7 +1439,8 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
         collection_voteheads_list = [
             {
                 "votehead": votehead,
-                "amount": data["amount"],
+                "cramount": data["cramount"],
+                "dramount": data["dramount"],
                 "lf_number": data["lf_number"]
             }
             for votehead, data in collectionvoteheadDictionary.items()
