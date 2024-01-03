@@ -137,3 +137,64 @@ def getBalancesByAccount(accounttype, financial_year, school_id):
         "cash": cash_at_hand,
         "bank": cash_at_bank,
     }
+
+
+
+
+
+
+def getBalancesByFinancialYear(financial_year, school_id):
+    collectionQuerySet = Collection.objects.filter(
+        school_id=school_id,
+        receipt__is_reversed=False
+    )
+
+    pikQuerySet = PaymentInKind.objects.filter(
+        receipt__is_posted=True,
+        school_id=school_id,
+    )
+
+    expensesQuerySet = VoucherItem.objects.filter(
+        voucher__is_deleted=False,
+        school_id=school_id,
+    )
+
+    if financial_year and financial_year != "":
+        collectionQuerySet = collectionQuerySet.filter(receipt__financial_year=financial_year)
+        pikQuerySet = pikQuerySet.filter(receipt__financial_year=financial_year)
+        expensesQuerySet = expensesQuerySet.filter(voucher__financial_year=financial_year)
+
+    collectionAmount = collectionQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
+    pikAmount = pikQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
+    total_amount = Decimal(collectionAmount) + Decimal(pikAmount)
+
+    collectionQuerySet = list(collectionQuerySet)
+    pikQuerySet = list(pikQuerySet)
+
+    cash_at_hand = Decimal(0.0)
+    cash_at_bank = Decimal(0.0)
+
+    for collection in collectionQuerySet:
+        if collection.receipt.payment_method.is_cash == True:
+            cash_at_hand += Decimal(collection.amount)
+        elif collection.receipt.payment_method.is_bank == True:
+            cash_at_bank += Decimal(collection.amount)
+        elif collection.receipt.payment_method.is_cheque == True:
+            cash_at_bank += Decimal(collection.amount)
+
+    for pik in pikQuerySet:
+        cash_at_hand += Decimal(pik.amoount)
+
+    for voucheritem in expensesQuerySet:
+        if voucheritem.voucher.payment_Method.is_cash == True:
+            cash_at_hand -= Decimal(voucheritem.amount)
+        elif voucheritem.voucher.payment_Method.is_bank == True:
+            cash_at_bank -= Decimal(voucheritem.amount)
+        elif voucheritem.voucher.payment_method.is_cheque == True:
+            cash_at_bank -= Decimal(voucheritem.amount)
+
+    return {
+        "total": total_amount,
+        "cash": cash_at_hand,
+        "bank": cash_at_bank,
+    }

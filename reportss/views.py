@@ -12,7 +12,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from academic_year.models import AcademicYear
+from account_types.models import AccountType
 from appcollections.models import Collection
+from bank_accounts.models import BankAccount
 from financial_years.models import FinancialYear
 from invoices.models import Invoice
 from items.models import Item
@@ -25,7 +27,7 @@ from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, 
     BalanceTracker, OpeningClosingBalances
 from reportss.serializers import ReportStudentBalanceSerializer, StudentTransactionsPrintViewSerializer, \
     IncomeSummarySerializer, ReceivedChequeSerializer
-from reportss.utils import getBalance, getBalancesByAccount
+from reportss.utils import getBalance, getBalancesByAccount, getBalancesByFinancialYear
 from students.models import Student
 from students.serializers import StudentSerializer
 from term.models import Term
@@ -1297,16 +1299,6 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
-    def last_day_of_month(themonth):
-        first_day_of_next_month = datetime.today().replace(day=1, month=themonth % 12 + 1)
-        last_day_of_month = first_day_of_next_month - timedelta(days=1)
-        return last_day_of_month
-
-    # Example usage:
-    # month_number = 12
-    # last_day = last_day_of_month(month_number)
-    # print(f"Last day of month {month_number}: {last_day}")
-
     def get(self, request, *args, **kwargs):
         school_id = self.check_school_id(request)
         if not school_id:
@@ -1487,8 +1479,6 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
         votehead_list = VoteHead.objects.filter(school_id=school_id)
 
 
-
-
         try:
             current_financial_year = FinancialYear.objects.get(school_id = school_id, is_current = True)
         except ObjectDoesNotExist:
@@ -1502,11 +1492,14 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
             previous_year = None
 
 
+
         collections_list = []
         expenses_list = []
         my_bank_account_list = []
         cash_in_hand_list = []
-
+        accounts_receivable = []
+        accounts_payables = []
+        balance_brought_forward = []
 
         #COLLECTIONS
         for accountType in accountTypeList:
@@ -1632,21 +1625,23 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
 
 
         #BANK ACCOUNTS
-        for accountType in accountTypeList:
-            accountype_name = accountType.account_type_name
-            current_bank_total = Decimal(0.0)
-            previous_bank_total = Decimal(0.0)
+        bank_account_list = BankAccount.objects.filter(school=school_id) or []
 
-            small = []
-            bank_account_list = BankAccount.objects.filter(school=school_id) or []
+        for bank_account in bank_account_list:
+            bank_account_name = bank_account.account_name
+            bank_account_number = bank_account.account_number
+            bank_account_currency = bank_account.currency
 
-            for bank_account in bank_account_list:
-                bank_account_name = bank_account.account_name
-                bank_account_number = bank_account.account_number
-                bank_account_currency = bank_account.currency
+            account_list = []
+
+            for accountType in accountTypeList:
+                accountype_name = accountType.account_type_name
+                current_bank_total = Decimal(0.0)
+                previous_bank_total = Decimal(0.0)
 
                 receiptsQuerySet = Receipt.objects.filter(
                     account_type=accountType,
+                    school_id=school_id,
                     bank_account=bank_account,
                     financial_year=financialyear
                 ).aggregate(result=Sum('totalAmount'))
@@ -1655,6 +1650,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
 
                 pikQuerySet = PIKReceipt.objects.filter(
                     bank_account__account_type=accountType,
+                    school_id=school_id,
                     bank_account=bank_account,
                     financial_year=financialyear
                 ).aggregate(result=Sum('totalAmount'))
@@ -1667,7 +1663,8 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                     receiptsQuerySet = Receipt.objects.filter(
                         account_type=accountType,
                         bank_account=bank_account,
-                        financial_year=previous_year
+                        financial_year=previous_year,
+                        school_id = school_id
                     ).aggregate(result=Sum('totalAmount'))
 
                     receipt_amount_sum = receiptsQuerySet.get('result', Decimal(
@@ -1676,22 +1673,26 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                     pikQuerySet = PIKReceipt.objects.filter(
                         bank_account__account_type=accountType,
                         bank_account=bank_account,
-                        financial_year=previous_year
+                        financial_year=previous_year,
+                        school_id = school_id
                     ).aggregate(result=Sum('totalAmount'))
 
                     pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
                     previous_bank_total = Decimal(receipt_amount_sum) + Decimal(pik_receipt_sum)
 
-
                     send = {
                             "account_type_name": accountype_name,
-                            "bank_account_name": bank_account_name,
-                            "bank_account_number": bank_account_number,
-                            "bank_account_currency": bank_account_currency,
                             "current_bank_total": current_bank_total,
                             "previous_bank_total": previous_bank_total,
                         }
-                    my_bank_account_list.append(send)
+                    account_list.append(send)
+
+                my_bank_account_list.append({
+                    "bank_account_name": bank_account_name,
+                    "bank_account_number": bank_account_number,
+                    "bank_account_currency": bank_account_currency,
+                    "accounts_for_bank": account_list
+                })
 
 
 
@@ -1704,58 +1705,123 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
             previous_cash_in_hand = getBalancesByAccount(accountType, previous_year, school_id)['cash']
 
             send = {
-                    "account_type_name": accountype_name,
-                    "current_cash_in_hand": current_cash_in_hand,
-                    "previous_cash_in_hand": previous_cash_in_hand,
-                }
+                "account_type_name": accountype_name,
+                "current_cash_in_hand": current_cash_in_hand,
+                "previous_cash_in_hand": previous_cash_in_hand,
+            }
 
             cash_in_hand_list.append(send)
 
 
 
+        #ACCOUNT RECEIVABLES
+        arrears_current_bank_total = Decimal(0.0)
+        arrears_previous_bank_total = Decimal(0.0)
+        receiptsQuerySet = Receipt.objects.filter(
+            school_id=school_id,
+            financial_year=financialyear
+        ).aggregate(result=Sum('totalAmount'))
 
-        #FINANCIAL
-        for accountType in accountTypeList:
-            accountype_name = accountType.account_type_name
-            expenses_votehead = {}
-            current_expenses_total = Decimal(0.0)
-            previous_expenses_total = Decimal(0.0)
+        receipt_amount_sum = receiptsQuerySet.get('result', Decimal(
+            '0.0')) if receiptsQuerySet is not None else Decimal('0.0')
 
-            current_expenses = Voucher.objects.filter(is_deleted=False, school_id = school_id, bank_account__account_type = accountType, financial_year__id = financialyear) or []
-            for expense in current_expenses:
-                amount = expense.totalAmount
-                for votehead in votehead_list:
-                    votehead_name = votehead.vote_head_name
-                    if not expenses_votehead.get(votehead_name):
-                        expenses_votehead[votehead_name]["name"] = votehead_name
-                        expenses_votehead[votehead_name]["amount"] = Decimal(amount)
-                        current_expenses_total += Decimal(amount)
-                    else:
-                        expenses_votehead[votehead_name]["amount"] += Decimal(amount)
-                        current_expenses_total += Decimal(amount)
+        pikQuerySet = PIKReceipt.objects.filter(
+            school_id=school_id,
+            financial_year=financialyear
+        ).aggregate(result=Sum('totalAmount'))
 
-            if previous_year:
-                previous_year_expenses = Voucher.objects.filter(is_deleted=False, account_type = accountType, school_id = school_id, financial_year = previous_year) or []
-                for expense in previous_year_expenses:
-                    amount = expense.totalAmount
-                    for votehead in votehead_list:
-                        votehead_name = votehead.vote_head_name
-                        if not expenses_votehead.get(votehead_name):
-                            expenses_votehead[votehead_name]["name"] = votehead_name
-                            expenses_votehead[votehead_name]["previous_amount"] = Decimal(amount)
-                            previous_expenses_total += Decimal(amount)
-
-                        else:
-                            expenses_votehead[votehead_name]["previous_amount"] += Decimal(amount)
-                            previous_expenses_total += Decimal(amount)
-
-                send = {
-                    "account_type_name": accountype_name,
-                    "current_expenses_total": current_expenses_total,
-                    "previous_expenses_total": previous_expenses_total,
-                    "expenses_votehead": expenses_votehead,
-                }
-                expenses_list.append(send)
+        pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
+        arrears_current_bank_total = Decimal(receipt_amount_sum) + Decimal(pik_receipt_sum)
 
 
-        return Response({"detail": "save_object"})
+        if previous_year:
+            receiptsQuerySet = Receipt.objects.filter(
+                school_id=school_id,
+                financial_year=previous_year
+            ).aggregate(result=Sum('totalAmount'))
+
+            receipt_amount_sum = receiptsQuerySet.get('result', Decimal(
+                '0.0')) if receiptsQuerySet is not None else Decimal('0.0')
+
+            pikQuerySet = PIKReceipt.objects.filter(
+                school_id=school_id,
+                financial_year=previous_year
+            ).aggregate(result=Sum('totalAmount'))
+
+
+            pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
+            arrears_previous_bank_total = Decimal(receipt_amount_sum) + Decimal(pik_receipt_sum)
+
+        sendback = {
+            "arrears_current_bank_total": arrears_current_bank_total,
+            "arrears_previous_bank_total": arrears_previous_bank_total
+        }
+
+        accounts_receivable.append(sendback)
+
+
+
+
+        #ACCOUNT PAYABLES
+        current_collection_amount_sum = Decimal(0.0)
+        previous_collection_amount_sum = Decimal(0.0)
+        collectionQuerySet = Collection.objects.filter(
+            school_id=school_id,
+            is_overpayment = True,
+            receipt__financial_year=financialyear
+        ).aggregate(result=Sum('amount'))
+
+        current_collection_amount_sum = collectionQuerySet.get('result', Decimal('0.0')) if collectionQuerySet is not None else Decimal('0.0')
+
+        if previous_year:
+            collectionQuerySet = Collection.objects.filter(
+                school_id=school_id,
+                is_overpayment = True,
+                receipt__financial_year=previous_year
+            ).aggregate(result=Sum('amount'))
+
+            previous_collection_amount_sum = collectionQuerySet.get('result', Decimal('0.0')) if collectionQuerySet is not None else Decimal('0.0')
+
+        sendback = {
+            "current_collection_amount_sum": current_collection_amount_sum,
+            "previous_collection_amount_sum": previous_collection_amount_sum
+        }
+
+        accounts_payables.append(sendback)
+
+
+
+        #FUND BALANCE BROUGHT FORWARD
+        cash_balances_current = getBalancesByFinancialYear(financialyear, school_id)['cash']
+        bank_balances_previous = getBalancesByFinancialYear(previous_year, school_id)['cash']
+        receivables_current = accounts_receivable[0]['arrears_current_bank_total']
+        receivables_previous = accounts_receivable[0]['arrears_previous_bank_total']
+        payables_current = accounts_payables[0]['current_collection_amount_sum']
+        payables_previous = accounts_payables[0]['previous_collection_amount_sum']
+        current_totals =Decimal(cash_balances_current) + Decimal(receivables_current) + Decimal(payables_current)
+        previous_totals =Decimal(bank_balances_previous) + Decimal(receivables_previous) + Decimal(payables_previous)
+
+        send = {
+            "cash_balances_current": cash_balances_current,
+            "bank_balances_previous": bank_balances_previous,
+            "receivables_current": receivables_current,
+            "receivables_previous": receivables_previous,
+            "payables_current": payables_current,
+            "payables_previous": payables_previous,
+            "current_totals": current_totals,
+            "previous_totals": previous_totals,
+        }
+
+        accounts_payables.append(send)
+
+        full = {
+            "collections_list": collections_list,
+            "expenses_list": expenses_list,
+            "my_bank_account_list": my_bank_account_list,
+            "cash_in_hand_list": cash_in_hand_list,
+            "accounts_receivable": accounts_receivable,
+            "accounts_payables": accounts_payables,
+            "balance_brought_forward": balance_brought_forward
+        }
+
+        return Response({"detail": full})
