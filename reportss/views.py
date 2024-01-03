@@ -1475,7 +1475,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
         if not financialyear or financialyear=="":
             return Response({'detail': f"Financial Year is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        accountTypeList = AccountType.objects.filter(school_id=school_id) or []
+        accountTypeList = AccountType.objects.filter(school=school_id) or []
         votehead_list = VoteHead.objects.filter(school_id=school_id)
 
 
