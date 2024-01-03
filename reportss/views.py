@@ -1564,7 +1564,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                         current_collection_total += Decimal(amount)
 
             if previous_year:
-                previous_year_piks = PIKReceipt.objects.filter(account_type=accountType, school_id=school_id,
+                previous_year_piks = PIKReceipt.objects.filter(bank_account__account_type=accountType, school_id=school_id,
                                                                    financial_year=previous_year) or []
                 for pik in previous_year_piks:
                     amount = pik.totalAmount
@@ -1611,7 +1611,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                         current_expenses_total += Decimal(amount)
 
             if previous_year:
-                previous_year_expenses = Voucher.objects.filter(is_deleted=False, account_type = accountType, school_id = school_id, financial_year = previous_year) or []
+                previous_year_expenses = Voucher.objects.filter(is_deleted=False, bank_account__account_type = accountType, school_id = school_id, financial_year = previous_year) or []
                 for expense in previous_year_expenses:
                     amount = expense.totalAmount
                     for votehead in votehead_list:
@@ -1642,7 +1642,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
         for bank_account in bank_account_list:
             bank_account_name = bank_account.account_name
             bank_account_number = bank_account.account_number
-            bank_account_currency = bank_account.currency
+            bank_account_currency = bank_account.currency.currency_name
 
             account_list = []
 
@@ -1658,7 +1658,8 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                     financial_year=financialyear
                 ).aggregate(result=Sum('totalAmount'))
 
-                receipt_amount_sum = receiptsQuerySet.get('result', Decimal('0.0')) if receiptsQuerySet is not None else Decimal('0.0')
+                receipt_amount_sum = receiptsQuerySet.get('result', Decimal('0.0')) if receiptsQuerySet.get(
+                    'result') is not None else Decimal('0.0')
 
                 pikQuerySet = PIKReceipt.objects.filter(
                     bank_account__account_type=accountType,
@@ -1667,7 +1668,11 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                     financial_year=financialyear
                 ).aggregate(result=Sum('totalAmount'))
 
-                pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
+                pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet.get(
+                    'result') is not None else Decimal('0.0')
+
+                print(f"{receipt_amount_sum}  -   {pik_receipt_sum}")
+
                 current_bank_total =  Decimal(receipt_amount_sum) +  Decimal(pik_receipt_sum)
 
 
@@ -1679,8 +1684,8 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                         school_id = school_id
                     ).aggregate(result=Sum('totalAmount'))
 
-                    receipt_amount_sum = receiptsQuerySet.get('result', Decimal(
-                        '0.0')) if receiptsQuerySet is not None else Decimal('0.0')
+                    receipt_amount_sum = receiptsQuerySet.get('result', Decimal('0.0')) if receiptsQuerySet.get(
+                        'result') is not None else Decimal('0.0')
 
                     pikQuerySet = PIKReceipt.objects.filter(
                         bank_account__account_type=accountType,
@@ -1689,7 +1694,9 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                         school_id = school_id
                     ).aggregate(result=Sum('totalAmount'))
 
-                    pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
+                    pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet.get(
+                        'result') is not None else Decimal('0.0')
+
                     previous_bank_total = Decimal(receipt_amount_sum) + Decimal(pik_receipt_sum)
 
                     send = {
@@ -1734,15 +1741,16 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
             financial_year=financialyear
         ).aggregate(result=Sum('totalAmount'))
 
-        receipt_amount_sum = receiptsQuerySet.get('result', Decimal(
-            '0.0')) if receiptsQuerySet is not None else Decimal('0.0')
+        receipt_amount_sum = receiptsQuerySet.get('result', Decimal('0.0')) if receiptsQuerySet.get(
+            'result') is not None else Decimal('0.0')
 
         pikQuerySet = PIKReceipt.objects.filter(
             school_id=school_id,
             financial_year=financialyear
         ).aggregate(result=Sum('totalAmount'))
 
-        pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
+        pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet.get(
+            'result') is not None else Decimal('0.0')
         arrears_current_bank_total = Decimal(receipt_amount_sum) + Decimal(pik_receipt_sum)
 
 
@@ -1752,16 +1760,16 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                 financial_year=previous_year
             ).aggregate(result=Sum('totalAmount'))
 
-            receipt_amount_sum = receiptsQuerySet.get('result', Decimal(
-                '0.0')) if receiptsQuerySet is not None else Decimal('0.0')
+            receipt_amount_sum = receiptsQuerySet.get('result', Decimal('0.0')) if receiptsQuerySet.get(
+                'result') is not None else Decimal('0.0')
 
             pikQuerySet = PIKReceipt.objects.filter(
                 school_id=school_id,
                 financial_year=previous_year
             ).aggregate(result=Sum('totalAmount'))
 
-
-            pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet is not None else Decimal('0.0')
+            pik_receipt_sum = pikQuerySet.get('result', Decimal('0.0')) if pikQuerySet.get(
+                'result') is not None else Decimal('0.0')
             arrears_previous_bank_total = Decimal(receipt_amount_sum) + Decimal(pik_receipt_sum)
 
         sendback = {
@@ -1783,7 +1791,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
             receipt__financial_year=financialyear
         ).aggregate(result=Sum('amount'))
 
-        current_collection_amount_sum = collectionQuerySet.get('result', Decimal('0.0')) if collectionQuerySet is not None else Decimal('0.0')
+        current_collection_amount_sum = collectionQuerySet.get('result', Decimal('0.0')) if collectionQuerySet.get('result') is not None else Decimal('0.0')
 
         if previous_year:
             collectionQuerySet = Collection.objects.filter(
@@ -1792,7 +1800,8 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                 receipt__financial_year=previous_year
             ).aggregate(result=Sum('amount'))
 
-            previous_collection_amount_sum = collectionQuerySet.get('result', Decimal('0.0')) if collectionQuerySet is not None else Decimal('0.0')
+            previous_collection_amount_sum = collectionQuerySet.get('result', Decimal('0.0')) if collectionQuerySet.get(
+                'result') is not None else Decimal('0.0')
 
         sendback = {
             "current_collection_amount_sum": current_collection_amount_sum,
@@ -1810,6 +1819,9 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
         receivables_previous = accounts_receivable[0]['arrears_previous_bank_total']
         payables_current = accounts_payables[0]['current_collection_amount_sum']
         payables_previous = accounts_payables[0]['previous_collection_amount_sum']
+
+        print(cash_balances_current, receivables_current, payables_current)
+
         current_totals =Decimal(cash_balances_current) + Decimal(receivables_current) + Decimal(payables_current)
         previous_totals =Decimal(bank_balances_previous) + Decimal(receivables_previous) + Decimal(payables_previous)
 
@@ -1824,16 +1836,34 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
             "previous_totals": previous_totals,
         }
 
-        accounts_payables.append(send)
+        balance_brought_forward.append(send)
+
+        print(f"{collections_list}")
+        print("\n")
+
+        print(f"{expenses_list}")
+        print("\n")
+
+        print(f"{my_bank_account_list}")
+        print("\n")
+
+        print(f"{cash_in_hand_list}")
+        print("\n")
+
+        print(f"{accounts_receivable}")
+        print("\n")
+
+        print(f"{accounts_receivable}")
+        print("\n")
 
         full = {
             "collections_list": collections_list,
             "expenses_list": expenses_list,
-            "my_bank_account_list": my_bank_account_list,
             "cash_in_hand_list": cash_in_hand_list,
             "accounts_receivable": accounts_receivable,
             "accounts_payables": accounts_payables,
-            "balance_brought_forward": balance_brought_forward
+            "balance_brought_forward": balance_brought_forward,
+            "my_bank_account_list": my_bank_account_list
         }
 
         return Response({"detail": full})
