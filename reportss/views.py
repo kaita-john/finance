@@ -1,5 +1,5 @@
 # Create your views here.
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
@@ -1297,6 +1297,16 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
+    def last_day_of_month(themonth):
+        first_day_of_next_month = datetime.today().replace(day=1, month=themonth % 12 + 1)
+        last_day_of_month = first_day_of_next_month - timedelta(days=1)
+        return last_day_of_month
+
+    # Example usage:
+    # month_number = 12
+    # last_day = last_day_of_month(month_number)
+    # print(f"Last day of month {month_number}: {last_day}")
+
     def get(self, request, *args, **kwargs):
         school_id = self.check_school_id(request)
         if not school_id:
@@ -1309,6 +1319,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
         financialyear = request.GET.get('financialyear')
         accounttype = request.GET.get('accounttype')
         month = request.GET.get('month')
+
 
         if not financialyear or financialyear=="" or not accounttype or accounttype == "" or not month or month == "":
             return Response({'detail': f"Account Type, Financial Year and Month are required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -1429,6 +1440,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
                 "votehead": votehead,
                 "cramount": data["cramount"],
                 "dramount": data["dramount"],
+                "name": data["name"],
                 "lf_number": data["lf_number"]
             }
             for votehead, data in collectionvoteheadDictionary.items()
