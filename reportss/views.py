@@ -1522,6 +1522,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                 for votehead in votehead_list:
                     votehead_name = votehead.vote_head_name
                     if not collection_votehead.get(votehead_name):
+                        collection_votehead[votehead_name] = {}
                         collection_votehead[votehead_name]["name"] = votehead_name
                         collection_votehead[votehead_name]["amount"] = Decimal(amount)
                         current_collection_total += Decimal(amount)
@@ -1536,6 +1537,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                     for votehead in votehead_list:
                         votehead_name = votehead.vote_head_name
                         if not collection_votehead.get(votehead_name):
+                            collection_votehead[votehead_name] = {}
                             collection_votehead[votehead_name]["name"] = votehead_name
                             collection_votehead[votehead_name]["previous_amount"] = Decimal(amount)
                             previous_collection_total += Decimal(amount)
@@ -1553,6 +1555,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                 for votehead in votehead_list:
                     votehead_name = votehead.vote_head_name
                     if not collection_votehead.get(votehead_name):
+                        collection_votehead[votehead_name] = {}
                         collection_votehead[votehead_name]["name"] = votehead_name
                         collection_votehead[votehead_name]["amount"] = Decimal(amount)
                         current_collection_total += Decimal(amount)
@@ -1568,6 +1571,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                     for votehead in votehead_list:
                         votehead_name = votehead.vote_head_name
                         if not collection_votehead.get(votehead_name):
+                            collection_votehead[votehead_name] = {}
                             collection_votehead[votehead_name]["name"] = votehead_name
                             collection_votehead[votehead_name]["amount"] = Decimal(amount)
                             previous_collection_total += Decimal(amount)
@@ -1598,6 +1602,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                 for votehead in votehead_list:
                     votehead_name = votehead.vote_head_name
                     if not expenses_votehead.get(votehead_name):
+                        expenses_votehead[votehead_name] = {}
                         expenses_votehead[votehead_name]["name"] = votehead_name
                         expenses_votehead[votehead_name]["amount"] = Decimal(amount)
                         current_expenses_total += Decimal(amount)
@@ -1612,6 +1617,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                     for votehead in votehead_list:
                         votehead_name = votehead.vote_head_name
                         if not expenses_votehead.get(votehead_name):
+                            expenses_votehead[votehead_name] = {}
                             expenses_votehead[votehead_name]["name"] = votehead_name
                             expenses_votehead[votehead_name]["previous_amount"] = Decimal(amount)
                             previous_expenses_total += Decimal(amount)
