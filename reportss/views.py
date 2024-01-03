@@ -1480,11 +1480,11 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
 
 
         try:
-            current_financial_year = FinancialYear.objects.get(school_id = school_id, is_current = True)
+            current_financial_year = FinancialYear.objects.get(school = school_id, is_current = True)
         except ObjectDoesNotExist:
             return Response({'detail': f"Current financial year has not been set for this school"}, status=status.HTTP_400_BAD_REQUEST)
 
-        financial_year_list = FinancialYear.objects.filter(school_id=school_id).order_by('dateofcreation')
+        financial_year_list = FinancialYear.objects.filter(school =school_id).order_by('dateofcreation')
         current_financial_year_index = financial_year_list.index(current_financial_year)
         if current_financial_year_index > 0:
             previous_year = financial_year_list[current_financial_year_index - 1]
