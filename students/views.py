@@ -378,7 +378,6 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
                     guardian_phone = str(row['GUARDIAN PHONE'])
                     boarding_status = str(row['BOARDING STATUS'])
                     date_of_admission = str(row['ADMISSION DATE'])
-                    classes = classes
 
                     Student.objects.create(
                         first_name = first_name,
