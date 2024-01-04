@@ -1,4 +1,6 @@
 # Create your views here.
+from datetime import datetime
+
 import pandas as pd
 from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
@@ -376,6 +378,9 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
                     guardian_phone = str(row['GUARDIAN PHONE'])
                     boarding_status = str(row['BOARDING STATUS'])
                     date_of_admission = str(row['ADMISSION DATE'])
+                    date_object = datetime.strptime(date_of_admission, "%m/%d/%Y")
+                    formatted_date = date_object.strftime("%Y-%m-%d")
+
                     classes = classes
 
                     Student.objects.create(
@@ -383,7 +388,7 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
                         last_name = last_name,
                         gender = gender,
                         admission_number = admission_number,
-                        date_of_admission = date_of_admission,
+                        date_of_admission = formatted_date,
                         guardian_name = guardian_name,
                         guardian_phone = guardian_phone,
                         boarding_status = boarding_status,
