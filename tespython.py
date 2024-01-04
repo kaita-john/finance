@@ -17,11 +17,16 @@ def transform_phone_number(phone_number):
 
 
 
-import base64
+# import base64
+#
+# file_path = "C:\\Users\\kaita\\OneDrive\\Desktop\\coatOfArms.png"
+#
+# with open(file_path, "rb") as file:
+#     encoded_content = base64.b64encode(file.read()).decode("utf-8")
+#
+# print(encoded_content)
 
-file_path = "C:\\Users\\kaita\\OneDrive\\Desktop\\coatOfArms.png"
 
-with open(file_path, "rb") as file:
-    encoded_content = base64.b64encode(file.read()).decode("utf-8")
-
-print(encoded_content)
+dated = "12/10/2023"
+date_of_admission = str(dated)
+print(date_of_admission)
