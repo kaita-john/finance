@@ -996,16 +996,16 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
                 return Response({'detail': f"Invalid Student"}, status=status.HTTP_400_BAD_REQUEST)
 
             student_List = []
-            if student:
+            if student and student != "":
                 student_List.append(student)
 
-            if classes:
+            if classes and classes != "":
                 class_students = Student.objects.filter(school_id=school_id, current_Class__id = classes)
                 if class_students:
                     for value in class_students:
                         student_List.append(value)
 
-            if stream:
+            if stream and stream != "":
                 stream_students = Student.objects.filter(current_Stream__id=stream, school_id=school_id)
                 if stream_students:
                     for value in stream_students:
@@ -1022,11 +1022,11 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
                 querySetReceipts = Receipt.objects.filter(school_id=school_id, student=student, is_reversed = False)
                 querysetPIK = PIKReceipt.objects.filter(school_id=school_id, student=student, is_posted=True)
 
-                if financialyear:
+                if financialyear and financialyear != "":
                     querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year__id=financialyear)
                     querysetPIK = querysetPIK.filter(school_id=school_id, financial_year__id=financialyear)
 
-                if academicyear:
+                if academicyear and academicyear != "":
                     querySetReceipts = querySetReceipts.filter(school_id=school_id, year__id = academicyear)
                     querysetPIK = querysetPIK.filter(school_id=school_id, year__id = academicyear)
 
