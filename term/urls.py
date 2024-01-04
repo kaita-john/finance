@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from .views import TermListView, TermDetailView, TermCreateView
+from .views import TermListView, TermDetailView, TermCreateView, CurrentTermView
 
 urlpatterns = [
     path('create', TermCreateView.as_view(), name="term-create"),
