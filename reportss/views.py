@@ -990,13 +990,12 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
             if not student and not classes and not stream:
                 return Response({'detail': f"Either of Student or Stream or Class should be passed"}, status=status.HTTP_400_BAD_REQUEST)
 
-            try:
-                student = Student.objects.get(id=student, school_id=school_id)
-            except ObjectDoesNotExist:
-                return Response({'detail': f"Invalid Student"}, status=status.HTTP_400_BAD_REQUEST)
-
             student_List = []
             if student and student != "":
+                try:
+                    student = Student.objects.get(id=student, school_id=school_id)
+                except ObjectDoesNotExist:
+                    return Response({'detail': f"Invalid Student"}, status=status.HTTP_400_BAD_REQUEST)
                 student_List.append(student)
 
             if classes and classes != "":
