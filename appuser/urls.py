@@ -1,8 +1,10 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.urls import path
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from appuser.views import *
+from school.models import School
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -18,6 +20,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['userid'] = str(uuid.UUID(str(user.id)))
         if user.school_id:
             token['school_id'] = str(uuid.UUID(str(user.school_id.id)))
+            try:
+                schoolName = School.objects.get(id=str(uuid.UUID(str(user.school_id.id))))
+                token['school_name'] = schoolName
+            except ObjectDoesNotExist:
+                pass
         else:
             token['school_id'] = None
         return token
