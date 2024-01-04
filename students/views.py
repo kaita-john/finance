@@ -352,52 +352,51 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
         required_columns = ['FIRST NAME', 'LAST NAME', 'GENDER', 'ADMNO', 'GUARDIAN NAME',
                             'GUARDIAN PHONE', 'BOARDING STATUS', 'ADMISSION DATE']
 
-        with transaction.atomic():
-            # Iterate through rows
-            for position, row in df.iterrows():
-                # Check if all required columns exist
-                missing_columns = [col for col in required_columns if col not in df.columns]
-                if missing_columns:
-                    return Response({'detail': f"Missing required columns: {', '.join(missing_columns)} in the Excel file"},
-                        status=status.HTTP_400_BAD_REQUEST)
+        try:
+            with transaction.atomic():
+                # Iterate through rows
+                for position, row in df.iterrows():
+                    # Check if all required columns exist
+                    missing_columns = [col for col in required_columns if col not in df.columns]
+                    if missing_columns:
+                        return Response({'detail': f"Missing required columns: {', '.join(missing_columns)} in the Excel file"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-                non_empty_columns = [col for col in required_columns if
-                                     pd.isna(row[col]) and col not in ['guardian_name', 'guardian_phone']]
+                    non_empty_columns = [col for col in required_columns if
+                                         pd.isna(row[col]) and col not in ['guardian_name', 'guardian_phone']]
 
-                if non_empty_columns:
-                    return Response({'detail': f"Column(s) {', '.join(non_empty_columns)} cannot be empty for student at row {position}"},
-                        status=status.HTTP_400_BAD_REQUEST)
+                    if non_empty_columns:
+                        return Response({'detail': f"Column(s) {', '.join(non_empty_columns)} cannot be empty for student at row {position}"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-                # Process the extracted data as needed
-                last_name = row['LAST NAME']
-                first_name = row['FIRST NAME']
-                gender = row['GENDER']
-                admission_number = row['ADMNO']
-                guardian_name = row['GUARDIAN NAME']
-                guardian_phone = row['GUARDIAN PHONE']
-                boarding_status = row['BOARDING STATUS']
-                date_of_admission = str(row['ADMISSION DATE'])
+                    # Process the extracted data as needed
+                    last_name = str(row['LAST NAME'])
+                    first_name = str(row['FIRST NAME'])
+                    gender = str(row['GENDER'])
+                    admission_number = str(row['ADMNO'])
+                    guardian_name = str(row['GUARDIAN NAME'])
+                    guardian_phone = str(row['GUARDIAN PHONE'])
+                    boarding_status = str(row['BOARDING STATUS'])
+                    date_of_admission = str(row['ADMISSION DATE'])
+                    classes = classes
 
-                print(f"The date of admission is {date_of_admission}")
-                date_object = datetime.strptime(date_of_admission, "%m/%d/%Y")
-                formatted_date = date_object.strftime("%Y-%m-%d")
+                    Student.objects.create(
+                        first_name = first_name,
+                        last_name = last_name,
+                        gender = gender,
+                        admission_number = admission_number,
+                        date_of_admission = date_of_admission,
+                        guardian_name = guardian_name,
+                        guardian_phone = guardian_phone,
+                        boarding_status = boarding_status,
+                        school_id = school_id,
+                        current_Class = theclass,
+                        current_Year = currentYear,
+                        current_Term = currentTerm,
+                    )
 
-                classes = classes
-
-                Student.objects.create(
-                    first_name = first_name,
-                    last_name = last_name,
-                    gender = gender,
-                    admission_number = admission_number,
-                    date_of_admission = formatted_date,
-                    guardian_name = guardian_name,
-                    guardian_phone = guardian_phone,
-                    boarding_status = boarding_status,
-                    school_id = school_id,
-                    current_Class = theclass,
-                    current_Year = currentYear,
-                    current_Term = currentTerm,
-                )
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
         return Response({'detail': 'Students created successfully'}, status=status.HTTP_201_CREATED)
