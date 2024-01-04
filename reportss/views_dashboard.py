@@ -159,11 +159,18 @@ class DashboardView(SchoolIdMixin, generics.GenericAPIView):
                 total_expenses = expenses_query_set.get('result', Decimal('0.0')) if expenses_query_set.get(
                     'result') is not None else Decimal('0.0')
 
+                total_collections_list = [entry["totalCollections"] for entry in tosend["income_vs_expense"]]
+                total_expenses_list = [entry["total_expenses"] for entry in tosend["income_vs_expense"]]
+
+                total_collections = sum(total_collections_list)
+                total_expenses = sum(total_expenses_list)
+
                 tosend = {
                     "voteheadname" : votehead_name,
                     "totalCollections" : totalCollections,
                     "total_expenses" : total_expenses,
                 }
+
                 income_vs_expense.append(tosend)
 
             toreturn = {
@@ -173,6 +180,15 @@ class DashboardView(SchoolIdMixin, generics.GenericAPIView):
                 "income_vs_expense": income_vs_expense,
                 "students_number": students_number
             }
+
+            total_collections_list = [entry["totalCollections"] for entry in toreturn["income_vs_expense"]]
+            total_expenses_list = [entry["total_expenses"] for entry in toreturn["income_vs_expense"]]
+            total_collections = sum(total_collections_list)
+            total_expenses = sum(total_expenses_list)
+
+            # Update the 'tosend' dictionary
+            toreturn["overall_collection_amount"] = total_collections
+            toreturn["overall_expense_amount"] = total_expenses
 
         except Exception as exception:
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
