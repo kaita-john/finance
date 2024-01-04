@@ -378,8 +378,12 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
                     guardian_phone = str(row['GUARDIAN PHONE'])
                     boarding_status = str(row['BOARDING STATUS'])
                     date_of_admission = str(row['ADMISSION DATE'])
-                    date_object = datetime.strptime(date_of_admission, "%m/%d/%Y")
-                    formatted_date = date_object.strftime("%Y-%m-%d")
+
+                    try:
+                        date_object = datetime.strptime(date_of_admission, "%m/%d/%Y")
+                        formatted_date = date_object.strftime("%Y-%m-%d")
+                    except Exception as exception:
+                        return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
                     classes = classes
 
