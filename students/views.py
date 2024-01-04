@@ -353,25 +353,18 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
         try:
             with transaction.atomic():
                 # Iterate through rows
-                for index, row in df.iterrows():
+                for position, row in df.iterrows():
                     # Check if all required columns exist
                     missing_columns = [col for col in required_columns if col not in df.columns]
                     if missing_columns:
                         return Response({'detail': f"Missing required columns: {', '.join(missing_columns)} in the Excel file"},
-                                        status=status.HTTP_400_BAD_REQUEST)
+                            status=status.HTTP_400_BAD_REQUEST)
 
-                    # Check if any of the required columns is empty
-                    # empty_columns = [col for col in required_columns if pd.isna(row[col])]
-                    # if empty_columns:
-                    #     return Response(
-                    #         {'detail': f"Column(s) {', '.join(empty_columns)} cannot be empty for student at row {index + 2}"},
-                    #         status=status.HTTP_400_BAD_REQUEST)
+                    non_empty_columns = [col for col in required_columns if
+                                         pd.isna(row[col]) and col not in ['guardian_name', 'guardian_phone']]
 
-                    # Check if any of the required columns is empty
-                    empty_columns = [col for col in required_columns if pd.isna(row[col])]
-                    if empty_columns:
-                        return Response(
-                            {'detail': f"Column(s) {', '.join(empty_columns)} cannot be empty for student at row {index + 2}"},
+                    if non_empty_columns:
+                        return Response({'detail': f"Column(s) {', '.join(non_empty_columns)} cannot be empty for student at row {position + 2}"},
                             status=status.HTTP_400_BAD_REQUEST)
 
                     # Process the extracted data as needed
