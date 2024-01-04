@@ -347,8 +347,8 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
         except Exception as e:
             return Response({'detail': f"Error reading Excel file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
-        required_columns = ['first_name', 'last_name', 'gender', 'admission_number', 'guardian_name',
-                            'guardian_phone', 'boarding_status', 'date_of_admission']
+        required_columns = ['FIRST NAME', 'LAST NAME', 'GENDER', 'ADMNO', 'GUARDIAN NAME',
+                            'GUARDIAN PHONE', 'BOARDING STATUS', 'ADMISSION DATE']
 
         try:
             with transaction.atomic():
