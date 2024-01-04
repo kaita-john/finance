@@ -2,11 +2,11 @@
 
 from django.urls import path
 
-from .views import StudentListView, StudentDetailView, StudentCreateView, StudentBalanceDetailView, \
-    StudentSearchByAdmissionNumber, GetStudentsByClass, GetStudentInvoicedVotehead
+from .views import *
 
 urlpatterns = [
     path('create', StudentCreateView.as_view(), name="student-create"),
+    path('upload', UploadStudentCreateView.as_view(), name="student-create"),
     path('list', StudentListView.as_view(), name="student-list"),
     path('search-by-admission', StudentSearchByAdmissionNumber.as_view(), name="student-list"),
     path('get-student-by-class', GetStudentsByClass.as_view(), name="get-student-by-class"),

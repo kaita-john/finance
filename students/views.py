@@ -1,6 +1,8 @@
 # Create your views here.
+import pandas as pd
 from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -11,15 +13,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from academic_year.models import AcademicYear
-from academic_year.serializers import AcademicYearSerializer
 from appcollections.models import Collection
+from classes.models import Classes
+from file_upload.models import SchoolImage
 from invoices.models import Invoice
 from invoices.views import createInvoices
 from payment_in_kind_Receipt.models import PIKReceipt
 from receipts.models import Receipt
 from term.models import Term
 from utils import SchoolIdMixin, UUID_from_PrimaryKey, currentAcademicYear, currentTerm, IsAdminOrSuperUser
-from voteheads.models import VoteHead
 from voteheads.serializers import VoteHeadSerializer
 from .models import Student
 from .serializers import StudentSerializer
@@ -297,4 +299,112 @@ class GetStudentInvoicedVotehead(SchoolIdMixin, generics.RetrieveAPIView):
 
 
         return Response({"detail": payload})
+
+
+
+
+class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
+    serializer_class = StudentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        school_id = self.check_school_id(self.request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+
+        classes = request.GET.get('classes')
+        fileid = request.GET.get('fileid')
+
+        try:
+            currentTerm = Term.objects.get(is_current=True)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"Current Term not set for school"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            currentYear = AcademicYear.objects.get(is_current=True)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"Current Year not set for school"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        if not classes or classes == "":
+            return Response({'detail': f"Student class is a must"}, status=status.HTTP_400_BAD_REQUEST)
+        if not fileid or fileid == "":
+            return Response({'detail': f"Csv file is a must"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            file = SchoolImage.objects.get(id=fileid)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"This file does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            theclass = Classes.objects.get(id=classes)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"This class does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            df = pd.read_excel(file.image.path)  # Assuming the path attribute contains the file path
+        except Exception as e:
+            return Response({'detail': f"Error reading Excel file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        required_columns = ['first_name', 'last_name', 'gender', 'admission_number', 'guardian_name',
+                            'guardian_phone', 'boarding_status', 'date_of_admission']
+
+        try:
+            with transaction.atomic():
+                # Iterate through rows
+                for index, row in df.iterrows():
+                    # Check if all required columns exist
+                    missing_columns = [col for col in required_columns if col not in df.columns]
+                    if missing_columns:
+                        return Response({'detail': f"Missing required columns: {', '.join(missing_columns)} in the Excel file"},
+                                        status=status.HTTP_400_BAD_REQUEST)
+
+                    # Check if any of the required columns is empty
+                    # empty_columns = [col for col in required_columns if pd.isna(row[col])]
+                    # if empty_columns:
+                    #     return Response(
+                    #         {'detail': f"Column(s) {', '.join(empty_columns)} cannot be empty for student at row {index + 2}"},
+                    #         status=status.HTTP_400_BAD_REQUEST)
+
+                    # Check if any of the required columns is empty
+                    empty_columns = [col for col in required_columns if pd.isna(row[col])]
+                    if empty_columns:
+                        return Response(
+                            {'detail': f"Column(s) {', '.join(empty_columns)} cannot be empty for student at row {index + 2}"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+                    # Process the extracted data as needed
+                    last_name = row['last_name']
+                    first_name = row['first_name']
+                    gender = row['gender']
+                    admission_number = row['admission_number']
+                    guardian_name = row['guardian_name']
+                    guardian_phone = row['guardian_phone']
+                    boarding_status = row['boarding_status']
+                    date_of_admission = row['date_of_admission']
+                    classes = classes
+
+                    Student.objects.create(
+                        first_name = first_name,
+                        last_name = last_name,
+                        gender = gender,
+                        admission_number = admission_number,
+                        date_of_admission = date_of_admission,
+                        guardian_name = guardian_name,
+                        guardian_phone = guardian_phone,
+                        boarding_status = boarding_status,
+                        school_id = school_id,
+                        current_Class = theclass,
+                        current_Year = currentYear,
+                        current_Term = currentTerm,
+                    )
+
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        return Response({'detail': 'Students created successfully'}, status=status.HTTP_201_CREATED)
+
+
 
