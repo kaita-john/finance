@@ -378,6 +378,7 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
                 boarding_status = row['BOARDING STATUS']
                 date_of_admission = row['ADMISSION DATE']
 
+                print(f"The date of admission is {date_of_admission}")
                 date_object = datetime.strptime(date_of_admission, "%m/%d/%Y")
                 formatted_date = date_object.strftime("%Y-%m-%d")
 
