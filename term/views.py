@@ -1,11 +1,12 @@
 # Create your views here.
-
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from utils import SchoolIdMixin, UUID_from_PrimaryKey
+from utils import SchoolIdMixin, UUID_from_PrimaryKey, IsAdminOrSuperUser
 from .models import Term
 from .serializers import TermSerializer
 
@@ -89,3 +90,20 @@ class TermDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({'detail': 'Record deleted successfully'}, status=status.HTTP_200_OK)
+
+
+
+class CurrentTermView(APIView, SchoolIdMixin):
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+    def get(self, request):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        try:
+            student = Term.objects.get(is_current=True, school_id = school_id)
+            serializer = TermSerializer(student, many=False)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"Current term not set for shool"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'detail': serializer.data}, status=status.HTTP_200_OK)
