@@ -21,8 +21,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         if user.school_id:
             token['school_id'] = str(uuid.UUID(str(user.school_id.id)))
             try:
-                schoolName = School.objects.get(id=str(uuid.UUID(str(user.school_id.id))))
-                token['school_name'] = schoolName
+                school = School.objects.get(id=str(uuid.UUID(str(user.school_id.id))))
+                token['school_name'] = school.name
             except ObjectDoesNotExist:
                 pass
         else:
