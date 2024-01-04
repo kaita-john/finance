@@ -376,7 +376,7 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
                 guardian_name = row['GUARDIAN NAME']
                 guardian_phone = row['GUARDIAN PHONE']
                 boarding_status = row['BOARDING STATUS']
-                date_of_admission = row['ADMISSION DATE']
+                date_of_admission = str(row['ADMISSION DATE'])
 
                 print(f"The date of admission is {date_of_admission}")
                 date_object = datetime.strptime(date_of_admission, "%m/%d/%Y")
