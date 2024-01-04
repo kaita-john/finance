@@ -33,6 +33,7 @@ from students.serializers import StudentSerializer
 from term.models import Term
 from utils import SchoolIdMixin, currentAcademicYear, currentTerm, IsAdminOrSuperUser, check_if_object_exists
 from voteheads.models import VoteHead
+from voteheads.serializers import VoteHeadSerializer
 from voucher_items.models import VoucherItem
 from vouchers.models import Voucher
 
@@ -987,6 +988,9 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
             classes = request.GET.get('classes')
             stream = request.GET.get('stream')
 
+            if not academicyear or academicyear == "":
+                return Response({'detail': f"Academic Year is a must"}, status=status.HTTP_400_BAD_REQUEST)
+
             if not student and not classes and not stream:
                 return Response({'detail': f"Either of Student or Stream or Class should be passed"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1017,6 +1021,12 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
                 student_admission = student.admission_number
                 student_class = student.current_Class
                 student_stream = student.current_Stream
+                student_id = student.id
+
+                try:
+                    year = get_object_or_404(AcademicYear, id=academicyear)
+                except Exception as exception:
+                    return Response({'detail': exception}, status=status.HTTP_400_BAD_REQUEST)
 
                 querySetReceipts = Receipt.objects.filter(school_id=school_id, student=student, is_reversed = False)
                 querysetPIK = PIKReceipt.objects.filter(school_id=school_id, student=student, is_posted=True)
@@ -1145,10 +1155,48 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
                 universalvoteheadDictionary['overall_balance_after'] = overall_balance_after
                 universalvoteheadDictionary['total_collections'] = total_collections
 
+                invoiceList = Invoice.objects.filter(
+                    student_id=student.id,
+                    year=year,
+                    school_id=school_id
+                )
+
+
+                student_voteheads = []
+                for invoice in invoiceList:
+                    votehead = invoice.votehead
+
+                    receiptAmount = Collection.objects.filter(
+                        receipt__year=year, votehead=votehead,
+                        school_id=school_id,
+                        student=student
+                    ).aggregate(Sum('amount'))['amount__sum'] or Decimal(0)
+
+                    pikAmount = PIKReceipt.objects.filter(
+                        year=year,
+                        school_id=school_id,
+                        student=student
+                    ).aggregate(Sum('totalAmount'))['totalAmount__sum'] or Decimal(0)
+
+                    amountpaid = Decimal(pikAmount) + Decimal(receiptAmount)
+                    required_amount = invoice.amount - amountpaid
+                    invoiced_amount = invoice.amount
+
+                    student_voteheads.append(
+                        {
+                            "votehead": VoteHeadSerializer(votehead).data,
+                            "name": votehead.vote_head_name,
+                            "amount_paid": amountpaid,
+                            "required_amount": required_amount,
+                            "invoiced_amount": invoiced_amount,
+                        }
+                    )
+
                 student_final_output.append(
                     {
                         "dated_student_instances": dated_instances,
                         "student": StudentSerializer(student).data,
+                        "invoiced_voteheads": student_voteheads,
                         "totals": universalvoteheadDictionary
                     }
                 )
