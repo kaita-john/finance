@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import DO_NOTHING
 
 from models import ParentModel
+from term.models import Term
 from voteheads.models import VoteHead
 from vouchers.models import Voucher
 
@@ -17,6 +18,7 @@ class VoucherItem(ParentModel):
 
     def __str__(self):
         return f"{self.id}"
+
 
 
 

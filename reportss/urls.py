@@ -3,6 +3,7 @@
 from django.urls import path
 
 from .views import *
+from .views_dashboard import *
 
 urlpatterns = [
 
@@ -22,6 +23,7 @@ urlpatterns = [
     path('financial/trial-balance', TrialBalanceView.as_view(), name="income-summary"),
 
     path('ipsas/notes', NotesView.as_view(), name="income-summary"),
+    path('dashboard', DashboardView.as_view(), name="dashboard"),
 
 ]
 
