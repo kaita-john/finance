@@ -343,7 +343,7 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': f"This class does not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            df = pd.read_excel(file.image.path)  # Assuming the path attribute contains the file path
+            df = pd.read_excel(file.document)  # Assuming the path attribute contains the file path
         except Exception as e:
             return Response({'detail': f"Error reading Excel file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -364,7 +364,7 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
                                          pd.isna(row[col]) and col not in ['guardian_name', 'guardian_phone']]
 
                     if non_empty_columns:
-                        return Response({'detail': f"Column(s) {', '.join(non_empty_columns)} cannot be empty for student at row {position + 2}"},
+                        return Response({'detail': f"Column(s) {', '.join(non_empty_columns)} cannot be empty for student at row {position}"},
                             status=status.HTTP_400_BAD_REQUEST)
 
                     # Process the extracted data as needed
