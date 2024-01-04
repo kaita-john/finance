@@ -1036,13 +1036,25 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
                 listofdateofcreations = list(set(listofdateofcreations))
                 listofdateofcreations = list(listofdateofcreations)
 
-                listofreceipts = []
+                overall_balance_after = Decimal(0.0)
                 universalvoteheadDictionary = {}
-
+                total_collections = Decimal(0.0)
 
                 dated_instances = []
 
-                for dateinstance in listofdateofcreations:
+
+                for index, dateinstance in enumerate(listofdateofcreations):
+
+                    balanceTrackerQuerySet = BalanceTracker.objects.filter(
+                        dateofcreation=dateinstance,
+                        school_id=school_id, student=student
+                    ).first()
+
+                    if balanceTrackerQuerySet:
+                        if index == len(listofdateofcreations) - 1:
+                            #It is the last index
+                            overall_balance_after = balanceTrackerQuerySet.balanceAfter
+
 
                     receipts = []
 
@@ -1063,8 +1075,10 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
                             receiptsList = Collection.objects.filter(receipt=receipt)
                             for collection in receiptsList:
                                 if collection.votehead.vote_head_name not in voteheadDictionary:
+                                    total_collections += collection.amount
                                     voteheadDictionary[f"{collection.votehead.vote_head_name}"] = collection.amount
                                 else:
+                                    total_collections += collection.amount
                                     voteheadDictionary[f"{collection.votehead.vote_head_name}"] += collection.amount
                                 if collection.votehead.vote_head_name not in universalvoteheadDictionary:
                                     universalvoteheadDictionary[f"{collection.votehead.vote_head_name}"] = collection.amount
@@ -1099,8 +1113,10 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
                             piks = PaymentInKind.objects.filter(receipt=pik)
                             for pik in piks:
                                 if pik.votehead.vote_head_name not in voteheadDictionary:
+                                    total_collections += pik.amount
                                     voteheadDictionary[f"{pik.votehead.vote_head_name}"] = pik.amount
                                 else:
+                                    total_collections += pik.amount
                                     voteheadDictionary[f"{pik.votehead.vote_head_name}"] += pik.amount
                                 if pik.votehead.vote_head_name not in universalvoteheadDictionary:
                                     universalvoteheadDictionary[f"{pik.votehead.vote_head_name}"] = pik.amount
@@ -1125,6 +1141,9 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
 
                     dated_instances.append(output)
 
+
+                universalvoteheadDictionary['overall_balance_after'] = overall_balance_after
+                universalvoteheadDictionary['total_collections'] = total_collections
 
                 student_final_output.append(
                     {
