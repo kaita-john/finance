@@ -125,12 +125,13 @@ class DashboardView(SchoolIdMixin, generics.GenericAPIView):
                         'result') is not None else Decimal('0.0')
 
                     percentage = (totalCollections/invoiced_amount_sum) * 100
+                    rounded_percentage = round(percentage)
 
                     to_Send = {
                         "form_name": form_name,
                         "collections": totalCollections,
                         "invoiced": invoiced_amount_sum,
-                        "percentage": percentage
+                        "percentage": rounded_percentage
                     }
                     form_collections_percentages.append(to_Send)
 
