@@ -30,7 +30,7 @@ class SchoolCategoryListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsSuperUser]
 
 
-class SchoolCategoryDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class SchoolCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = SchoolCategory.objects.all()
     serializer_class = SchoolCategorySerializer
     permission_classes = [IsAuthenticated, IsSuperUser]
@@ -44,15 +44,11 @@ class SchoolCategoryDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIV
             raise NotFound({'detail': 'Record Not Found'})
 
     def update(self, request, *args, **kwargs):
-        school_id = self.check_school_id(request)
-        if not school_id:
-            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
-            serializer.validated_data['school_id'] = school_id
             self.perform_update(serializer)
             return Response({'detail': 'SchoolCategory updated successfully'}, status=status.HTTP_201_CREATED)
         else:
