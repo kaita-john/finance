@@ -159,12 +159,6 @@ class DashboardView(SchoolIdMixin, generics.GenericAPIView):
                 total_expenses = expenses_query_set.get('result', Decimal('0.0')) if expenses_query_set.get(
                     'result') is not None else Decimal('0.0')
 
-                total_collections_list = [entry["totalCollections"] for entry in tosend["income_vs_expense"]]
-                total_expenses_list = [entry["total_expenses"] for entry in tosend["income_vs_expense"]]
-
-                total_collections = sum(total_collections_list)
-                total_expenses = sum(total_expenses_list)
-
                 tosend = {
                     "voteheadname" : votehead_name,
                     "totalCollections" : totalCollections,
