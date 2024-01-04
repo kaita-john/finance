@@ -368,14 +368,14 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
                     # Process the extracted data as needed
-                    last_name = row['last_name']
-                    first_name = row['first_name']
-                    gender = row['gender']
-                    admission_number = row['admission_number']
-                    guardian_name = row['guardian_name']
-                    guardian_phone = row['guardian_phone']
-                    boarding_status = row['boarding_status']
-                    date_of_admission = row['date_of_admission']
+                    last_name = row['LAST NAME']
+                    first_name = row['FIRST NAME']
+                    gender = row['GENDER']
+                    admission_number = row['ADMNO']
+                    guardian_name = row['GUARDIAN NAME']
+                    guardian_phone = row['GUARDIAN PHONE']
+                    boarding_status = row['BOARDING STATUS']
+                    date_of_admission = row['ADMISSION DATE']
                     classes = classes
 
                     Student.objects.create(
