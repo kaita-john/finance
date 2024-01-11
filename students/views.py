@@ -431,13 +431,8 @@ class UploadStudentBalancesView(APIView, SchoolIdMixin):
         if not current_academic_year or not current_term:
             return Response({'detail': f"Both current academic year and current term are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-
-        template_type = request.GET.get('template_type')
         due_date = request.GET.get('due_date')
         template_id = request.GET.get('template_id')
-
-        if not template_type or not due_date or not template_id:
-            return Response({'detail': f"Template Type, File Id and Due Date is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             file = SchoolImage.objects.get(id=template_id)
@@ -451,78 +446,76 @@ class UploadStudentBalancesView(APIView, SchoolIdMixin):
             return Response({'detail': f"Error reading Excel file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+        required_columns = ['ADMNO', 'NAME', 'AMOUNT']
 
-        if template_type == "total_amount":
-          required_columns = ['ADMNO', 'NAME', 'AMOUNT']
+        try:
+          with transaction.atomic():
+              for position, row in df.iterrows():
+                  missing_columns = [col for col in required_columns if col not in df.columns]
+                  if missing_columns:
+                      return Response(
+                          {'detail': f"Missing required columns: {', '.join(missing_columns)} in the Excel file"},
+                          status=status.HTTP_400_BAD_REQUEST)
 
-          try:
-              with transaction.atomic():
-                  for position, row in df.iterrows():
-                      missing_columns = [col for col in required_columns if col not in df.columns]
-                      if missing_columns:
-                          return Response(
-                              {'detail': f"Missing required columns: {', '.join(missing_columns)} in the Excel file"},
-                              status=status.HTTP_400_BAD_REQUEST)
+                  non_empty_columns = [col for col in required_columns if
+                                       pd.isna(row[col]) and col not in ['guardian_name', 'guardian_phone']]
 
-                      non_empty_columns = [col for col in required_columns if
-                                           pd.isna(row[col]) and col not in ['guardian_name', 'guardian_phone']]
+                  if non_empty_columns:
+                      return Response({ 'detail': f"Column(s) {', '.join(non_empty_columns)} cannot be empty for student at row {position}"},
+                                      status=status.HTTP_400_BAD_REQUEST)
 
-                      if non_empty_columns:
-                          return Response({ 'detail': f"Column(s) {', '.join(non_empty_columns)} cannot be empty for student at row {position}"},
-                                          status=status.HTTP_400_BAD_REQUEST)
+                  # Process the extracted data as needed
+                  admission_number = str(row['ADMNO'])
+                  student_name = str(row['NAME'])
+                  amount = Decimal(row['AMOUNT'])
 
-                      # Process the extracted data as needed
-                      admission_number = str(row['ADMNO'])
-                      student_name = str(row['NAME'])
-                      amount = Decimal(row['AMOUNT'])
+                  try:
+                      student = Student.objects.get(admission_number=admission_number)
+                  except ObjectDoesNotExist:
+                      return Response({'detail': f"Student {student_name} of admission number {admission_number} not found"}, status=status.HTTP_400_BAD_REQUEST)
 
-                      try:
-                          student = Student.objects.get(admission_number=admission_number)
-                      except ObjectDoesNotExist:
-                          return Response({'detail': f"Student {student_name} of admission number {admission_number} not found"}, status=status.HTTP_400_BAD_REQUEST)
+                  try:
+                      invoicable_votehead = VoteHead.objects.get(is_Arrears_Default=True)
+                  except ObjectDoesNotExist:
+                      return Response({'detail': f"This school does not have an arrears default votehead set!"}, status=status.HTTP_400_BAD_REQUEST)
 
-                      try:
-                          invoicable_votehead = VoteHead.objects.get(is_Arrears_Default=True)
-                      except ObjectDoesNotExist:
-                          return Response({'detail': f"This school does not have an arrears default votehead set!"}, status=status.HTTP_400_BAD_REQUEST)
+                  description = invoicable_votehead.vote_head_name
+                  amount = amount
+                  term = current_term
+                  year = current_academic_year
+                  classes = student.current_Class
+                  school_id = school_id
+                  votehead = invoicable_votehead
+                  exists_query = Invoice.objects.filter(votehead__id=votehead.id, term=term, year=year, student=student)
 
-                      description = invoicable_votehead.vote_head_name
-                      amount = amount
-                      term = current_term
-                      year = current_academic_year
-                      classes = student.current_Class
-                      school_id = school_id
-                      votehead = invoicable_votehead
-                      exists_query = Invoice.objects.filter(votehead__id=votehead.id, term=term, year=year, student=student)
+                  invoice_no = generate_unique_code()
 
-                      invoice_no = generate_unique_code()
+                  if exists_query.exists():
+                      invoice = exists_query[0]
+                      invoice.amount = invoice.amount + Decimal(amount)
+                      invoice.save()
+                  else:
+                      invoice = Invoice(
+                          issueDate=timezone.now().date(),
+                          invoiceNo=invoice_no,
+                          amount=amount,
+                          paid=0.00,
+                          due=amount,
+                          description=description,
+                          student=student,
+                          term=term,
+                          year=year,
+                          classes=classes,
+                          currency=currency,
+                          school_id=school_id,
+                          votehead=votehead
+                      )
+                      invoice.save()
 
-                      if exists_query.exists():
-                          invoice = exists_query[0]
-                          invoice.amount = invoice.amount + Decimal(amount)
-                          invoice.save()
-                      else:
-                          invoice = Invoice(
-                              issueDate=timezone.now().date(),
-                              invoiceNo=invoice_no,
-                              amount=amount,
-                              paid=0.00,
-                              due=amount,
-                              description=description,
-                              student=student,
-                              term=term,
-                              year=year,
-                              classes=classes,
-                              currency=currency,
-                              school_id=school_id,
-                              votehead=votehead
-                          )
-                          invoice.save()
+          return Response({'detail': f"Balances were uploaded successfully"}, status=status.HTTP_200_OK)
 
-              return Response({'detail': f"Balances were uploaded successfully"}, status=status.HTTP_200_OK)
-
-          except Exception as exception:
-              return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exception:
+          return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 

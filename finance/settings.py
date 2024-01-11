@@ -78,6 +78,8 @@ INSTALLED_APPS = [
     'voucher_items',
     'voucher_attachments',
     'reportss',
+    'grants',
+    'grant_items',
 ]
 
 

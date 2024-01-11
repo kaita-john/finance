@@ -32,6 +32,8 @@ api_patterns = [
     path(api_version + 'receipts/', include('receipts.urls')),
     path(api_version + 'receipts/', include('receipts.urls')),
     path(api_version + 'bursaries/', include('bursaries.urls')),
+
+    path(api_version + 'grants/', include('grants.urls')),
     path(api_version + 'items/', include('items.urls')),
 
 
