@@ -19,9 +19,14 @@ class VoteHead(ParentModel):
     ledget_folio_number_lf = models.CharField(max_length=255,  default=1)
 
     def save(self, *args, **kwargs):
+        existing_votehead = VoteHead.objects.filter(vote_head_name=self.vote_head_name,school_id=self.school_id).exclude(pk=self.pk).first()
+        if existing_votehead:
+            raise ValidationError({'detail': 'VoteHead with the same name and school_id already exists.'})
+
         if self.is_Overpayment_Default:
             VoteHead.objects.exclude(pk=self.pk).update(is_Overpayment_Default=False)
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f"{self.vote_head_name} - {self.id}"

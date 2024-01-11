@@ -5,6 +5,7 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
+    path('upload-balances', UploadStudentBalancesView.as_view(), name="template-type"),
     path('create', StudentCreateView.as_view(), name="student-create"),
     path('upload', UploadStudentCreateView.as_view(), name="student-create"),
     path('list', StudentListView.as_view(), name="student-list"),

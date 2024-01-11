@@ -2,6 +2,7 @@
 import uuid
 from uuid import UUID
 
+from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Sum, F
@@ -174,7 +175,9 @@ def createInvoices(students, structure_year, structure_term, structure_class):
                         exists_query = Invoice.objects.filter(votehead__id=votehead.id, term=term, year=year, student=student)
 
                         if exists_query.exists():
-                            pass
+                            invoice = exists_query[0]
+                            invoice.amount = invoice.amount + Decimal(amount)
+                            invoice.save()
                         else:
                             invoice = Invoice(
                                 issueDate=timezone.now().date(),
