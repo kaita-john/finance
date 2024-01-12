@@ -25,7 +25,7 @@ class VoucherSerializer(serializers.ModelSerializer):
     payment_values = serializers.ListField(child=serializers.DictField(), write_only=True)
     attachmens_values = serializers.ListField(child=serializers.DictField(), allow_null=True, required=False, write_only=True)
 
-    payment_itetms = serializers.SerializerMethodField(read_only=True)
+    payment_items = serializers.SerializerMethodField(read_only=True)
     attachments_items = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
