@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import DO_NOTHING
 
 from academic_year.models import AcademicYear
 from classes.models import Classes
