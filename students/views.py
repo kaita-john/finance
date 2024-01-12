@@ -405,6 +405,7 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
         return Response({'detail': 'Students created successfully'}, status=status.HTTP_201_CREATED)
 
 
+
 class UploadStudentBalancesView(APIView, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -516,6 +517,95 @@ class UploadStudentBalancesView(APIView, SchoolIdMixin):
 
         except Exception as exception:
           return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+class UploadSingleStudentBalance(APIView, SchoolIdMixin):
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+
+    def post(self, request):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        try:
+
+            try:
+                current_financial_year = FinancialYear.objects.get(school=school_id, is_current=True)
+            except ObjectDoesNotExist:
+                return Response({'detail': f"Current financial year has not been set for this school"},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                currency = Currency.objects.get(is_default=True)
+            except Currency.DoesNotExist:
+                currency = None
+                return Response({"detail": "Default Currency Not Set For This School"},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            current_academic_year = currentAcademicYear()
+            current_term = currentTerm()
+            if not current_academic_year or not current_term:
+                return Response({'detail': f"Both current academic year and current term are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            due_date = request.GET.get('due_date')
+            student_id = request.GET.get('student_id')
+            total_balance = request.GET.get('total_balance')
+
+            if not due_date or not student_id or not total_balance:
+                return Response({'detail': f"Values Due Date, Student And Total Balance are all required."}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+              student = Student.objects.get(id=student_id)
+            except ObjectDoesNotExist:
+              return Response({'detail': "Student does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+              invoicable_votehead = VoteHead.objects.get(is_Arrears_Default=True)
+            except ObjectDoesNotExist:
+              return Response({'detail': f"This school does not have an arrears default votehead set!"}, status=status.HTTP_400_BAD_REQUEST)
+
+            description = invoicable_votehead.vote_head_name
+            amount = Decimal(total_balance)
+            term = current_term
+            year = current_academic_year
+            classes = student.current_Class
+            school_id = school_id
+            votehead = invoicable_votehead
+            exists_query = Invoice.objects.filter(votehead__id=votehead.id, term=term, year=year, student=student)
+
+            invoice_no = generate_unique_code()
+
+            if exists_query.exists():
+              invoice = exists_query[0]
+              invoice.amount = invoice.amount + Decimal(amount)
+              invoice.save()
+            else:
+              invoice = Invoice(
+                  issueDate=timezone.now().date(),
+                  invoiceNo=invoice_no,
+                  amount=amount,
+                  paid=0.00,
+                  due=amount,
+                  description=description,
+                  student=student,
+                  term=term,
+                  year=year,
+                  classes=classes,
+                  currency=currency,
+                  school_id=school_id,
+                  votehead=votehead
+              )
+              invoice.save()
+
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'detail': f"Balances were uploaded successfully"}, status=status.HTTP_200_OK)
 
 
 
