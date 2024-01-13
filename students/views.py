@@ -544,8 +544,7 @@ class UploadSingleStudentBalance(APIView, SchoolIdMixin):
                 currency = Currency.objects.get(is_default=True)
             except Currency.DoesNotExist:
                 currency = None
-                return Response({"detail": "Default Currency Not Set For This School"},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
 
             current_academic_year = currentAcademicYear()
             current_term = currentTerm()

@@ -1642,7 +1642,10 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                             collection_votehead[votehead_name]["amount"] = Decimal(amount)
                             previous_collection_total += Decimal(amount)
                         else:
-                            collection_votehead[votehead_name]["amount"] += Decimal(amount)
+                            if "amount" not in collection_votehead[votehead_name]:
+                                collection_votehead[votehead_name]["amount"] = Decimal(amount)
+                            else:
+                                collection_votehead[votehead_name]["amount"] += Decimal(amount)
                             previous_collection_total += Decimal(amount)
 
             send = {
