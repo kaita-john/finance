@@ -122,7 +122,7 @@ def getBalancesByAccount(accounttype, financial_year, school_id):
             cash_at_bank += Decimal(collection.amount)
 
     for pik in pikQuerySet:
-        cash_at_hand += Decimal(pik.amoount)
+        cash_at_hand += Decimal(pik.amount)
 
     for voucheritem in expensesQuerySet:
         if voucheritem.voucher.payment_Method.is_cash == True:
