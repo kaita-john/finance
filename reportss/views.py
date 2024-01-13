@@ -1593,7 +1593,10 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                         collection_votehead[votehead_name]["amount"] = Decimal(amount)
                         current_collection_total += Decimal(amount)
                     else:
-                        collection_votehead[votehead_name]["amount"] += Decimal(amount)
+                        if "amount" not in collection_votehead[votehead_name]:
+                            collection_votehead[votehead_name]["amount"] = Decimal(amount)
+                        else:
+                            collection_votehead[votehead_name]["amount"] += Decimal(amount)
                         current_collection_total += Decimal(amount)
 
             if previous_year:
@@ -1609,7 +1612,10 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                             previous_collection_total += Decimal(amount)
 
                         else:
-                            collection_votehead[votehead_name]["previous_amount"] += Decimal(amount)
+                            if "previous_amount" not in collection_votehead[votehead_name]:
+                                collection_votehead[votehead_name]["previous_amount"] = Decimal(amount)
+                            else:
+                                collection_votehead[votehead_name]["previous_amount"] += Decimal(amount)
                             previous_collection_total += Decimal(amount)
 
             #COLLECTION - PIKS
@@ -1626,7 +1632,10 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                         collection_votehead[votehead_name]["amount"] = Decimal(amount)
                         current_collection_total += Decimal(amount)
                     else:
-                        collection_votehead[votehead_name]["amount"] += Decimal(amount)
+                        if "amount" not in collection_votehead[votehead_name]:
+                            collection_votehead[votehead_name]["amount"] = Decimal(amount)
+                        else:
+                            collection_votehead[votehead_name]["amount"] += Decimal(amount)
                         current_collection_total += Decimal(amount)
 
             if previous_year:
@@ -1676,7 +1685,10 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                         expenses_votehead[votehead_name]["amount"] = Decimal(amount)
                         current_expenses_total += Decimal(amount)
                     else:
-                        expenses_votehead[votehead_name]["amount"] += Decimal(amount)
+                        if "amount" not in expenses_votehead[votehead_name]:
+                            expenses_votehead[votehead_name]["amount"] = Decimal(amount)
+                        else:
+                            expenses_votehead[votehead_name]["amount"] += Decimal(amount)
                         current_expenses_total += Decimal(amount)
 
             if previous_year:
@@ -1692,7 +1704,10 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                             previous_expenses_total += Decimal(amount)
 
                         else:
-                            expenses_votehead[votehead_name]["previous_amount"] += Decimal(amount)
+                            if "previous_amount" not in expenses_votehead[votehead_name]:
+                                expenses_votehead[votehead_name]["previous_amount"] = Decimal(amount)
+                            else:
+                                expenses_votehead[votehead_name]["previous_amount"] += Decimal(amount)
                             previous_expenses_total += Decimal(amount)
 
                 send = {
