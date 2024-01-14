@@ -29,7 +29,7 @@ class FeeStructureCreateView(SchoolIdMixin, generics.CreateAPIView):
 
             academic_year = serializer.validated_data.get('academic_year', None)
             if academic_year is None:
-                current_academic_year = currentAcademicYear()
+                current_academic_year = currentAcademicYear(school_id
                 if current_academic_year is None:
                     return Response({'detail': 'Current academic year is not set'}, status=status.HTTP_400_BAD_REQUEST)
                 serializer.validated_data['academic_year'] = current_academic_year

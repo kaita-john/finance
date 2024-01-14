@@ -33,8 +33,8 @@ def manualCollection(self, request, school_id, current_financial_year):
         with transaction.atomic():
             receipt_no = generate_unique_code("RT")
             default_Currency = defaultCurrency(school_id)
-            year = currentAcademicYear()
-            term = currentTerm()
+            year = currentAcademicYear(school_id)
+            term = currentTerm(school_id)
             if not default_Currency:
                 Response({'detail': "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
             if not year:
@@ -130,8 +130,8 @@ def autoCollection(self, request, school_id, auto_configuration_type, current_fi
         with transaction.atomic():
             receipt_no = generate_unique_code("RT")
             default_Currency = defaultCurrency(school_id)
-            year = currentAcademicYear()
-            term = currentTerm()
+            year = currentAcademicYear(school_id)
+            term = currentTerm(school_id)
             if not default_Currency:
                 Response({'detail': "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
             if not year:

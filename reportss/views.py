@@ -42,7 +42,7 @@ from vouchers.models import Voucher
 class ReportStudentBalanceView(APIView, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
-    def calculate(self, queryset, startdate, enddate, boardingstatus, term, year):
+    def calculate(self, school_id, queryset, startdate, enddate, boardingstatus, term, year):
 
         print(f"1")
         if boardingstatus:
@@ -50,8 +50,8 @@ class ReportStudentBalanceView(APIView, SchoolIdMixin):
 
         reportsStudentBalanceList = []
 
-        current_academic_year = currentAcademicYear()
-        current_term = currentTerm()
+        current_academic_year = currentAcademicYear(school_id)
+        current_term = currentTerm(school_id)
 
         try:
             if year:
@@ -145,22 +145,22 @@ class ReportStudentBalanceView(APIView, SchoolIdMixin):
 
             if not currentClass and not stream and not student:
                 print("here")
-                reportsStudentBalanceList = self.calculate(queryset, startdate, enddate, boardingstatus, term, year)
+                reportsStudentBalanceList = self.calculate(school_id, queryset, startdate, enddate, boardingstatus, term, year)
 
             if currentClass:
                 queryset = queryset.filter(current_Class=currentClass)
-                reportsStudentBalanceList = self.calculate(queryset, startdate, enddate, boardingstatus, term, year)
+                reportsStudentBalanceList = self.calculate(school_id, queryset, startdate, enddate, boardingstatus, term, year)
 
             if stream:
                 # if not currentClass:
                 # return Response({'detail': f"Both Class and Stream must be entered to query stream"},status=status.HTTP_400_BAD_REQUEST)
                 queryset = queryset.filter(current_Stream=stream)
-                reportsStudentBalanceList = self.calculate(queryset, startdate, enddate, boardingstatus, term, year)
+                reportsStudentBalanceList = self.calculate(school_id, queryset, startdate, enddate, boardingstatus, term, year)
 
             if student:
                 queryset = queryset.filter(id=student)
                 print(f"student was passed {queryset}")
-                reportsStudentBalanceList = self.calculate(queryset, startdate, enddate, boardingstatus, term, year)
+                reportsStudentBalanceList = self.calculate(school_id, queryset, startdate, enddate, boardingstatus, term, year)
 
             if amountbelow:
                 amountbelow = Decimal(amountbelow)

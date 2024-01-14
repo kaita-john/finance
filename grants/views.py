@@ -187,8 +187,8 @@ def autoGrant(self, request, school_id, auto_configuration_type, itemamount, bur
         with transaction.atomic():
             receipt_no = generate_unique_code("RT")
             default_Currency = defaultCurrency(school_id)
-            year = currentAcademicYear()
-            term = currentTerm()
+            year = currentAcademicYear(school_id)
+            term = currentTerm(school_id)
             defaultAccounttype = defaultAccountType()
             if not default_Currency:
                 Response({'detail': "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)

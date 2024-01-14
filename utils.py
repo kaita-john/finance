@@ -163,16 +163,16 @@ def file_upload(instance, filename):
     return os.path.join(upload_to, filename)
 
 
-def currentAcademicYear():
+def currentAcademicYear(school_id):
     try:
-        return AcademicYear.objects.get(is_current=True)
+        return AcademicYear.objects.get(is_current=True, school_id=school_id)
     except AcademicYear.DoesNotExist:
         return None
 
 
-def currentTerm():
+def currentTerm(school_id):
     try:
-        return Term.objects.get(is_current=True)
+        return Term.objects.get(is_current=True , school_id=school_id)
     except Term.DoesNotExist:
         return None
 

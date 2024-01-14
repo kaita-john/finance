@@ -260,8 +260,8 @@ class GetStudentInvoicedVotehead(SchoolIdMixin, generics.RetrieveAPIView):
         year = request.GET.get('year')
         term = request.GET.get('term')
 
-        current_academic_year = currentAcademicYear()
-        current_term = currentTerm()
+        current_academic_year = currentAcademicYear(school_id)
+        current_term = currentTerm(school_id)
         if current_academic_year is None or current_term is None:
             return Response({'detail': 'Both Current Academic Year and Current Term must be set for school first'},
                             status=status.HTTP_200_OK)
@@ -427,8 +427,8 @@ class UploadStudentBalancesView(APIView, SchoolIdMixin):
             return Response({"detail": "Default Currency Not Set For This School"},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        current_academic_year = currentAcademicYear()
-        current_term = currentTerm()
+        current_academic_year = currentAcademicYear(school_id)
+        current_term = currentTerm(school_id)
         if not current_academic_year or not current_term:
             return Response({'detail': f"Both current academic year and current term are required"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -546,8 +546,8 @@ class UploadSingleStudentBalance(APIView, SchoolIdMixin):
                 currency = None
                 return Response({"detail": "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
 
-            current_academic_year = currentAcademicYear()
-            current_term = currentTerm()
+            current_academic_year = currentAcademicYear(school_id)
+            current_term = currentTerm(school_id)
             if not current_academic_year or not current_term:
                 return Response({'detail': f"Both current academic year and current term are required"}, status=status.HTTP_400_BAD_REQUEST)
 
