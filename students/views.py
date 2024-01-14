@@ -421,7 +421,7 @@ class UploadStudentBalancesView(APIView, SchoolIdMixin):
                             status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            currency = Currency.objects.get(school_id=school_id, is_default=True)
+            currency = Currency.objects.get(school=school_id, is_default=True)
         except Currency.DoesNotExist:
             currency = None
             return Response({"detail": "Default Currency Not Set For This School"},
