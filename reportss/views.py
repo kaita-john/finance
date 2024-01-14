@@ -16,6 +16,7 @@ from account_types.models import AccountType
 from appcollections.models import Collection
 from bank_accounts.models import BankAccount
 from financial_years.models import FinancialYear
+from grants.models import Grant
 from invoices.models import Invoice
 from items.models import Item
 from payment_in_kind_Receipt.models import PIKReceipt
@@ -448,6 +449,12 @@ class IncomeSummaryView(SchoolIdMixin, generics.GenericAPIView):
             startdate = request.GET.get('startdate')
             enddate = request.GET.get('enddate')
 
+
+            querysetGrants = Grant.objects.filter(
+                deleted = False,
+                school_id=school_id
+            )
+
             querysetCollections = Collection.objects.filter(
                 receipt__is_reversed = False,
                 school_id=school_id
@@ -467,9 +474,11 @@ class IncomeSummaryView(SchoolIdMixin, generics.GenericAPIView):
             if startdate:
                 querysetCollections = querysetCollections.filter(transaction_date__gt=startdate, transaction_date__isnull=False)
                 querysetPIK = querysetPIK.filter(transaction_date__gt=startdate, transaction_date__isnull=False)
+                querysetGrants = querysetGrants.filter(receipt_date__gt=startdate, receipt_date__isnull=False)
             if enddate:
                 querysetCollections = querysetCollections.filter(transaction_date__lte=enddate, transaction_date__isnull=False)
                 querysetPIK = querysetPIK.filter(transaction_date__lte=enddate, transaction_date__isnull=False)
+                querysetGrants = querysetGrants.filter(receipt_date__gt=enddate, receipt_date__isnull=False)
 
             incomeSummaryList = []
 
@@ -488,6 +497,10 @@ class IncomeSummaryView(SchoolIdMixin, generics.GenericAPIView):
                     for pik in querysetPIK:
                         if pik.receipt.payment_method == paymentmode:
                             totalAmount += pik.amount
+
+                    for grant in querysetGrants:
+                        if grant.paymentMethod == paymentmode:
+                            totalAmount += grant.overall_amount
 
                     item = IncomeSummary(
                         votehead_name=paymentmode_name,
@@ -648,7 +661,33 @@ class ReceivedChequesView(SchoolIdMixin, generics.GenericAPIView):
                 receipt__payment_method__is_cheque=True
             )
 
+            querysetGrants = Grant.objects.filter(
+                deleted=False,
+                school_id=school_id
+            )
+
             chequeCollectionList = []
+
+            for grant in querysetGrants:
+                creationdate = grant.dateofcreation
+                transactiondate = grant.receipt_date
+                chequeNo = grant.transactionNumber
+                currency = grant.currency
+                student = None
+                amount = grant.overall_amount
+
+                item = ReceivedCheque(
+                    transactionDate=transactiondate,
+                    dateofcreation=creationdate,
+                    chequeNo=chequeNo,
+                    student=student,
+                    currency=currency,
+                    amount=amount
+                )
+                item.save()
+                chequeCollectionList.append(item)
+
+
             for collection in querysetCollections:
                 creationdate = collection.receipt.dateofcreation
                 transactiondate = collection.receipt.transaction_date

@@ -1,4 +1,5 @@
 # Create your views here.
+from collections import defaultdict
 from datetime import datetime
 
 from _decimal import Decimal
@@ -48,25 +49,22 @@ class GrantCreateView(SchoolIdMixin, generics.CreateAPIView):
 
             serializer.validated_data['school_id'] = school_id
 
-            schoolgroup = serializer.validated_data.get('schoolgroup')
-            studentamount = serializer.validated_data.get('studentamount')
-
             items_data = serializer.validated_data.pop('items_list', [])
 
+            schoolgroup = serializer.validated_data.get('schoolgroup')
             if schoolgroup:
-                if not studentamount:
-                    return Response({'detail': f"Enter amount for each student"}, status=status.HTTP_400_BAD_REQUEST)
-
                 groupStudents = Student.objects.filter(group = schoolgroup, school_id=school_id)
-                for value in groupStudents:
-                    item = {'amount': studentamount, 'student': value.id}
-                    items_data.append(item)
+                student_ids = [student.id for student in groupStudents]
+                serializer.validated_data['students'] = student_ids
 
+            votehead_amounts = defaultdict(Decimal)
             try:
                 with transaction.atomic():
                     grant = serializer.save()
                     grant.currency = currency
                     grant.save()
+
+                    print(grant.grant_items)
 
                     for item in items_data:
                         item['school_id'] = grant.school_id
@@ -74,6 +72,20 @@ class GrantCreateView(SchoolIdMixin, generics.CreateAPIView):
                         grant_itemSerializer = GrantItemSerializer(data=item)
                         grant_itemSerializer.is_valid(raise_exception=True)
                         grant_itemSerializer.save()
+
+                        votehead_id = item['votehead']
+                        amount = Decimal(item['amount'])
+                        votehead_amounts[votehead_id] += amount
+
+                    total_amount_for_each_votehead = sum(votehead_amounts.values())
+                    overall_amount = total_amount_for_each_votehead * len(serializer.validated_data['students'])
+                    votehead_amounts_serializable = {
+                        key: str(value) for key, value in votehead_amounts.items()
+                    }
+                    grant.voteheadamounts = dict(votehead_amounts_serializable)
+                    grant.overall_amount  = Decimal(overall_amount)
+                    grant.save()
+
 
                     return Response({'detail': f'Grant created successfully'},status=status.HTTP_201_CREATED)
             except Exception as e:

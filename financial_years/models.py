@@ -1,7 +1,5 @@
 from datetime import datetime, timedelta
-
 from django.db import models
-
 from models import ParentModel
 
 
@@ -13,6 +11,13 @@ class FinancialYear(ParentModel):
     school = models.UUIDField(max_length=255, blank=True, null=True)
     previous_financial_year = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True)
     is_current = models.BooleanField(default=False, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.is_current:
+            FinancialYear.objects.filter(is_current=True, school=self.school).exclude(id=self.id).update(
+                is_current=False)
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.financial_year_name

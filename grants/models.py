@@ -1,3 +1,5 @@
+import json
+
 from django.db import models
 from django.db.models import DO_NOTHING
 
@@ -20,17 +22,19 @@ class Grant(ParentModel):
     term = models.ForeignKey(Term, default=None, on_delete=DO_NOTHING, related_name="grants")
     year = models.ForeignKey(AcademicYear, default=None, null=True, on_delete=DO_NOTHING, related_name="grants")
     school_id = models.UUIDField(max_length=255, default=None, blank=True, null=True)
-    posted = models.BooleanField(default=False, null=True)
-    unposted_date = models.DateField(null=True)
+    deleted = models.BooleanField(default=False, null=True)
+    deleted_date = models.DateField(null=True)
     receipt_date = models.DateField(default=None, null=True)
     schoolgroup = models.ForeignKey(SchoolGroup, default=None, null=True, on_delete=DO_NOTHING, related_name="grants")
     currency = models.ForeignKey(Currency, default=None, null=True, on_delete=DO_NOTHING, related_name="grants")
     studentamount = models.DecimalField(max_digits=15, null=True, default=0.00, decimal_places=2)
     students = models.JSONField(default=list)
-
+    voteheadamounts = models.JSONField(default=dict, blank=True, null=True)
+    overall_amount = models.DecimalField(max_digits=15, null=True,blank=True, default=0.00, decimal_places=2)
 
     def __str__(self):
         return f"{self.id}"
+
 
 
 

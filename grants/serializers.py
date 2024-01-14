@@ -1,13 +1,9 @@
-from _decimal import Decimal
-from django.db.models import Sum
 from rest_framework import serializers
 
 from bank_accounts.serializers import BankAccountSerializer
 from currencies.serializers import CurrencySerializer
-from items.models import Item
 from payment_methods.serializers import PaymentMethodSerializer
 from school.serializer import SchoolSerializer
-from students.serializers import StudentSerializer
 from term.serializers import TermSerializer
 from .models import Grant
 
@@ -20,7 +16,7 @@ class GrantSerializer(serializers.ModelSerializer):
     school_details = SchoolSerializer(source='school',required=False, read_only=True, many=False)
     items_list = serializers.ListField(child=serializers.DictField(), allow_null=True, required=False, write_only=True)
     items = serializers.SerializerMethodField(read_only=True)
-    students = serializers.SerializerMethodField(read_only=True)
+    # students = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Grant
@@ -41,7 +37,7 @@ class GrantSerializer(serializers.ModelSerializer):
         except AttributeError as exception:
             print(f"Atttribute error {exception}")
             students = []
-        return len(students)
+        return students
 
 
 
