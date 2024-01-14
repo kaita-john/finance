@@ -323,12 +323,12 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
         fileid = request.GET.get('fileid')
 
         try:
-            currentTerm = Term.objects.get(is_current=True)
+            currentTerm = Term.objects.get(is_current=True, school_id = school_id)
         except ObjectDoesNotExist:
             return Response({'detail': f"Current Term not set for school"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            currentYear = AcademicYear.objects.get(is_current=True)
+            currentYear = AcademicYear.objects.get(is_current=True, school_id=school_id)
         except ObjectDoesNotExist:
             return Response({'detail': f"Current Year not set for school"}, status=status.HTTP_400_BAD_REQUEST)
 
