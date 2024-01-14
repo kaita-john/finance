@@ -476,7 +476,7 @@ class UploadStudentBalancesView(APIView, SchoolIdMixin):
                       return Response({'detail': f"Student {student_name} of admission number {admission_number} not found"}, status=status.HTTP_400_BAD_REQUEST)
 
                   try:
-                      invoicable_votehead = VoteHead.objects.get(is_Arrears_Default=True)
+                      invoicable_votehead = VoteHead.objects.get(is_Arrears_Default=True, school_id= school_id)
                   except ObjectDoesNotExist:
                       return Response({'detail': f"This school does not have an arrears default votehead set!"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -564,7 +564,7 @@ class UploadSingleStudentBalance(APIView, SchoolIdMixin):
               return Response({'detail': "Student does not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
             try:
-              invoicable_votehead = VoteHead.objects.get(is_Arrears_Default=True)
+              invoicable_votehead = VoteHead.objects.get(is_Arrears_Default=True, school_id=school_id)
             except ObjectDoesNotExist:
               return Response({'detail': f"This school does not have an arrears default votehead set!"}, status=status.HTTP_400_BAD_REQUEST)
 
