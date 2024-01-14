@@ -8,7 +8,7 @@ from models import ParentModel
 
 
 class VoteHead(ParentModel):
-    vote_head_name = models.CharField(max_length=255)
+    vote_head_name = models.CharField(max_length=255, unique=True)
     folio_number = models.CharField(max_length=255, null=True, default=1)
     exempted = models.BooleanField(default=False, blank=False, null=False)
     account_type = models.ForeignKey(AccountType, on_delete=DO_NOTHING, related_name='voteheads')
