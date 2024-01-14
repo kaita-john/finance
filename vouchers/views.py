@@ -28,7 +28,7 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
         try:
-            current_financial_year = FinancialYear.objects.get(is_current=True)
+            current_financial_year = FinancialYear.objects.get(is_current=True, school=school_id)
         except ObjectDoesNotExist:
             return Response({'detail': f"Current Financial Year not set"}, status=status.HTTP_400_BAD_REQUEST)
 

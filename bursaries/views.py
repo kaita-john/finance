@@ -400,7 +400,7 @@ class PostBursaryDetailView(SchoolIdMixin, generics.UpdateAPIView):
                 auto_configuration_type = configuration.auto_configuration_type
 
                 try:
-                    current_financial_year = FinancialYear.objects.get(is_current=True)
+                    current_financial_year = FinancialYear.objects.get(is_current=True, school=school_id)
                 except ObjectDoesNotExist:
                     return Response({'detail': f"Current Financial Year not set"}, status=status.HTTP_400_BAD_REQUEST)
 
