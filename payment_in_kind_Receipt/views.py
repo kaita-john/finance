@@ -47,7 +47,7 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
         try:
             with transaction.atomic():
                 receipt_no = generate_unique_code("RT")
-                default_Currency = defaultCurrency()
+                default_Currency = defaultCurrency(school_id)
                 year = currentAcademicYear()
                 term = currentTerm()
                 if not default_Currency:

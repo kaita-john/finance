@@ -41,7 +41,7 @@ class BursaryCreateView(SchoolIdMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
 
-            currency = defaultCurrency()
+            currency = defaultCurrency(school_id)
             if not currency:
                 return Response({'detail': f"Default Currency has not been set for this school"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -185,7 +185,7 @@ def autoBursary(self, request, school_id, auto_configuration_type, itemamount, b
     try:
         with transaction.atomic():
             receipt_no = generate_unique_code("RT")
-            default_Currency = defaultCurrency()
+            default_Currency = defaultCurrency(school_id)
             year = currentAcademicYear()
             term = currentTerm()
             defaultAccounttype = defaultAccountType()

@@ -32,7 +32,7 @@ def manualCollection(self, request, school_id, current_financial_year):
     try:
         with transaction.atomic():
             receipt_no = generate_unique_code("RT")
-            default_Currency = defaultCurrency()
+            default_Currency = defaultCurrency(school_id)
             year = currentAcademicYear()
             term = currentTerm()
             if not default_Currency:
@@ -129,7 +129,7 @@ def autoCollection(self, request, school_id, auto_configuration_type, current_fi
     try:
         with transaction.atomic():
             receipt_no = generate_unique_code("RT")
-            default_Currency = defaultCurrency()
+            default_Currency = defaultCurrency(school_id)
             year = currentAcademicYear()
             term = currentTerm()
             if not default_Currency:

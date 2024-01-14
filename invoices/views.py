@@ -143,9 +143,9 @@ class InvoiceDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
 
 
 
-def createInvoices(students, structure_year, structure_term, structure_class):
+def createInvoices(school_id, students, structure_year, structure_term, structure_class):
     try:
-        currency = Currency.objects.get(is_default=True)
+        currency = Currency.objects.get(is_default=True, school_id=school_id)
     except Currency.DoesNotExist:
         currency = None
         return Response({"detail": "Student not invoiced! Default Currency not set for this school"}, status=status.HTTP_400_BAD_REQUEST)
@@ -232,7 +232,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
                 return Response({"detail": "Student ID is required for filter_type 'student'"})
             students = Student.objects.filter(id = student, school_id=school_id)
 
-            return createInvoices(students, structure_year, structure_term, structure_class)
+            return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
         elif filter_type == 'class':
@@ -241,7 +241,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
                 return Response({"detail": "Class ID is required for filter_type 'class'"})
             students = Student.objects.filter(current_Class = structure_class, school_id=school_id)
 
-            return createInvoices(students, structure_year, structure_term, structure_class)
+            return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
         elif filter_type == 'stream':
@@ -251,7 +251,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
                 return Response({"detail": "Both class ID and stream ID are required for filter_type 'stream'"})
             students = Student.objects.filter(current_Class = structure_class, current_Stream = stream, school_id=school_id)
 
-            return createInvoices(students, structure_year, structure_term, structure_class)
+            return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
         elif filter_type == 'group':
@@ -260,7 +260,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
                 return Response({"detail": "Group is require for Group Query"})
             students = Student.objects.filter(current_Class = structure_class, group = group, school_id=school_id)
 
-            return createInvoices(students, structure_year, structure_term, structure_class)
+            return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
         else:

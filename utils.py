@@ -177,9 +177,9 @@ def currentTerm():
         return None
 
 
-def defaultCurrency():
+def defaultCurrency(school_id):
     try:
-        return Currency.objects.get(is_default=True)
+        return Currency.objects.get(is_default=True, school_id=school_id)
     except Currency.DoesNotExist:
         return None
 
