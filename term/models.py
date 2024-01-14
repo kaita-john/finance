@@ -12,7 +12,7 @@ class Term(ParentModel):
 
     def save(self, *args, **kwargs):
         if self.is_current:
-            Term.objects.exclude(pk=self.pk).update(is_current=False)
+            Term.objects.filter(school_id=self.school_id).exclude(pk=self.pk).update(is_current=False)
         super().save(*args, **kwargs)
 
     def __str__(self):

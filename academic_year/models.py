@@ -19,7 +19,7 @@ class AcademicYear(ParentModel):
 
     def save(self, *args, **kwargs):
         if self.is_current:
-            AcademicYear.objects.exclude(pk=self.pk).update(is_current=False)
+            AcademicYear.objects.filter(school_id=self.school_id).exclude(pk=self.pk).update(is_current=False)
         super().save(*args, **kwargs)
 
     def __str__(self):

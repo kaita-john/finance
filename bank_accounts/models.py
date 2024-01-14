@@ -15,5 +15,11 @@ class BankAccount(ParentModel):
     balance = models.DecimalField(max_digits=15, decimal_places=2)
     is_default = models.BooleanField(default=False)
     school = models.UUIDField(max_length=255, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            BankAccount.objects.filter(school=self.school).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.account_name

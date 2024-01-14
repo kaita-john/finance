@@ -24,7 +24,11 @@ class VoteHead(ParentModel):
             raise ValidationError({'detail': 'VoteHead with the same name and school_id already exists.'})
 
         if self.is_Overpayment_Default:
-            VoteHead.objects.exclude(pk=self.pk).update(is_Overpayment_Default=False)
+            VoteHead.objects.filter(school_id=self.school_id).exclude(pk=self.pk).update(is_Overpayment_Default=False)
+        super().save(*args, **kwargs)
+
+        if self.is_Arrears_Default:
+            VoteHead.objects.filter(school_id=self.school_id).exclude(pk=self.pk).update(is_Arrears_Default=False)
         super().save(*args, **kwargs)
 
 

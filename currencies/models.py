@@ -11,7 +11,7 @@ class Currency(ParentModel):
 
     def save(self, *args, **kwargs):
         if self.is_default:
-            Currency.objects.exclude(pk=self.pk).update(is_default=False)
+            Currency.objects.filter(school=self.school).exclude(pk=self.pk).update(is_default=False)
         super().save(*args, **kwargs)
     def __str__(self):
         return self.currency_code

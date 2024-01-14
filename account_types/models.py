@@ -10,7 +10,7 @@ class AccountType(ParentModel):
 
     def save(self, *args, **kwargs):
         if self.is_default:
-            AccountType.objects.exclude(pk=self.pk).update(is_default=False)
+            AccountType.objects.filter(school=self.school).exclude(pk=self.pk).update(is_default=False)
         super().save(*args, **kwargs)
     def __str__(self):
         return self.account_type_name
