@@ -9,6 +9,7 @@ class Term(ParentModel):
     end_date = models.DateField()
     is_current = models.BooleanField(default=False, null = True)
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
+    academic_year = models.CharField(max_length=255, default="2023", null=True)
 
     def save(self, *args, **kwargs):
         if self.is_current:
