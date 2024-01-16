@@ -1,10 +1,10 @@
-from django.http import HttpResponse
 from rest_framework import serializers
 
 from academic_year.serializers import AcademicYearSerializer
 from classes.serializers import ClassesSerializer
 from school.models import School
 from school.serializer import SchoolSerializer
+from schoolgroups.models import SchoolGroup
 from streams.serializers import StreamsSerializer
 from students.models import Student
 
@@ -24,6 +24,16 @@ class StudentSerializer(serializers.ModelSerializer):
             return {'error': f"School not found for id {school_id}"}
         except Exception as exception:
             return {'error': f"Bad Request {exception}"}
+
+    def validate_groups(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Groups must be a list.")
+        for group_id in value:
+            try:
+                SchoolGroup.objects.get(id=group_id)
+            except SchoolGroup.DoesNotExist:
+                raise serializers.ValidationError(f"Invalid Group ID: {group_id}")
+        return value
 
     class Meta:
         model = Student

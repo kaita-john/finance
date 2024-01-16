@@ -32,6 +32,8 @@ class PIKReceipt(ParentModel):
     counter = models.FloatField(null=True, default=None)
 
     def save(self, *args, **kwargs):
+        if self.receipt_No:
+            self.receipt_No = self.receipt_No.upper()
         if not self.counter:
             max_counter = PIKReceipt.objects.all().aggregate(models.Max('counter'))['counter__max']
             self.counter = max_counter + 1 if max_counter is not None else 1

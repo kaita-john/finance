@@ -10,6 +10,8 @@ class Currency(ParentModel):
     school = models.UUIDField(max_length=255, blank=True, null=True)
 
     def save(self, *args, **kwargs):
+        if self.currency_name:
+            self.currency_name = self.currency_name.upper()
         if self.is_default:
             Currency.objects.filter(school=self.school).exclude(pk=self.pk).update(is_default=False)
         super().save(*args, **kwargs)

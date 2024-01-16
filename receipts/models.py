@@ -35,6 +35,12 @@ class Receipt(ParentModel):
     counter = models.FloatField(null=True, default=None)
 
     def save(self, *args, **kwargs):
+        if self.receipt_No:
+            self.receipt_No = self.receipt_No.upper()
+        if self.transaction_code:
+            self.transaction_code = self.transaction_code.upper()
+        if self.receipt_No:
+            self.receipt_No = self.receipt_No.upper()
         if not self.counter:
             max_counter = Receipt.objects.all().aggregate(models.Max('counter'))['counter__max']
             self.counter = max_counter + 1 if max_counter is not None else 1

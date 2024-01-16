@@ -53,7 +53,7 @@ class StudentCreateView(SchoolIdMixin, generics.CreateAPIView):
                 studentList.append(created_student)
 
                 try:
-                    return createInvoices(studentList, created_student.current_Year, created_student.current_Term,
+                    return createInvoices(school_id, studentList, created_student.current_Year, created_student.current_Term,
                                           created_student.current_Class)
                 except Exception as exception:
                     return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
@@ -541,7 +541,7 @@ class UploadSingleStudentBalance(APIView, SchoolIdMixin):
                                 status=status.HTTP_400_BAD_REQUEST)
 
             try:
-                currency = Currency.objects.get(school_id == school_id, is_default=True)
+                currency = Currency.objects.get(school = school_id, is_default=True)
             except Currency.DoesNotExist:
                 currency = None
                 return Response({"detail": "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)

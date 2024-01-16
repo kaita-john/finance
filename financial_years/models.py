@@ -13,6 +13,9 @@ class FinancialYear(ParentModel):
     is_current = models.BooleanField(default=False, null=True)
 
     def save(self, *args, **kwargs):
+        if self.financial_year_name:
+            self.financial_year_name = self.financial_year_name.upper()
+
         if self.is_current:
             FinancialYear.objects.filter(is_current=True, school=self.school).exclude(id=self.id).update(
                 is_current=False)

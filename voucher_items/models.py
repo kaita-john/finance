@@ -16,6 +16,11 @@ class VoucherItem(ParentModel):
     itemName = models.CharField(max_length=255)
     voucher = models.ForeignKey(Voucher, null=True, default=None, on_delete=models.SET_NULL, related_name="voucher_items")
 
+    def save(self, *args, **kwargs):
+        if self.itemName:
+            self.itemName = self.itemName.upper()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.id}"
 

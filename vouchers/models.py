@@ -25,6 +25,7 @@ class Voucher(ParentModel):
 
     referenceNumber = models.CharField(max_length=255, blank=True, null=True)
     paymentDate = models.DateField(null=True)
+
     paymentVoucherNumber = models.CharField(max_length=255, blank=True, null=True)
     description = models.CharField(max_length=7000, blank=True, null=True)
     totalAmount = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
@@ -37,6 +38,18 @@ class Voucher(ParentModel):
     counter = models.FloatField(null=True, default=None)
 
     def save(self, *args, **kwargs):
+
+        if self.recipientType:
+            self.recipientType = self.recipientType.upper()
+        if self.other:
+            self.other = self.other.upper()
+        if self.referenceNumber:
+            self.referenceNumber = self.referenceNumber.upper()
+        if self.paymentVoucherNumber:
+            self.paymentVoucherNumber = self.paymentVoucherNumber.upper()
+        if self.deliveryNoteNumber:
+            self.deliveryNoteNumber = self.deliveryNoteNumber.upper()
+
         if not self.counter:
             max_counter = Voucher.objects.all().aggregate(models.Max('counter'))['counter__max']
             self.counter = max_counter + 1 if max_counter is not None else 1

@@ -41,5 +41,34 @@ class School(models.Model):
     school_type = models.ForeignKey(SchoolType, on_delete=DO_NOTHING, related_name="schools", null=True)
     school_category = models.ForeignKey(SchoolCategory, on_delete=DO_NOTHING, related_name="schools", null=True)
 
+    def save(self, *args, **kwargs):
+        if self.name:
+            self.name = self.name.upper()
+        if self.location:
+            self.location = self.location.upper()
+        if self.city:
+            self.city = self.city.upper()
+        if self.country:
+            self.country = self.country.upper()
+        if self.first_name:
+            self.first_name = self.first_name.upper()
+        if self.last_name:
+            self.last_name = self.last_name.upper()
+        if self.contact_fullname:
+            self.contact_fullname = self.contact_fullname.upper()
+        if self.contact_lastname:
+            self.contact_lastname = self.contact_lastname.upper()
+        if self.postal_address:
+            self.postal_address = self.postal_address.upper()
+        if self.postal_code:
+            self.postal_code = self.postal_code.upper()
+        if self.schoolcode:
+            self.schoolcode = self.schoolcode.upper()
+        if self.schoolgender:
+            self.schoolgender = self.schoolgender.upper()
+        if self.boardingstatus:
+            self.boardingstatus = self.boardingstatus.upper()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.name} - {self.id}"

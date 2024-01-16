@@ -9,6 +9,8 @@ class AccountType(ParentModel):
     school = models.UUIDField(max_length=255, blank=True, null=True)
 
     def save(self, *args, **kwargs):
+        if self.account_type_name:
+            self.account_type_name = self.account_type_name.upper()
         if self.is_default:
             AccountType.objects.filter(school=self.school).exclude(pk=self.pk).update(is_default=False)
         super().save(*args, **kwargs)

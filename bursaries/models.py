@@ -28,6 +28,14 @@ class Bursary(ParentModel):
     currency = models.ForeignKey(Currency, default=None, null=True, on_delete=DO_NOTHING, related_name="bursaries")
     studentamount = models.DecimalField(max_digits=15, null=True, default=0.00, decimal_places=2)
 
+    def save(self, *args, **kwargs):
+
+        if self.institution:
+            self.institution = self.institution.upper()
+        if self.institutionAddress:
+            self.institutionAddress = self.institutionAddress.upper()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.id}"
 

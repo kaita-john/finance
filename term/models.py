@@ -12,6 +12,10 @@ class Term(ParentModel):
     academic_year = models.CharField(max_length=255, default="2023", null=True)
 
     def save(self, *args, **kwargs):
+        if self.term_name:
+            self.term_name = self.term_name.upper()
+        if self.academic_year:
+            self.academic_year = self.academic_year.upper()
         if self.is_current:
             Term.objects.filter(school_id=self.school_id).exclude(pk=self.pk).update(is_current=False)
         super().save(*args, **kwargs)

@@ -24,6 +24,13 @@ class ReportStudentBalance(ParentModel):
     totalBalance = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     schoolFee = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
 
+    def save(self, *args, **kwargs):
+        if self.name:
+            self.name = self.name.upper()
+        if self.boarding_status:
+            self.boarding_status = self.boarding_status.upper()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"({self.id})"
 

@@ -19,6 +19,16 @@ class VoteHead(ParentModel):
     ledget_folio_number_lf = models.CharField(max_length=255,  default=1)
 
     def save(self, *args, **kwargs):
+
+        if self.folio_number:
+            self.folio_number = self.folio_number.upper()
+        if self.vote_head_name:
+            self.vote_head_name = self.vote_head_name.upper()
+        if self.priority_number:
+            self.priority_number = self.priority_number.upper()
+        if self.ledget_folio_number_lf:
+            self.ledget_folio_number_lf = self.ledget_folio_number_lf.upper()
+
         existing_votehead = VoteHead.objects.filter(vote_head_name=self.vote_head_name,school_id=self.school_id).exclude(pk=self.pk).first()
         if existing_votehead:
             raise ValidationError({'detail': 'VoteHead with the same name and school_id already exists.'})

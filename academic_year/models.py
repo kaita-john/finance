@@ -18,6 +18,8 @@ class AcademicYear(ParentModel):
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
 
     def save(self, *args, **kwargs):
+        if self.academic_year:
+            self.academic_year = self.academic_year.upper()
         if self.is_current:
             AcademicYear.objects.filter(school_id=self.school_id).exclude(pk=self.pk).update(is_current=False)
         super().save(*args, **kwargs)

@@ -9,6 +9,7 @@ from currencies.serializers import CurrencySerializer
 from receipts.models import Receipt
 from school.models import School
 from school.serializer import SchoolSerializer
+from schoolgroups.serializers import SchoolGroupSerializer
 from streams.serializers import StreamsSerializer
 from students.serializers import StudentSerializer
 from term.serializers import TermSerializer
@@ -93,7 +94,7 @@ class StructureSerializer(serializers.ModelSerializer):
     student_details = StudentSerializer(source='student', required=False, read_only=True)
     classes_details = ClassesSerializer(source='classes', required=False, read_only=True)
     stream_details = StreamsSerializer(source='stream', required=False, read_only=True)
-    group_details = StreamsSerializer(source='group', required=False, read_only=True)
+    group_details = SchoolGroupSerializer(source='group', required=False, read_only=True)
     class Meta:
         model = Structure
         fields = '__all__'

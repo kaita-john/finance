@@ -16,6 +16,11 @@ class FeeStructureItem(ParentModel):
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     school_id = models.UUIDField(null=True, blank=True, default=None, max_length=255)
 
+    def save(self, *args, **kwargs):
+        if self.boardingStatus:
+            self.boardingStatus = self.boardingStatus.upper()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.school_id}"
 

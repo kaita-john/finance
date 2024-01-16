@@ -57,6 +57,11 @@ class AppUser(BaseUserModel, AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
+        if self.first_name:
+            self.first_name = self.first_name.upper()
+        if self.last_name:
+            self.last_name = self.last_name.upper()
+
         if self.is_superuser:
             admin_group, admin_created = Group.objects.get_or_create(name='ADMIN')
             superuser_group, created = Group.objects.get_or_create(name='SUPERUSER')

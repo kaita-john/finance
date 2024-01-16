@@ -14,7 +14,15 @@ class VoucherAttachment(ParentModel):
     fileid = models.ForeignKey(SchoolImage, null=True, default=None, on_delete=DO_NOTHING, related_name="voucher_attachments")
     voucher = models.ForeignKey(Voucher, null=True, default=None, on_delete=models.SET_NULL, related_name="attachments")
 
+    def save(self, *args, **kwargs):
+        if self.name:
+            self.name = self.name.upper()
+        if self.type:
+            self.type = self.type.upper()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.id}"
+
 
 
