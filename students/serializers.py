@@ -14,6 +14,8 @@ class StudentSerializer(serializers.ModelSerializer):
     current_Class_details = ClassesSerializer(source='current_Class', required=False, read_only=True)
     current_Year_details = AcademicYearSerializer(source='current_Year', required=False, read_only=True)
     school_details = serializers.SerializerMethodField(read_only=True)
+    #groups = serializers.ListField(child=serializers.UUIDField())
+
 
     def get_school_details(self, obj):
         school_id = obj.school_id

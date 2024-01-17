@@ -266,7 +266,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
             except SchoolGroup.DoesNotExist:
                 return Response({'detail': f"Invalid Group ID"}, status=status.HTTP_400_BAD_REQUEST)
 
-            students = Student.objects.filter(current_Class=structure_class, groups__contains=[groupid],school_id=school_id)
+            students = Student.objects.filter(current_Class=structure_class, groups__icontains=str(groupid),school_id=school_id)
 
             return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 

@@ -37,8 +37,6 @@ class Receipt(ParentModel):
     def save(self, *args, **kwargs):
         if self.receipt_No:
             self.receipt_No = self.receipt_No.upper()
-        if self.transaction_code:
-            self.transaction_code = self.transaction_code.upper()
         if self.receipt_No:
             self.receipt_No = self.receipt_No.upper()
         if not self.counter:

@@ -2,6 +2,7 @@
 
 import uuid
 
+from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
@@ -16,6 +17,7 @@ from rest_framework.response import Response
 
 from appcollections.models import Collection
 from appcollections.serializers import CollectionSerializer
+from bank_accounts.models import BankAccount
 from constants import MANUAL, AUTO, PRIORITY, RATIO
 from financial_years.models import FinancialYear
 from invoices.models import Invoice
@@ -114,6 +116,14 @@ def manualCollection(self, request, school_id, current_financial_year):
                     is_overpayment = True
                 )
                 newCollection.save()
+
+            print("Here")
+            bank_account = receipt_instance.bank_account
+            amount = receipt_instance.totalAmount
+            initial_balance = bank_account.balance
+            new_balance = initial_balance + Decimal(amount)
+            bank_account.balance = new_balance
+            bank_account.save()
 
 
         return Response({'detail': 'Receipt and collections created successfully'}, status=status.HTTP_201_CREATED)
@@ -276,6 +286,14 @@ def autoCollection(self, request, school_id, auto_configuration_type, current_fi
                     is_overpayment = True
                 )
                 newCollection.save()
+
+            print("Here")
+            bank_account = receipt_instance.bank_account
+            amount = receipt_instance.totalAmount
+            initial_balance = bank_account.balance
+            new_balance = initial_balance + Decimal(amount)
+            bank_account.balance = new_balance
+            bank_account.save()
 
 
         return Response({'detail': 'Receipt and collections created successfully'}, status=status.HTTP_201_CREATED)

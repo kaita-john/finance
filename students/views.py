@@ -24,6 +24,7 @@ from invoices.models import Invoice
 from invoices.views import createInvoices
 from payment_in_kind_Receipt.models import PIKReceipt
 from receipts.models import Receipt
+from schoolgroups.models import SchoolGroup
 from term.models import Term
 from utils import SchoolIdMixin, UUID_from_PrimaryKey, currentAcademicYear, currentTerm, IsAdminOrSuperUser, \
     generate_unique_code
@@ -611,7 +612,42 @@ class UploadSingleStudentBalance(APIView, SchoolIdMixin):
 
 
 
+class UpdateStudentGroupsAPIView(generics.UpdateAPIView, SchoolIdMixin):
+    serializer_class = StudentSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
+    def post(self, request, *args, **kwargs):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
+        student_ids = request.data.get('student_ids', [])
+        group_ids = request.data.get('group_ids', [])
+        action = request.data.get('action')
 
+        if not action or not action in ['add', 'remove']:
+            return Response({"detail": "Invalid action. Use 'add' or 'remove'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            students = Student.objects.filter(id__in=student_ids, school_id=school_id)
+            groups = SchoolGroup.objects.filter(id__in=group_ids, school_id=school_id)
+        except Student.DoesNotExist:
+            return Response({"detail": "Invalid student ID."}, status=status.HTTP_400_BAD_REQUEST)
+        except SchoolGroup.DoesNotExist:
+            return Response({"detail": "Invalid group ID."}, status=status.HTTP_400_BAD_REQUEST)
+
+        for student in students:
+            student_groups = set(student.groups)
+
+            for group in groups:
+                if action == 'add':
+                    if group.id not in student_groups:
+                        student_groups.add(str(group.id))
+                elif action == 'remove':
+                    student_groups.discard(str(group.id))
+
+            student.groups = list(student_groups)
+            student.save()
+
+        return Response({"detail": "Students Groups updated successfully."}, status=status.HTTP_200_OK)
 

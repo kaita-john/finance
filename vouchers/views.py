@@ -1,6 +1,7 @@
 # Create your views here.
 from datetime import datetime
 
+from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import JsonResponse
@@ -66,6 +67,13 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
 
                     voucher.financial_year = current_financial_year
                     voucher.save()
+
+                    bank_account = voucher.bank_account
+                    amount = voucher.totalAmount
+                    initial_balance = bank_account.balance
+                    new_balance = initial_balance - Decimal(amount)
+                    bank_account.balance = new_balance
+                    bank_account.save()
 
                     for payment_item_data in payment_items_data:
                         payment_item_data['school_id'] = voucher.school_id

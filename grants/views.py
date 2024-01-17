@@ -53,7 +53,7 @@ class GrantCreateView(SchoolIdMixin, generics.CreateAPIView):
 
             schoolgroup = serializer.validated_data.get('schoolgroup')
             if schoolgroup:
-                groupStudents = Student.objects.filter(group = schoolgroup, school_id=school_id)
+                groupStudents = Student.objects.filter(groups__icontains=str(schoolgroup), school_id=school_id)
                 student_ids = [student.id for student in groupStudents]
                 serializer.validated_data['students'] = student_ids
 
@@ -85,6 +85,13 @@ class GrantCreateView(SchoolIdMixin, generics.CreateAPIView):
                     grant.voteheadamounts = dict(votehead_amounts_serializable)
                     grant.overall_amount  = Decimal(overall_amount)
                     grant.save()
+
+                    bank_account = grant.bankAccount
+                    amount = grant.overall_amount
+                    initial_balance = bank_account.balance
+                    new_balance = initial_balance + Decimal(amount)
+                    bank_account.balance = new_balance
+                    bank_account.save()
 
 
                     return Response({'detail': f'Grant created successfully'},status=status.HTTP_201_CREATED)

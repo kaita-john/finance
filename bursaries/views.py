@@ -56,7 +56,7 @@ class BursaryCreateView(SchoolIdMixin, generics.CreateAPIView):
                 if not studentamount:
                     return Response({'detail': f"Enter amount for each student"}, status=status.HTTP_400_BAD_REQUEST)
 
-                groupStudents = Student.objects.filter(group = schoolgroup, school_id=school_id)
+                groupStudents = Student.objects.filter(groups__icontains=str(schoolgroup), school_id=school_id)
                 for value in groupStudents:
                     item = {'amount': studentamount, 'student': value.id}
                     items_data.append(item)
@@ -234,7 +234,13 @@ def autoBursary(self, request, school_id, auto_configuration_type, itemamount, b
 
             receipt_instance.save()
 
-
+            print("Here  2")
+            bank_account = receipt_instance.bank_account
+            amount = receipt_instance.totalAmount
+            initial_balance = bank_account.balance
+            new_balance = initial_balance + Decimal(amount)
+            bank_account.balance = new_balance
+            bank_account.save()
 
             voteheads = Invoice.objects.filter( term=term, year=year, school_id=school_id, student=itemstudent)
             votehead_ids = voteheads.values('votehead').distinct()
@@ -455,5 +461,12 @@ class UnPostBursaryDetailView(SchoolIdMixin, generics.UpdateAPIView):
                     receipt_instance.term,
                     receipt_instance.year
                 )
+
+                bank_account = receipt_instance.bank_account
+                amount = receipt_instance.totalAmount
+                initial_balance = bank_account.balance
+                new_balance = initial_balance - Decimal(amount)
+                bank_account.balance = new_balance
+                bank_account.save()
 
         return Response({'detail': "Bursary has been unposted successfully"}, status=status.HTTP_200_OK)

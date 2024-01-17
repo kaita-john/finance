@@ -177,6 +177,14 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                 else:
                     print(f"It is not greater than - No overpayment")
 
+                print("Here  1")
+                bank_account = pikreceipt_instance.bank_account
+                amount = pikreceipt_instance.totalAmount
+                initial_balance = bank_account.balance
+                new_balance = initial_balance + Decimal(amount)
+                bank_account.balance = new_balance
+                bank_account.save()
+
 
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
