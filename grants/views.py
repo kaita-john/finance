@@ -147,20 +147,61 @@ class GrantDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
 
-            Item.objects.filter(bursary=instance).delete()
-            grant = serializer.save()
-
             items_data = serializer.validated_data.get('items_list', [])
-            for item in items_data:
-                item['school_id'] = grant.school_id
-                item['grant'] = grant.id
-                grant_itemSerializer = GrantItemSerializer(data=item)
-                grant_itemSerializer.is_valid(raise_exception=True)
-                grant_itemSerializer.save()
 
-            self.perform_update(serializer)
+            try:
+                with transaction.atomic():
 
-            return Response({'detail': 'Grant updated successfully'}, status=status.HTTP_200_OK)
+                    # Update the grant
+                    grant = serializer.save()
+
+                    # Update BankAccount balance
+                    bank_account = grant.bankAccount
+                    amount = grant.overall_amount
+                    initial_balance = bank_account.balance
+                    new_balance = initial_balance - Decimal(amount)
+                    bank_account.balance = new_balance
+                    bank_account.save()
+
+                    # Delete existing GrantItems related to the grant
+                    GrantItem.objects.filter(grant=instance).delete()
+
+                    # Process GrantItems
+                    votehead_amounts = defaultdict(Decimal)
+                    for item in items_data:
+                        item['school_id'] = grant.school_id
+                        item['grant'] = grant.id
+                        grant_item_serializer = GrantItemSerializer(data=item)
+                        grant_item_serializer.is_valid(raise_exception=True)
+                        grant_item_serializer.save()
+
+                        # Calculate votehead amounts
+                        votehead_id = item['votehead']
+                        amount = Decimal(item['amount'])
+                        votehead_amounts[votehead_id] += amount
+
+                    # Update grant details
+                    total_amount_for_each_votehead = sum(votehead_amounts.values())
+                    overall_amount = total_amount_for_each_votehead * len(serializer.validated_data['students'])
+                    votehead_amounts_serializable = {
+                        key: str(value) for key, value in votehead_amounts.items()
+                    }
+                    grant.voteheadamounts = dict(votehead_amounts_serializable)
+                    grant.overall_amount = Decimal(overall_amount)
+                    grant.save()
+
+                    # Update BankAccount balance
+                    bank_account = grant.bankAccount
+                    amount = grant.overall_amount
+                    initial_balance = bank_account.balance
+                    new_balance = initial_balance + Decimal(amount)
+                    bank_account.balance = new_balance
+                    bank_account.save()
+
+
+                    return Response({'detail': 'Grant updated successfully'}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
