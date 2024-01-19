@@ -26,8 +26,6 @@ class VoteHead(ParentModel):
             self.vote_head_name = self.vote_head_name.upper()
         if self.priority_number:
             self.priority_number = self.priority_number.upper()
-        if self.ledget_folio_number_lf:
-            self.ledget_folio_number_lf = self.ledget_folio_number_lf.upper()
 
         existing_votehead = VoteHead.objects.filter(vote_head_name=self.vote_head_name,school_id=self.school_id).exclude(pk=self.pk).first()
         if existing_votehead:
@@ -35,7 +33,6 @@ class VoteHead(ParentModel):
 
         if self.is_Overpayment_Default:
             VoteHead.objects.filter(school_id=self.school_id).exclude(pk=self.pk).update(is_Overpayment_Default=False)
-        super().save(*args, **kwargs)
 
         if self.is_Arrears_Default:
             VoteHead.objects.filter(school_id=self.school_id).exclude(pk=self.pk).update(is_Arrears_Default=False)
