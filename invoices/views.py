@@ -1,12 +1,13 @@
 # Create your views here.
 import uuid
+from collections import defaultdict
 from uuid import UUID
 
 from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Sum, F
-from django.http import JsonResponse
+from django.http import JsonResponse, request
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, ValidationError
@@ -23,7 +24,9 @@ from fee_structures_items.models import FeeStructureItem
 from schoolgroups.models import SchoolGroup
 from students.models import Student
 from term.models import Term
+from term.serializers import TermSerializer
 from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey, IsAdminOrSuperUser
+from voteheads.models import VoteHead
 from .models import Invoice
 from .serializers import InvoiceSerializer, StructureSerializer, UninvoiceStudentSerializer
 
@@ -406,3 +409,72 @@ class TotalInvoicedAmount(APIView, SchoolIdMixin):
 
         total_sum = queryset.aggregate(Sum('amount'))['amount__sum']
         return Response({'detail': float(total_sum)}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+class invoiceView(SchoolIdMixin, generics.GenericAPIView):
+    serializer_class = InvoiceSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+
+    def get(self, request, *args, **kwargs):
+        print("called")
+        school_id = self.check_school_id(self.request)
+        if not school_id:
+            return Invoice.objects.none()
+
+        academic_year = self.request.GET.get('academic_year')
+
+        if not academic_year:
+            return Response({'detail': f"Academic Year is a must"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            academic_year = AcademicYear.objects.get(id=academic_year)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"Academic Year does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+        fullList = []
+
+        terms_list = Term.objects.all()
+
+        for term in terms_list:
+            term_name = term.term_name
+            start_date = term.begin_date
+            end_date = term.end_date
+
+            invoices = Invoice.objects.filter(school_id=school_id, year=academic_year, term=term)
+            # classes_list = invoices.exclude(student__current_Class=None) .values_list('student__current_Class', flat=True).distinct()
+            classes_set = {invoice.student.current_Class for invoice in invoices if invoice.student.current_Class is not None}
+            classes_list = list(classes_set)
+
+            thevotehead_list = list(invoice.votehead for invoice in invoices if invoice.votehead is not None)
+
+            fee_structure_items = {}
+
+            votehead_list = defaultdict(lambda: defaultdict(float))
+            overall = defaultdict(float)
+
+            for votehead in thevotehead_list:
+                print(f"Checking Voteheads {votehead}")
+                for invoice in invoices.filter(votehead=votehead):
+                    boarding_status = invoice.student.boarding_status
+                    votehead_list[votehead.vote_head_name][boarding_status] += float(invoice.amount)
+                    overall[boarding_status] += float(invoice.amount)
+
+            fee_structure_items['invoiced_voteheads'] = votehead_list
+            fee_structure_items['totals'] = overall
+
+            print(f"{classes_list}")
+
+            theobject = {
+                "term_details": TermSerializer(term).data,
+                "class_details": ClassesSerializer(classes_list, many=True).data,
+                "fee_structure_items": fee_structure_items
+            }
+
+            fullList.append(theobject)
+
+        return Response({'detail': fullList}, status=status.HTTP_200_OK)

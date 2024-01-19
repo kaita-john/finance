@@ -7,7 +7,6 @@ from bank_accounts.serializers import BankAccountSerializer
 from currencies.serializers import CurrencySerializer
 from payment_methods.serializers import PaymentMethodSerializer
 from students.serializers import StudentSerializer
-from voteheads.serializers import VoteHeadSerializer
 from .models import Receipt
 
 
