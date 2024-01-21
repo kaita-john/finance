@@ -5,6 +5,7 @@ from academic_year.models import AcademicYear
 from account_types.models import AccountType
 from bank_accounts.models import BankAccount
 from classes.models import Classes
+from configurations.models import Configuration
 from currencies.models import Currency
 from financial_years.models import FinancialYear
 from models import ParentModel
@@ -37,11 +38,16 @@ class Receipt(ParentModel):
     def save(self, *args, **kwargs):
         if self.receipt_No:
             self.receipt_No = self.receipt_No.upper()
-        if self.receipt_No:
-            self.receipt_No = self.receipt_No.upper()
+
         if not self.counter:
-            max_counter = Receipt.objects.all().aggregate(models.Max('counter'))['counter__max']
-            self.counter = max_counter + 1 if max_counter is not None else 1
+            if Receipt.objects.count() == 0:
+                start_at_value = Configuration.objects.values('receipt_start_at').first().get('receipt_start_at', 1)
+                self.counter = start_at_value
+            else:
+                from payment_in_kind_Receipt.models import PIKReceipt
+                max_counter_receipt = Receipt.objects.all().aggregate(models.Max('counter'))['counter__max']
+                max_counter_pik_receipt = PIKReceipt.objects.all().aggregate(models.Max('counter'))['counter__max']
+                self.counter = max(max_counter_receipt, max_counter_pik_receipt) + 1
 
         super().save(*args, **kwargs)
 

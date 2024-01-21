@@ -2,6 +2,7 @@ from _decimal import Decimal
 from django.db.models import Sum
 
 from appcollections.models import Collection
+from grants.models import Grant
 from payment_in_kinds.models import PaymentInKind
 from voucher_items.models import VoucherItem
 
@@ -11,6 +12,12 @@ def getBalance(account_type, month, financial_year, school_id):
         month = 12
     else:
         month = int(month) - 1
+
+    querysetGrants = Grant.objects.filter(
+        deleted=False,
+        receipt_date__month=month,
+        school_id=school_id,
+    ).aggregate(result=Sum('overall_amount'))
 
     collectionQuerySet = Collection.objects.filter(
         school_id=school_id,
@@ -34,16 +41,28 @@ def getBalance(account_type, month, financial_year, school_id):
         collectionQuerySet = collectionQuerySet.filter(receipt__financial_year=financial_year)
         pikQuerySet = pikQuerySet.filter(receipt__financial_year=financial_year)
         expensesQuerySet = expensesQuerySet.filter(voucher__financial_year=financial_year)
+        querysetGrants = querysetGrants.filter(financial_year=financial_year)
 
     collectionAmount = collectionQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
     pikAmount = pikQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
-    total_amount = Decimal(collectionAmount) + Decimal(pikAmount)
+    grantAmount = querysetGrants.aggregate(Sum('overall_amount'))['overall_amount__sum'] or Decimal(0.0)
+    total_amount = Decimal(collectionAmount) + Decimal(pikAmount) + Decimal(grantAmount)
 
     collectionQuerySet = list(collectionQuerySet)
     pikQuerySet = list(pikQuerySet)
+    querysetGrants = list(querysetGrants)
 
     cash_at_hand = Decimal(0.0)
     cash_at_bank = Decimal(0.0)
+
+    for grant in querysetGrants:
+        if grant.paymentMethod.is_cash == True:
+            cash_at_hand += Decimal(grant.amount)
+        elif grant.paymentMethod.is_bank == True:
+            cash_at_bank += Decimal(grant.amount)
+        elif grant.paymentMethod.is_cheque == True:
+            cash_at_bank += Decimal(grant.amount)
+
 
     for collection in collectionQuerySet:
         if collection.receipt.payment_method.is_cash == True:
@@ -80,6 +99,12 @@ def getBalance(account_type, month, financial_year, school_id):
 
 def getBalancesByAccount(accounttype, financial_year, school_id):
 
+    querysetGrants = Grant.objects.filter(
+        deleted=False,
+        school_id=school_id,
+        bankAccount__account_type=accounttype,
+    ).aggregate(result=Sum('overall_amount'))
+
     collectionQuerySet = Collection.objects.filter(
         school_id=school_id,
         receipt__bank_account__account_type=accounttype,
@@ -102,16 +127,28 @@ def getBalancesByAccount(accounttype, financial_year, school_id):
         collectionQuerySet = collectionQuerySet.filter(receipt__financial_year=financial_year)
         pikQuerySet = pikQuerySet.filter(receipt__financial_year=financial_year)
         expensesQuerySet = expensesQuerySet.filter(voucher__financial_year=financial_year)
+        querysetGrants = querysetGrants.filter(financial_year=financial_year)
 
     collectionAmount = collectionQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
     pikAmount = pikQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
-    total_amount = Decimal(collectionAmount) + Decimal(pikAmount)
+    grantsAmount = querysetGrants.aggregate(Sum('overall_amount'))['overall_amount__sum'] or Decimal(0.0)
+
+    total_amount = Decimal(collectionAmount) + Decimal(pikAmount) + Decimal(grantsAmount)
 
     collectionQuerySet = list(collectionQuerySet)
     pikQuerySet = list(pikQuerySet)
+    querysetGrants = list(querysetGrants)
 
     cash_at_hand = Decimal(0.0)
     cash_at_bank = Decimal(0.0)
+
+    for grant in querysetGrants:
+        if grant.paymentMethod.is_cash == True:
+            cash_at_hand += Decimal(grant.amount)
+        elif grant.paymentMethod.is_bank == True:
+            cash_at_bank += Decimal(grant.amount)
+        elif grant.paymentMethod.is_cheque == True:
+            cash_at_bank += Decimal(grant.amount)
 
     for collection in collectionQuerySet:
         if collection.receipt.payment_method.is_cash == True:
@@ -144,6 +181,13 @@ def getBalancesByAccount(accounttype, financial_year, school_id):
 
 
 def getBalancesByFinancialYear(financial_year, school_id):
+
+    querysetGrants = Grant.objects.filter(
+        deleted=False,
+        school_id=school_id,
+    ).aggregate(result=Sum('overall_amount'))
+
+
     collectionQuerySet = Collection.objects.filter(
         school_id=school_id,
         receipt__is_reversed=False
@@ -163,16 +207,28 @@ def getBalancesByFinancialYear(financial_year, school_id):
         collectionQuerySet = collectionQuerySet.filter(receipt__financial_year=financial_year)
         pikQuerySet = pikQuerySet.filter(receipt__financial_year=financial_year)
         expensesQuerySet = expensesQuerySet.filter(voucher__financial_year=financial_year)
+        querysetGrants = querysetGrants.filter(financial_year=financial_year)
 
     collectionAmount = collectionQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
     pikAmount = pikQuerySet.aggregate(Sum('amount'))['amount__sum'] or Decimal(0.0)
-    total_amount = Decimal(collectionAmount) + Decimal(pikAmount)
+    grantsAmount = querysetGrants.aggregate(Sum('overall_amount'))['overall_amount__sum'] or Decimal(0.0)
+
+    total_amount = Decimal(collectionAmount) + Decimal(pikAmount) + Decimal(grantsAmount)
 
     collectionQuerySet = list(collectionQuerySet)
     pikQuerySet = list(pikQuerySet)
+    querysetGrants = list(querysetGrants)
 
     cash_at_hand = Decimal(0.0)
     cash_at_bank = Decimal(0.0)
+
+    for grant in querysetGrants:
+        if grant.paymentMethod.is_cash == True:
+            cash_at_hand += Decimal(grant.amount)
+        elif grant.paymentMethod.is_bank == True:
+            cash_at_bank += Decimal(grant.amount)
+        elif grant.paymentMethod.is_cheque == True:
+            cash_at_bank += Decimal(grant.amount)
 
     for collection in collectionQuerySet:
         if collection.receipt.payment_method.is_cash == True:

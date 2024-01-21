@@ -25,7 +25,7 @@ from receipts.models import Receipt
 from reportss.models import trackBalance
 from students.models import Student
 from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, generate_unique_code, defaultCurrency, \
-    currentAcademicYear, currentTerm, defaultAccountType
+    currentAcademicYear, currentTerm, defaultAccountType, currentFinancialYear
 from voteheads.models import VoteheadConfiguration, VoteHead
 from .models import Grant
 from .serializers import GrantSerializer
@@ -47,7 +47,13 @@ class GrantCreateView(SchoolIdMixin, generics.CreateAPIView):
             if not currency:
                 return Response({'detail': f"Default Currency has not been set for this school"}, status=status.HTTP_400_BAD_REQUEST)
 
+            financial_year = currentFinancialYear(school_id)
+            if not financial_year:
+                return Response({'detail': f"Current Financial Year has not been set for this school"}, status=status.HTTP_400_BAD_REQUEST)
+
+
             serializer.validated_data['school_id'] = school_id
+            serializer.validated_data['financial_year'] = financial_year
 
             items_data = serializer.validated_data.pop('items_list', [])
 
@@ -78,11 +84,19 @@ class GrantCreateView(SchoolIdMixin, generics.CreateAPIView):
                         votehead_amounts[votehead_id] += amount
 
                     total_amount_for_each_votehead = sum(votehead_amounts.values())
-                    overall_amount = total_amount_for_each_votehead * len(serializer.validated_data['students'])
+                    students_length = len(serializer.validated_data['students'])
+                    overall_amount = total_amount_for_each_votehead * students_length
+
                     votehead_amounts_serializable = {
-                        key: str(value) for key, value in votehead_amounts.items()
+                        key: str(value * students_length) for key, value in votehead_amounts.items()
                     }
                     grant.voteheadamounts = dict(votehead_amounts_serializable)
+
+                    assigned_votehead_amounts_serializable = {
+                        key: str(value) for key, value in votehead_amounts.items()
+                    }
+                    grant.assigned_voteheadamounts = dict(assigned_votehead_amounts_serializable)
+
                     grant.overall_amount  = Decimal(overall_amount)
                     grant.save()
 
@@ -237,7 +251,7 @@ def autoGrant(self, request, school_id, auto_configuration_type, itemamount, bur
             default_Currency = defaultCurrency(school_id)
             year = currentAcademicYear(school_id)
             term = currentTerm(school_id)
-            defaultAccounttype = defaultAccountType()
+            defaultAccounttype = defaultAccountType(school_id)
             if not default_Currency:
                 Response({'detail': "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
             if not year:

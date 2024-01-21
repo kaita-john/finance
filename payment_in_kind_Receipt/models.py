@@ -7,10 +7,8 @@ from classes.models import Classes
 from currencies.models import Currency
 from financial_years.models import FinancialYear
 from models import ParentModel
-from receipts.models import Receipt
 from students.models import Student
 from term.models import Term
-from voteheads.models import VoteHead
 
 
 class PIKReceipt(ParentModel):
@@ -34,9 +32,12 @@ class PIKReceipt(ParentModel):
     def save(self, *args, **kwargs):
         if self.receipt_No:
             self.receipt_No = self.receipt_No.upper()
+
         if not self.counter:
-            max_counter = PIKReceipt.objects.all().aggregate(models.Max('counter'))['counter__max']
-            self.counter = max_counter + 1 if max_counter is not None else 1
+            from receipts.models import Receipt
+            max_counter_receipt = Receipt.objects.all().aggregate(models.Max('counter'))['counter__max']
+            max_counter_pik_receipt = PIKReceipt.objects.all().aggregate(models.Max('counter'))['counter__max']
+            self.counter = max(max_counter_receipt, max_counter_pik_receipt) + 1
 
         super().save(*args, **kwargs)
 

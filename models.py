@@ -8,3 +8,9 @@ class ParentModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+
+
+
+

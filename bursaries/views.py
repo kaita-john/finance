@@ -188,7 +188,7 @@ def autoBursary(self, request, school_id, auto_configuration_type, itemamount, b
             default_Currency = defaultCurrency(school_id)
             year = currentAcademicYear(school_id)
             term = currentTerm(school_id)
-            defaultAccounttype = defaultAccountType()
+            defaultAccounttype = defaultAccountType(school_id)
             if not default_Currency:
                 Response({'detail': "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
             if not year:
@@ -338,7 +338,7 @@ def autoBursary(self, request, school_id, auto_configuration_type, itemamount, b
 
 
             if overpayment > 0:
-                overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
+                overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True, school_id = school_id).first()
                 if not overpayment_votehead:
                     raise ValueError("Overpayment votehead has not been configured")
 

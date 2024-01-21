@@ -175,9 +175,9 @@ class StudentBalanceDetailView(SchoolIdMixin, generics.RetrieveAPIView):
                 total_amount_paid1 = PIKReceipt.objects.filter(student_id=student.id, school_id=school_id, is_posted=True).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
                 total_amount_paid = Decimal(total_amount_paid0) + Decimal(total_amount_paid1)
             else:
-                total_amount_required = Invoice.objects.filter(term=term, year=year,student = student.id).aggregate(total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
-                total_amount_paid0 = Receipt.objects.filter(student_id=student.id,term=term, year=year, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
-                total_amount_paid1 = PIKReceipt.objects.filter(student_id=student.id,term=term, year=year, is_posted=True).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
+                total_amount_required = Invoice.objects.filter(school_id=school_id, term=term, year=year,student = student.id).aggregate(total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
+                total_amount_paid0 = Receipt.objects.filter(student_id=student.id,term=term, year=year, school_id=school_id, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
+                total_amount_paid1 = PIKReceipt.objects.filter(student_id=student.id,term=term, year=year, school_id=school_id, is_posted=True).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
                 total_amount_paid = Decimal(total_amount_paid0) + Decimal(total_amount_paid1)
 
             balance = Decimal(total_amount_required) - Decimal(total_amount_paid)
@@ -285,10 +285,8 @@ class GetStudentInvoicedVotehead(SchoolIdMixin, generics.RetrieveAPIView):
         for invoice in invoiceList:
             votehead = invoice.votehead
 
-            receiptAmount = Collection.objects.filter(receipt__term=term, receipt__year=year, votehead=votehead, school_id=school_id,
-                                      student=student).aggregate(Sum('amount'))['amount__sum'] or Decimal(0)
-            pikAmount = PIKReceipt.objects.filter(term=term, year=year, school_id=school_id, student=student).aggregate(
-                Sum('totalAmount'))['totalAmount__sum'] or Decimal(0)
+            receiptAmount = Collection.objects.filter(receipt__term=term, receipt__year=year, votehead=votehead, school_id=school_id,student=student).aggregate(Sum('amount'))['amount__sum'] or Decimal(0)
+            pikAmount = PIKReceipt.objects.filter(term=term, year=year, school_id=school_id, student=student).aggregate(Sum('totalAmount'))['totalAmount__sum'] or Decimal(0)
 
             amountpaid = Decimal(pikAmount) + Decimal(receiptAmount)
             required_amount  = invoice.amount - amountpaid
@@ -488,7 +486,7 @@ class UploadStudentBalancesView(APIView, SchoolIdMixin):
                   classes = student.current_Class
                   school_id = school_id
                   votehead = invoicable_votehead
-                  exists_query = Invoice.objects.filter(votehead__id=votehead.id, term=term, year=year, student=student)
+                  exists_query = Invoice.objects.filter(votehead__id=votehead.id, term=term, year=year, student=student, school_id=school_id)
 
                   invoice_no = generate_unique_code()
 
@@ -576,7 +574,7 @@ class UploadSingleStudentBalance(APIView, SchoolIdMixin):
             classes = student.current_Class
             school_id = school_id
             votehead = invoicable_votehead
-            exists_query = Invoice.objects.filter(votehead__id=votehead.id, term=term, year=year, student=student)
+            exists_query = Invoice.objects.filter(school_id = school_id, votehead__id=votehead.id, term=term, year=year, student=student)
 
             invoice_no = generate_unique_code()
 

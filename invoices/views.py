@@ -157,7 +157,8 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
     fee_structures_itemList = FeeStructureItem.objects.filter(
         fee_Structure__academic_year=structure_year,
         fee_Structure__classes=structure_class,
-        fee_Structure__term=structure_term
+        fee_Structure__term=structure_term,
+        school_id=school_id
     )
 
     errors = []
@@ -176,7 +177,7 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
                         school_id = item.school_id
                         votehead = item.votehead
 
-                        exists_query = Invoice.objects.filter(votehead__id=votehead.id, term=term, year=year, student=student)
+                        exists_query = Invoice.objects.filter(school_id=school_id, votehead__id=votehead.id, term=term, year=year, student=student)
 
                         if exists_query.exists():
                             invoice = exists_query[0]

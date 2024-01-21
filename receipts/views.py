@@ -102,7 +102,7 @@ def manualCollection(self, request, school_id, current_financial_year):
 
             if receipt_instance.totalAmount > sum_Invoice_Amount:
 
-                overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
+                overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True, school_id=school_id).first()
                 if not overpayment_votehead:
                     raise ValueError("No VoteHead found with is_Overpayment_Default set to true")
 
@@ -273,7 +273,7 @@ def autoCollection(self, request, school_id, auto_configuration_type, current_fi
 
 
             if overpayment > 0:
-                overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
+                overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True, school_id=school_id).first()
                 if not overpayment_votehead:
                     raise ValueError("Overpayment votehead has not been configured")
 

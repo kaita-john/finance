@@ -3,6 +3,7 @@ from django.db.models import DO_NOTHING
 
 from academic_year.models import AcademicYear
 from bank_accounts.models import BankAccount
+from configurations.models import Configuration
 from currencies.models import Currency
 from financial_years.models import FinancialYear
 from models import ParentModel
@@ -27,14 +28,24 @@ class Bursary(ParentModel):
     schoolgroup = models.ForeignKey(SchoolGroup, default=None, null=True, on_delete=DO_NOTHING, related_name="bursaries")
     currency = models.ForeignKey(Currency, default=None, null=True, on_delete=DO_NOTHING, related_name="bursaries")
     studentamount = models.DecimalField(max_digits=15, null=True, default=0.00, decimal_places=2)
+    counter = models.FloatField(null=True, default=None)
 
     def save(self, *args, **kwargs):
-
         if self.institution:
             self.institution = self.institution.upper()
         if self.institutionAddress:
             self.institutionAddress = self.institutionAddress.upper()
+
+        if not self.counter:
+            if Bursary.objects.count() == 0:
+                start_at_value = Configuration.objects.values('bursary_start_at').first().get('bursary_start_at', 1)
+                self.counter = start_at_value
+            else:
+                max_counter = Bursary.objects.all().aggregate(models.Max('counter'))['counter__max']
+                self.counter = max_counter + 1 if max_counter is not None else 1
+
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f"{self.id}"

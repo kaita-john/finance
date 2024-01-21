@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     'reportss',
     'grants',
     'grant_items',
+    'configurations',
 ]
 
 

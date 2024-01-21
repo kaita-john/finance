@@ -19,6 +19,7 @@ from account_types.models import AccountType
 from appcollections.models import Collection
 from currencies.models import Currency
 from finance.settings import SIMPLE_JWT
+from financial_years.models import FinancialYear
 from payment_in_kinds.models import PaymentInKind
 from reportss.models import OpeningClosingBalances
 from school.models import School
@@ -169,6 +170,12 @@ def currentAcademicYear(school_id):
     except AcademicYear.DoesNotExist:
         return None
 
+def currentFinancialYear(school_id):
+    try:
+        return FinancialYear.objects.get(is_current=True, school=school_id)
+    except FinancialYear.DoesNotExist:
+        return None
+
 
 def currentTerm(school_id):
     try:
@@ -184,9 +191,9 @@ def defaultCurrency(school_id):
         return None
 
 
-def defaultAccountType():
+def defaultAccountType(school_id):
     try:
-        return AccountType.objects.get(is_default=True)
+        return AccountType.objects.get(is_default=True, school = school_id)
     except AccountType.DoesNotExist:
         return None
 
@@ -246,7 +253,7 @@ def close_financial_year(current_financial_year,new_financial_year, school_id):
 
     try:
         with transaction.atomic():
-            openingClosingBalances_Instance = OpeningClosingBalances.objects.get(financial_year=current_financial_year)
+            openingClosingBalances_Instance = OpeningClosingBalances.objects.get(financial_year=current_financial_year, school_id=school_id)
             openingClosingBalances_Instance.closing_cash_at_hand = closing_cash_at_hand
             openingClosingBalances_Instance.closing_cash_at_bank = closing_cash_at_bank
             openingClosingBalances_Instance.closing_balance = Decimal(closing_cash_at_hand) + Decimal(closing_cash_at_bank)

@@ -35,6 +35,7 @@ api_patterns = [
 
     path(api_version + 'grants/', include('grants.urls')),
     path(api_version + 'items/', include('items.urls')),
+    path(api_version + 'config/', include('configurations.urls')),
 
 
     path(api_version + 'admin/suppliers/', include('suppliers.urls')),
