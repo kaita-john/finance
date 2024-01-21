@@ -79,8 +79,8 @@ def trackBalance(student, school_id, amount, operation, term, year):
     try:
 
         invoicedAmount = Invoice.objects.filter(student_id=student.id,school_id=school_id,term=term,year=year).aggregate(invoiced_amount=Coalesce(Sum('amount', output_field=DecimalField()), Value(Decimal('0.0'))))['invoiced_amount']
-        receiptAmount = Receipt.objects.filter(student_id=student.id,school_id=school_id,term=term,year=year).aggregate(receipt_amount=Coalesce(Sum('totalAmount', output_field=DecimalField()), Value(Decimal('0.0'))))['receipt_amount']
-        pikreceiptAmount = PIKReceipt.objects.filter(student_id=student.id,school_id=school_id,term=term,year=year).aggregate(pikreceipt_amount=Coalesce(Sum('totalAmount', output_field=DecimalField()), Value(Decimal('0.0'))))['pikreceipt_amount']
+        receiptAmount = Receipt.objects.filter(student_id=student.id,school_id=school_id,term=term,year=year, is_reversed = False).aggregate(receipt_amount=Coalesce(Sum('totalAmount', output_field=DecimalField()), Value(Decimal('0.0'))))['receipt_amount']
+        pikreceiptAmount = PIKReceipt.objects.filter(student_id=student.id,school_id=school_id,term=term,year=year, is_posted = True).aggregate(pikreceipt_amount=Coalesce(Sum('totalAmount', output_field=DecimalField()), Value(Decimal('0.0'))))['pikreceipt_amount']
 
         previouslyPaidAmount = Decimal(receiptAmount) + Decimal(pikreceiptAmount)
 

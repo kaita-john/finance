@@ -130,7 +130,7 @@ class OverpaymentPaymentInKindListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return PaymentInKind.objects.none()
-        queryset = PaymentInKind.objects.filter(school_id=school_id, votehead__is_Overpayment_Default=True).order_by('-transaction_date')
+        queryset = PaymentInKind.objects.filter(school_id=school_id, votehead__is_Overpayment_Default=True, receipt__is_posted = True).order_by('-transaction_date')
         return queryset
 
     def list(self, request, *args, **kwargs):

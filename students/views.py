@@ -285,8 +285,8 @@ class GetStudentInvoicedVotehead(SchoolIdMixin, generics.RetrieveAPIView):
         for invoice in invoiceList:
             votehead = invoice.votehead
 
-            receiptAmount = Collection.objects.filter(receipt__term=term, receipt__year=year, votehead=votehead, school_id=school_id,student=student).aggregate(Sum('amount'))['amount__sum'] or Decimal(0)
-            pikAmount = PIKReceipt.objects.filter(term=term, year=year, school_id=school_id, student=student).aggregate(Sum('totalAmount'))['totalAmount__sum'] or Decimal(0)
+            receiptAmount = Collection.objects.filter(receipt__term=term, receipt__year=year, votehead=votehead, school_id=school_id,student=student, receipt__is_reversed=False).aggregate(Sum('amount'))['amount__sum'] or Decimal(0)
+            pikAmount = PIKReceipt.objects.filter(term=term, year=year, school_id=school_id, student=student, is_posted = True).aggregate(Sum('totalAmount'))['totalAmount__sum'] or Decimal(0)
 
             amountpaid = Decimal(pikAmount) + Decimal(receiptAmount)
             required_amount  = invoice.amount - amountpaid

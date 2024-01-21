@@ -1252,12 +1252,14 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
                     votehead = invoice.votehead
 
                     receiptAmount = Collection.objects.filter(
+                        receipt__is_reversed=False,
                         receipt__year=year, votehead=votehead,
                         school_id=school_id,
                         student=student
                     ).aggregate(Sum('amount'))['amount__sum'] or Decimal(0)
 
                     pikAmount = PIKReceipt.objects.filter(
+                        is_posted = True,
                         year=year,
                         school_id=school_id,
                         student=student
@@ -2094,13 +2096,15 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
 
         receiptsQuerySet = Receipt.objects.filter(
             school_id=school_id,
-            financial_year=financialyear
+            financial_year=financialyear,
+            is_reversed = False
         ).aggregate(result=Sum('totalAmount'))
 
         receipt_amount_sum = receiptsQuerySet.get('result', Decimal('0.0')) if receiptsQuerySet.get(
             'result') is not None else Decimal('0.0')
 
         pikQuerySet = PIKReceipt.objects.filter(
+            is_posted=True,
             school_id=school_id,
             financial_year=financialyear
         ).aggregate(result=Sum('totalAmount'))
@@ -2122,13 +2126,15 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
 
             receiptsQuerySet = Receipt.objects.filter(
                 school_id=school_id,
-                financial_year=previous_year
+                financial_year=previous_year,
+                is_reversed=False
             ).aggregate(result=Sum('totalAmount'))
 
             receipt_amount_sum = receiptsQuerySet.get('result', Decimal('0.0')) if receiptsQuerySet.get(
                 'result') is not None else Decimal('0.0')
 
             pikQuerySet = PIKReceipt.objects.filter(
+                is_posted=True,
                 school_id=school_id,
                 financial_year=previous_year
             ).aggregate(result=Sum('totalAmount'))
@@ -2151,6 +2157,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
         current_collection_amount_sum = Decimal(0.0)
         previous_collection_amount_sum = Decimal(0.0)
         collectionQuerySet = Collection.objects.filter(
+            receipt__is_reversed=False,
             school_id=school_id,
             is_overpayment = True,
             receipt__financial_year=financialyear
@@ -2160,6 +2167,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
 
         if previous_year:
             collectionQuerySet = Collection.objects.filter(
+                receipt__is_reversed=False,
                 school_id=school_id,
                 is_overpayment = True,
                 receipt__financial_year=previous_year
