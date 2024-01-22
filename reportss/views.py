@@ -2120,7 +2120,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                 deleted=False,
                 financial_year=previous_year,
                 school_id=school_id
-            )
+            ).aggregate(result=Sum('overall_amount'))
             grant_amount_sum = querysetGrants.get('result', Decimal('0.0')) if querysetGrants.get(
                 'result') is not None else Decimal('0.0')
 
