@@ -24,6 +24,11 @@ class ConfigurationCreateView(SchoolIdMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.validated_data['school'] = school_id
+
+            existing_instances = Configuration.objects.count()
+            if existing_instances > 1:
+                return Response({'detail': f"Configuration already saved. Edit existing configuration"}, status=status.HTTP_400_BAD_REQUEST)
+
             self.perform_create(serializer)
             return Response({'detail': 'Configuration created successfully'}, status=status.HTTP_201_CREATED)
         else:
