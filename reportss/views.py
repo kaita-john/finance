@@ -2021,8 +2021,8 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                         bankAccount=bank_account
                     ).aggregate(result=Sum('overall_amount'))
 
-                    grants_amount_sum = querysetGrants.get('result', Decimal('0.0')) if querysetGrants.get(
-                        'result') is not None else Decimal('0.0')
+                    grants_amount_sum = querysetGrants['result'] if querysetGrants['result'] is not None else Decimal('0.0')
+
 
                     receiptsQuerySet = Receipt.objects.filter(
                         is_reversed=False,
