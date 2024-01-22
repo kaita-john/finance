@@ -1785,7 +1785,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
             if previous_year:
                 previous_year_collections = Grant.objects.filter(school_id=school_id, deleted=False,
                                                          bankAccount__account_type=accountType,
-                                                         financial_year__id=previous_year) or []
+                                                         financial_year=previous_year) or []
                 for grant in previous_year_collections:
                     amount = grant.totalAmount
 
@@ -1835,7 +1835,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                             current_collection_total += Decimal(amount)
 
             if previous_year:
-                previous_year_collections = Collection.objects.filter(school_id = school_id, receipt__is_reversed = False, receipt__bank_account__account_type = accountType, receipt__financial_year__id = previous_year) or []
+                previous_year_collections = Collection.objects.filter(school_id = school_id, receipt__is_reversed = False, receipt__bank_account__account_type = accountType, receipt__financial_year = previous_year) or []
                 for collection in previous_year_collections:
                     amount = collection.amount
                     for votehead in votehead_list:
@@ -1878,7 +1878,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
             if previous_year:
                 previous_year_piks = PaymentInKind.objects.filter(receipt__is_posted=True, school_id=school_id,
                                                          receipt__bank_account__account_type=accountType,
-                                                         receipt__financial_year__id=previous_year) or []
+                                                         receipt__financial_year=previous_year) or []
                 for pik in previous_year_piks:
                     amount = pik.amount
                     for votehead in votehead_list:
