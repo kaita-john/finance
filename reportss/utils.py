@@ -17,7 +17,7 @@ def getBalance(account_type, month, financial_year, school_id):
         deleted=False,
         receipt_date__month=month,
         school_id=school_id,
-    ).aggregate(result=Sum('overall_amount'))
+    )
 
     collectionQuerySet = Collection.objects.filter(
         school_id=school_id,
@@ -103,7 +103,7 @@ def getBalancesByAccount(accounttype, financial_year, school_id):
         deleted=False,
         school_id=school_id,
         bankAccount__account_type=accounttype,
-    ).aggregate(result=Sum('overall_amount'))
+    )
 
     collectionQuerySet = Collection.objects.filter(
         school_id=school_id,
@@ -185,7 +185,7 @@ def getBalancesByFinancialYear(financial_year, school_id):
     querysetGrants = Grant.objects.filter(
         deleted=False,
         school_id=school_id,
-    ).aggregate(result=Sum('overall_amount'))
+    )
 
 
     collectionQuerySet = Collection.objects.filter(
