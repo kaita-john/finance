@@ -1961,11 +1961,21 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                                 expenses_votehead[votehead_name]["previous_amount"] += Decimal(amount)
                             previous_expenses_total += Decimal(amount)
 
+
+                expenses_votehead_list = []
+
+                for key, value in expenses_votehead.items():
+                    item = {"name": key, "amount": value.get("amount", None)}
+                    previous_amount = value.get("previous_amount", None)
+                    if previous_amount is not None:
+                        item["previous_amount"] = previous_amount
+                    expenses_votehead_list.append(item)
+
                 send = {
                     "account_type_name": accountype_name,
                     "current_expenses_total": current_expenses_total,
                     "previous_expenses_total": previous_expenses_total,
-                    "expenses_votehead": expenses_votehead,
+                    "expenses_votehead": expenses_votehead_list,
                 }
                 expenses_list.append(send)
 
