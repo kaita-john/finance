@@ -1900,7 +1900,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
 
             collection_votehead_list  = []
 
-            for key, value in collection_votehead.get("collection_votehead", {}).items():
+            for key, value in collection_votehead.items():
                 item = {"name": key, "amount": value.get("amount", 0.0)}
                 previous_amount = value.get("previous_amount")
                 if previous_amount is not None:
