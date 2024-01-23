@@ -120,6 +120,7 @@ class ReportStudentBalanceView(APIView, SchoolIdMixin):
 
             reportsStudentBalanceList.append(reportStudentBalance)
 
+
         return reportsStudentBalanceList
 
     def get(self, request):
@@ -1753,9 +1754,8 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
 
 
             # COLLECTION - COLLECTIONS
-            current_grants = Grant.objects.filter(school_id=school_id, deleted=False,
-                                                         bankAccount__account_type=accountType,
-                                                         financial_year__id=financialyear) or []
+            current_grants = Grant.objects.filter(school_id=school_id, deleted=False,bankAccount__account_type=accountType,financial_year__id=financialyear) or []
+
             for grant in current_grants:
                 amount = grant.overall_amount
 
@@ -1896,12 +1896,24 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                                     collection_votehead[votehead_name]["amount"] += Decimal(amount)
                                 previous_collection_total += Decimal(amount)
 
+
+
+            collection_votehead_list  = []
+
+            for key, value in collection_votehead.get("collection_votehead", {}).items():
+                item = {"name": key, "amount": value.get("amount", 0.0)}
+                previous_amount = value.get("previous_amount")
+                if previous_amount is not None:
+                    item["previous_amount"] = previous_amount
+                collection_votehead_list.append(item)
+
             send = {
-                "account_type_name" : accountype_name,
+                "account_type_name": accountype_name,
                 "current_collection_total": current_collection_total,
-                "previous_collection_total" : previous_collection_total,
-                "collection_votehead" : collection_votehead,
+                "previous_collection_total": previous_collection_total,
+                "collection_votehead": collection_votehead_list,
             }
+
             collections_list.append(send)
 
 
