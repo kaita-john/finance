@@ -24,14 +24,13 @@ class FileUploadCreateView(SchoolIdMixin, generics.CreateAPIView):
         if not school_id:
             return JsonResponse({'detail': 'Invalid school in token'}, status=401)
 
-        #title = self.request.GET.get('title')
-        # title = request.POST.get('title')
-        # if not title:
-        #     return Response({"details": "Title not provided"}, status=status.HTTP_400_BAD_REQUEST)
+        title = request.POST.get('title')
+        if not title:
+            title = "None"
 
-        # queryset = SchoolImage.objects.filter(school_id=school_id, title="logo")
-        # if queryset:
-        #     return Response({"detail": "Image already uploaded"}, status=status.HTTP_200_OK)
+        queryset = SchoolImage.objects.filter(school_id=school_id, title="logo")
+        if queryset:
+            return Response({"detail": "Image already uploaded"}, status=status.HTTP_200_OK)
 
 
         documents = []
@@ -46,7 +45,7 @@ class FileUploadCreateView(SchoolIdMixin, generics.CreateAPIView):
                             creator=request.user,
                             original_file_name=original_file_name,
                             school_id = school_id,
-                            title = "title"
+                            title = title
                         )
                         exts = ['xlsx', 'csv']
                     except PermissionError:
