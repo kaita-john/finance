@@ -450,7 +450,7 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
 
             invoices = Invoice.objects.filter(school_id=school_id, year=academic_year, term=term)
             # classes_list = invoices.exclude(student__current_Class=None) .values_list('student__current_Class', flat=True).distinct()
-            classes_set = {invoice.student.current_Class for invoice in invoices if invoice.student.current_Class is not None}
+            classes_set = {invoice.classes for invoice in invoices if invoice.classes is not None}
             classes_list = list(classes_set)
 
             thevotehead_list = list(invoice.votehead for invoice in invoices if invoice.votehead is not None)
