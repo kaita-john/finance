@@ -25,7 +25,7 @@ from schoolgroups.models import SchoolGroup
 from students.models import Student
 from term.models import Term
 from term.serializers import TermSerializer
-from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey, IsAdminOrSuperUser
+from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey, IsAdminOrSuperUser, currentAcademicYear
 from voteheads.models import VoteHead
 from .models import Invoice
 from .serializers import InvoiceSerializer, StructureSerializer, UninvoiceStudentSerializer
@@ -430,12 +430,14 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
         academic_year = self.request.GET.get('academic_year')
 
         if not academic_year:
-            return Response({'detail': f"Academic Year is a must"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            academic_year = AcademicYear.objects.get(id=academic_year)
-        except ObjectDoesNotExist:
-            return Response({'detail': f"Academic Year does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+            academic_year = currentAcademicYear(school_id)
+            if not academic_year:
+                Response({'detail': "Default Academic Year Not Set For This School"},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            try:
+                academic_year = AcademicYear.objects.get(id=academic_year)
+            except ObjectDoesNotExist:
+                return Response({'detail': f"Academic Year does not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
         fullList = []
 
