@@ -28,10 +28,9 @@ class FileUploadCreateView(SchoolIdMixin, generics.CreateAPIView):
         if not title:
             title = "None"
 
-        queryset = SchoolImage.objects.filter(school_id=school_id, title="logo")
-        if queryset:
-            return Response({"detail": "Image already uploaded"}, status=status.HTTP_200_OK)
-
+        existing_image = SchoolImage.objects.filter(school_id=school_id, title="logo").first()
+        if existing_image:
+            existing_image.delete()
 
         documents = []
         with transaction.atomic():
