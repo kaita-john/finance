@@ -467,10 +467,15 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
                     votehead_list[votehead.vote_head_name][boarding_status] += float(invoice.amount)
                     overall[boarding_status] += float(invoice.amount)
 
-            fee_structure_items['invoiced_voteheads'] = votehead_list
-            fee_structure_items['totals'] = overall
-
             print(f"{classes_list}")
+
+            invoiced_voteheads_list = [
+                {"voteheadname": votehead, "amounts": amounts}
+                for votehead, amounts in votehead_list.items()
+            ]
+
+            fee_structure_items['invoiced_voteheads'] = invoiced_voteheads_list
+            fee_structure_items['totals'] = overall
 
             theobject = {
                 "term_details": TermSerializer(term).data,
