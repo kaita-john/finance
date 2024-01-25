@@ -470,7 +470,7 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
             print(f"{classes_list}")
 
             invoiced_voteheads_list = [
-                {"voteheadname": votehead, "amounts": amounts}
+                {"votehead": votehead, **amounts}
                 for votehead, amounts in votehead_list.items()
             ]
 
