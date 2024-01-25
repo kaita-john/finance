@@ -50,11 +50,15 @@ class Voucher(ParentModel):
             self.deliveryNoteNumber = self.deliveryNoteNumber.upper()
 
         if not self.counter:
-            if Voucher.objects.count() == 0:
-                start_at_value = Configuration.objects.values('voucher_start_at').first().get('voucher_start_at', 1)
+            school_id_filter = {'school_id': self.school_id}  # Add school filter here
+            school_filter = {'school': self.school_id}  # Add school filter here
+
+            if Voucher.objects.filter(**school_id_filter).count() == 0:
+                start_at_value = Configuration.objects.filter(**school_filter).values('voucher_start_at').first().get(
+                    'voucher_start_at', 1)
                 self.counter = start_at_value
             else:
-                max_counter = Voucher.objects.all().aggregate(models.Max('counter'))['counter__max']
+                max_counter = Voucher.objects.filter(**school_id_filter).aggregate(models.Max('counter'))['counter__max']
                 self.counter = max_counter + 1 if max_counter is not None else 1
 
         super().save(*args, **kwargs)

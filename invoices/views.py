@@ -441,7 +441,7 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
 
         fullList = []
 
-        terms_list = Term.objects.all()
+        terms_list = Term.objects.filter(school_id=school_id, academic_year=academic_year)
 
         for term in terms_list:
             term_name = term.term_name

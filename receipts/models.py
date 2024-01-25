@@ -40,13 +40,19 @@ class Receipt(ParentModel):
             self.receipt_No = self.receipt_No.upper()
 
         if not self.counter:
-            if Receipt.objects.count() == 0:
-                start_at_value = Configuration.objects.values('receipt_start_at').first().get('receipt_start_at', 1)
+            school_filter = {'school_id': self.school_id}  # Add school filter here
+            schooltwo_filter = {'school': self.school_id}  # Add school filter here
+
+            if Receipt.objects.filter(**school_filter).count() == 0:
+                start_at_value = Configuration.objects.filter(**schooltwo_filter).values('receipt_start_at').first().get(
+                    'receipt_start_at', 1)
                 self.counter = start_at_value
             else:
                 from payment_in_kind_Receipt.models import PIKReceipt
-                max_counter_receipt = Receipt.objects.all().aggregate(models.Max('counter'))['counter__max']
-                max_counter_pik_receipt = PIKReceipt.objects.all().aggregate(models.Max('counter'))['counter__max']
+                max_counter_receipt = Receipt.objects.filter(**school_filter).aggregate(models.Max('counter'))[
+                    'counter__max']
+                max_counter_pik_receipt = PIKReceipt.objects.filter(**school_filter).aggregate(models.Max('counter'))[
+                    'counter__max']
                 self.counter = max(max_counter_receipt, max_counter_pik_receipt) + 1
 
         super().save(*args, **kwargs)

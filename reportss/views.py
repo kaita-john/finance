@@ -511,7 +511,7 @@ class IncomeSummaryView(SchoolIdMixin, generics.GenericAPIView):
                     incomeSummaryList.append(item)
 
 
-            voteheads = VoteHead.objects.all()
+            voteheads = VoteHead.objects.filter(school_id=school_id)
             if orderby == "votehead":
                 for votehead in voteheads:
                     totalAmount = Decimal('0.0')
@@ -605,7 +605,7 @@ class ExpenseSummaryView(SchoolIdMixin, generics.GenericAPIView):
                     incomeSummaryList.append(item)
 
 
-            voteheads = VoteHead.objects.all()
+            voteheads = VoteHead.objects.filter(school_id=school_id)
             if orderby == "votehead":
                 for votehead in voteheads:
                     totalAmount = Decimal('0.0')

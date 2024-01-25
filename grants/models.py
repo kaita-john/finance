@@ -44,11 +44,14 @@ class Grant(ParentModel):
             self.institutionAddress = self.institutionAddress.upper()
 
         if not self.counter:
-            if Grant.objects.count() == 0:
-                start_at_value = Configuration.objects.values('grant_start_at').first().get('grant_start_at', 1)
+            school_filter = {'school_id': self.school_id}  # Add school filter here
+            schooltwo_filter = {'school': self.school_id}  # Add school filter here
+            if Grant.objects.filter(**school_filter).count() == 0:
+                start_at_value = Configuration.objects.filter(**schooltwo_filter).values('grant_start_at').first().get(
+                    'grant_start_at', 1)
                 self.counter = start_at_value
             else:
-                max_counter = Grant.objects.all().aggregate(models.Max('counter'))['counter__max']
+                max_counter = Grant.objects.filter(**school_filter).aggregate(models.Max('counter'))['counter__max']
                 self.counter = max_counter + 1 if max_counter is not None else 1
 
         super().save(*args, **kwargs)

@@ -35,8 +35,13 @@ class PIKReceipt(ParentModel):
 
         if not self.counter:
             from receipts.models import Receipt
-            max_counter_receipt = Receipt.objects.all().aggregate(models.Max('counter'))['counter__max']
-            max_counter_pik_receipt = PIKReceipt.objects.all().aggregate(models.Max('counter'))['counter__max']
+            school_filter = {'school_id': self.school_id}  # Add school filter here
+
+            max_counter_receipt = Receipt.objects.filter(**school_filter).aggregate(models.Max('counter'))[
+                'counter__max']
+            max_counter_pik_receipt = PIKReceipt.objects.filter(**school_filter).aggregate(models.Max('counter'))[
+                'counter__max']
+
             self.counter = max(max_counter_receipt, max_counter_pik_receipt) + 1
 
         super().save(*args, **kwargs)
