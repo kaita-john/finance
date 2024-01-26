@@ -4,8 +4,12 @@ from term.models import Term
 
 
 class TermSerializer(serializers.ModelSerializer):
-    academic_year_id = serializers.UUIDField(source='academic_year.id', read_only=True)
+    academic_year_id = serializers.SerializerMethodField()
 
-    class Meta:
+    def get_academic_year_id(self, obj):
+        return str(obj.academic_year.id) if obj.academic_year else None
+
+
+class Meta:
         model = Term
         fields = '__all__'
