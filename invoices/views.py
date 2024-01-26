@@ -439,9 +439,11 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
             end_date = term.end_date
 
             invoices = Invoice.objects.filter(school_id=school_id, year=academic_year, term=term)
+            print(f"Invoices is {len(invoices)}")
             # classes_list = invoices.exclude(student__current_Class=None) .values_list('student__current_Class', flat=True).distinct()
             classes_set = {invoice.classes for invoice in invoices if invoice.classes is not None}
             classes_list = list(classes_set)
+            print(f"Invoices is {len(classes_list)}")
 
             thevotehead_list = list(invoice.votehead for invoice in invoices if invoice.votehead is not None)
 
