@@ -229,10 +229,10 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
 
 
         elif filter_type == 'classes':
-            class_id = serialized_data.get('classes')
-            if not class_id:
+            classes = serialized_data.get('classes')
+            if not classes:
                 return Response({"detail": "Class ID is required for filter_type 'class'"})
-            students = Student.objects.filter(current_Class = structure_class, school_id=school_id)
+            students = Student.objects.filter(current_Class = classes, school_id=school_id)
 
             return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
@@ -242,7 +242,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
             stream =serialized_data.get('stream')
             if not classes or not stream:
                 return Response({"detail": "Both class ID and stream ID are required for filter_type 'stream'"})
-            students = Student.objects.filter(current_Class = structure_class, current_Stream = stream, school_id=school_id)
+            students = Student.objects.filter(current_Class = classes, current_Stream = stream, school_id=school_id)
 
             return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
