@@ -165,9 +165,12 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
                         school_id = item.school_id
                         votehead = item.votehead
 
+
                         exists_query = Invoice.objects.filter(school_id=school_id, votehead__id=votehead.id, term=term, year=year, student=student)
 
                         if exists_query.exists():
+                            print(f"Stopped and Student is {student} and Fee structure Class is {classes} and student class is {student.classes} and Votehead is {votehead.vote_head_name}")
+
                             print("Invoice already exists there!")
                             invoice = exists_query[0]
                             invoice.amount = invoice.amount + Decimal(amount)
