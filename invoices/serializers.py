@@ -33,7 +33,6 @@ class InvoiceSerializer(serializers.ModelSerializer):
     def get_paid(self, obj):
         invoice = obj
         try:
-            print(f"\n\n")
             school = School.objects.get(id=invoice.student.school_id)
             student = invoice.student
             term = invoice.term
