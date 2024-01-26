@@ -217,7 +217,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
             return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
-        elif filter_type == 'class':
+        elif filter_type == 'classes':
             class_id = serialized_data.get('classes')
             if not class_id:
                 return Response({"detail": "Class ID is required for filter_type 'class'"})
