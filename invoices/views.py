@@ -131,9 +131,9 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
         return Response({"detail": "Student not invoiced! Default Currency not set for this school"}, status=status.HTTP_400_BAD_REQUEST)
 
     fee_structures_itemList = FeeStructureItem.objects.filter(
-        fee_Structure__academic_year=structure_year,
-        fee_Structure__classes=structure_class,
-        fee_Structure__term=structure_term,
+        fee_Structure__academic_year__id=structure_year,
+        fee_Structure__classes__id=structure_class,
+        fee_Structure__term__id=structure_term,
         school_id=school_id
     )
 
@@ -145,7 +145,7 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
         errors.append(error_message)
 
     if not students:
-        error_message = "There are no students for selected Group"
+        error_message = "There are no students for selected students Group"
         print(f"Student List is empty")
         print(error_message)
         errors.append(error_message)
@@ -231,10 +231,9 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
 
         elif filter_type == 'class':
             classes = serialized_data.get('classes')
-            print(f"Classes is {classes}")
             if not classes:
                 return Response({"detail": "Class ID is required for filter_type 'class'"})
-            students = Student.objects.filter(current_Class = classes, school_id=school_id)
+            students = Student.objects.filter(current_Class__id = classes, school_id=school_id)
 
             return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
@@ -244,7 +243,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
             stream =serialized_data.get('stream')
             if not classes or not stream:
                 return Response({"detail": "Both class ID and stream ID are required for filter_type 'stream'"})
-            students = Student.objects.filter(current_Class = classes, current_Stream = stream, school_id=school_id)
+            students = Student.objects.filter(current_Class__id = classes, current_Stream__id = stream, school_id=school_id)
 
             return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
@@ -259,7 +258,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
             except SchoolGroup.DoesNotExist:
                 return Response({'detail': f"Invalid Group ID"}, status=status.HTTP_400_BAD_REQUEST)
 
-            students = Student.objects.filter(current_Class=structure_class, groups__icontains=str(groupid),school_id=school_id)
+            students = Student.objects.filter(current_Class__id=structure_class, groups__icontains=str(groupid),school_id=school_id)
 
             return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
