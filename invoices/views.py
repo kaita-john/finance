@@ -417,7 +417,7 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
 
         fullList = []
 
-        terms_list = Term.objects.filter(school_id=school_id, academic_year = academic_year)
+        terms_list = Term.objects.filter(school_id=school_id)
 
         print("Here")
         for term in terms_list:
