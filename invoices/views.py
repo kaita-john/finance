@@ -144,6 +144,11 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
         print(error_message)
         errors.append(error_message)
 
+    if not students:
+        error_message = "There are no students for selected Group"
+        print(error_message)
+        errors.append(error_message)
+
     invoice_no = generate_unique_code()
 
     with transaction.atomic():
