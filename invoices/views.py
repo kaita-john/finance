@@ -138,6 +138,12 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
     )
 
     errors = []
+
+    if not fee_structures_itemList:
+        error_message = f"There are no Fee Structure Items for Academic Year {structure_year}, Term {structure_term} and Class {structure_class}"
+        print(error_message)
+        errors.append(error_message)
+
     invoice_no = generate_unique_code()
 
     with transaction.atomic():
