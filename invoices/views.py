@@ -59,12 +59,23 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
         if not school_id:
             return Invoice.objects.none()
 
-        queryset = Invoice.objects.filter(school_id=school_id).values('term', 'year', 'student', 'issueDate', 'invoiceNo').annotate(
+        from django.db.models import Sum
+
+
+        queryset = Invoice.objects.filter(school_id=school_id).values(
+            'id', 'issueDate', 'invoiceNo', 'amount', 'paid', 'due',
+            'description', 'student__id', 'student__name',  # Add all fields from related models as needed
+            'votehead__id', 'votehead__name',
+            'term__id', 'term__name',
+            'year__id', 'year__name',
+            'classes__id', 'classes__name',
+            'currency__id', 'currency__name',
+            'school_id'
+        ).annotate(
             total_amount=Sum('amount'),
             total_paid=Sum('paid'),
             total_due=Sum('due')
         )
-
 
         invoices = []
         for result in queryset:
@@ -441,9 +452,11 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
 
         fullList = []
 
-        terms_list = Term.objects.filter(school_id=school_id, academic_year=academic_year)
+        terms_list = Term.objects.filter(school_id=school_id)
 
+        print("Here")
         for term in terms_list:
+            print(term.term_name)
             term_name = term.term_name
             start_date = term.begin_date
             end_date = term.end_date
