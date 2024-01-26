@@ -59,44 +59,9 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
         if not school_id:
             return Invoice.objects.none()
 
-        from django.db.models import Sum
+        queryset = Invoice.objects.filter(school_id=school_id)
+        return queryset
 
-
-        queryset = Invoice.objects.filter(school_id=school_id).values(
-            'id', 'issueDate', 'invoiceNo', 'amount', 'paid', 'due',
-            'description', 'student__id', 'student__name',  # Add all fields from related models as needed
-            'votehead__id', 'votehead__name',
-            'term__id', 'term__name',
-            'year__id', 'year__name',
-            'classes__id', 'classes__name',
-            'currency__id', 'currency__name',
-            'school_id'
-        ).annotate(
-            total_amount=Sum('amount'),
-            total_paid=Sum('paid'),
-            total_due=Sum('due')
-        )
-
-        invoices = []
-        for result in queryset:
-            student_id = result['student']
-            term_id = result['term']
-            year_id = result['year']
-            issueDate = result['issueDate']
-            invoiceNo = result['invoiceNo']
-
-            try:
-                student = Student.objects.get(id=student_id, school_id=school_id)
-                term = Term.objects.get(id=term_id)
-                year = AcademicYear.objects.get(id=year_id)
-            except ObjectDoesNotExist:
-                student = None
-                term = None
-                year = None
-
-            invoice = Invoice(invoiceNo=invoiceNo, issueDate=issueDate, term=term,year=year,student=student, amount=result['total_amount'], paid=result['total_paid'], due=result['total_due'],)
-            invoices.append(invoice)
-        return invoices
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
