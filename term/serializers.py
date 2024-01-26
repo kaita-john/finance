@@ -9,7 +9,6 @@ class TermSerializer(serializers.ModelSerializer):
     def get_academic_year_id(self, obj):
         return str(obj.academic_year.id) if obj.academic_year else None
 
-
-class Meta:
-        model = Term
-        fields = '__all__'
+    class Meta:
+            model = Term
+            fields = '__all__'
