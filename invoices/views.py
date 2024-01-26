@@ -446,6 +446,7 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
 
             feeStructureItems = FeeStructureItem.objects.filter(school_id=school_id, fee_Structure__academic_year=academic_year, fee_Structure__term=term)
 
+
             classes_set = {feeStructureItem.fee_Structure.classes for feeStructureItem in feeStructureItems if feeStructureItem.classes is not None}
             classes_list = list(classes_set)
 
