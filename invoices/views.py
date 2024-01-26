@@ -445,8 +445,32 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
             invoices = Invoice.objects.filter(school_id=school_id, year=academic_year, term=term)
 
             feeStructureItems = FeeStructureItem.objects.filter(school_id=school_id, fee_Structure__academic_year=academic_year, fee_Structure__term=term)
-            classes_set = {feeStructureItem.fee_Structure.classes for feeStructureItem in feeStructureItems if feeStructureItem.fee_Structure.classes is not None}
-            classes_list = list(classes_set)
+
+            classes_set = set()
+
+            for feeStructureItem in feeStructureItems:
+                classes_set.add(
+                    (
+                        feeStructureItem.fee_Structure.classes.id,
+                        feeStructureItem.fee_Structure.classes.classname,
+                        feeStructureItem.fee_Structure.classes.graduation_year,
+                        feeStructureItem.fee_Structure.classes.graduation_month,
+                        feeStructureItem.fee_Structure.academic_year.id,
+                        feeStructureItem.fee_Structure.classes.school_id,
+                    )
+                )
+
+            classes_list = [
+                {
+                    "id": class_info[0],
+                    "classname": class_info[1],
+                    "graduation_year": class_info[2],
+                    "graduation_month": class_info[3],
+                    "academic_year_id": class_info[4],
+                    "school_id": class_info[5],
+                }
+                for class_info in classes_set
+            ]
 
             print(f"Invoices is {len(classes_list)}")
 
@@ -476,7 +500,7 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
 
             theobject = {
                 "term_details": TermSerializer(term).data,
-                "class_details": ClassesSerializer(classes_list, many=True).data,
+                "class_details": classes_list,
                 "fee_structure_items": fee_structure_items
             }
 
