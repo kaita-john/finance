@@ -146,6 +146,7 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
 
     if not students:
         error_message = "There are no students for selected Group"
+        print(f"Student List is empty")
         print(error_message)
         errors.append(error_message)
 
@@ -228,8 +229,9 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
             return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
-        elif filter_type == 'classes':
+        elif filter_type == 'class':
             classes = serialized_data.get('classes')
+            print(f"Classes is {classes}")
             if not classes:
                 return Response({"detail": "Class ID is required for filter_type 'class'"})
             students = Student.objects.filter(current_Class = classes, school_id=school_id)
