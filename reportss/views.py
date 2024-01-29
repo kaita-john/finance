@@ -15,6 +15,7 @@ from academic_year.models import AcademicYear
 from account_types.models import AccountType
 from appcollections.models import Collection
 from bank_accounts.models import BankAccount
+from currencies.serializers import CurrencySerializer
 from financial_years.models import FinancialYear
 from grants.models import Grant
 from invoices.models import Invoice
@@ -669,51 +670,48 @@ class ReceivedChequesView(SchoolIdMixin, generics.GenericAPIView):
 
             chequeCollectionList = []
 
+
             for grant in querysetGrants:
                 creationdate = grant.dateofcreation
                 transactiondate = grant.receipt_date
                 chequeNo = grant.transactionNumber
-                currency = grant.currency
+                currency_data = CurrencySerializer(grant.currency).data if grant.currency else None
                 student = None
                 amount = grant.overall_amount
 
-                item = ReceivedCheque(
-                    transactionDate=transactiondate,
-                    dateofcreation=creationdate,
-                    chequeNo=chequeNo,
-                    student=student,
-                    currency=currency,
-                    amount=amount
-                )
-                item.save()
-                chequeCollectionList.append(item)
-
+                chequeCollectionList.append({
+                    "transactionDate": transactiondate,
+                    "dateofcreation": creationdate,
+                    "chequeNo": chequeNo,
+                    "student": student,
+                    "currency": currency_data,
+                    "amount": amount
+                })
 
             for collection in querysetCollections:
                 creationdate = collection.receipt.dateofcreation
                 transactiondate = collection.receipt.transaction_date
                 chequeNo = collection.receipt.transaction_code
                 student = collection.student
-                currency = collection.receipt.currency
+
+                currency_data = CurrencySerializer(collection.receipt.currency).data if collection.receipt.currency else None
                 amount = collection.amount
+                student_data = StudentSerializer(student).data if student else None
 
-                item = ReceivedCheque(
-                    transactionDate=transactiondate,
-                    dateofcreation=creationdate,
-                    chequeNo=chequeNo,
-                    student=student,
-                    currency=currency,
-                    amount=amount
-                )
-                item.save()
-                chequeCollectionList.append(item)
+                chequeCollectionList.append({
+                    "transactionDate": transactiondate,
+                    "dateofcreation": creationdate,
+                    "chequeNo": chequeNo,
+                    "student": student_data,
+                    "currency": currency_data,
+                    "amount": amount
+                })
 
-            serializer = ReceivedChequeSerializer(chequeCollectionList, many=True)
 
         except Exception as exception:
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"detail": serializer.data})
+        return Response({"detail": chequeCollectionList})
 
 
 
