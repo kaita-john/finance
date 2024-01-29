@@ -152,8 +152,11 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
 
     invoice_no = generate_unique_code()
 
+
     with transaction.atomic():
         for student in students:
+            boarding_status = student.boarding_status
+
             for item in fee_structures_itemList:
                 try:
                     if item.votehead:
@@ -164,34 +167,36 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
                         classes = item.fee_Structure.classes
                         school_id = item.school_id
                         votehead = item.votehead
+                        required_boardingstatus = item.boardingStatus
 
+                        if required_boardingstatus == boarding_status:
+                            exists_query = Invoice.objects.filter(school_id=school_id, votehead__id=votehead.id, term=term, year=year, student=student)
 
-                        exists_query = Invoice.objects.filter(school_id=school_id, votehead__id=votehead.id, term=term, year=year, student=student)
+                            if exists_query.exists():
+                                print(f"Stopped and Student is {student} and Fee structure Class is {classes} and student class is {student.current_Class} and Votehead is {votehead.vote_head_name}")
 
-                        if exists_query.exists():
-                            print(f"Stopped and Student is {student} and Fee structure Class is {classes} and student class is {student.current_Class} and Votehead is {votehead.vote_head_name}")
+                                print("Invoice already exists there!")
+                                invoice = exists_query[0]
+                                invoice.amount = invoice.amount + Decimal(amount)
+                                invoice.save()
+                            else:
+                                invoice = Invoice(
+                                    issueDate=timezone.now().date(),
+                                    invoiceNo=invoice_no,
+                                    amount=amount,
+                                    paid=0.00,
+                                    due=amount,
+                                    description=description,
+                                    student=student,
+                                    term=term,
+                                    year=year,
+                                    classes=classes,
+                                    currency=currency,
+                                    school_id=school_id,
+                                    votehead=votehead
+                                )
+                                invoice.save()
 
-                            print("Invoice already exists there!")
-                            invoice = exists_query[0]
-                            invoice.amount = invoice.amount + Decimal(amount)
-                            invoice.save()
-                        else:
-                            invoice = Invoice(
-                                issueDate=timezone.now().date(),
-                                invoiceNo=invoice_no,
-                                amount=amount,
-                                paid=0.00,
-                                due=amount,
-                                description=description,
-                                student=student,
-                                term=term,
-                                year=year,
-                                classes=classes,
-                                currency=currency,
-                                school_id=school_id,
-                                votehead=votehead
-                            )
-                            invoice.save()
                 except Exception as e:
                     error_message = f"An error occurred while processing item {item.id} for student {student.id}: {e}"
                     print(error_message)
@@ -433,9 +438,11 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
 
         fullList = []
 
-        terms_list = Term.objects.filter(school_id=school_id, academic_year=academic_year)
+        feeStructureItems = FeeStructureItem.objects.filter(school_id=school_id, fee_Structure__academic_year=academic_year)
+        unique_terms = Term.objects.filter(fee_structures__fee_structure_items__in=feeStructureItems
+        ).distinct()
+        terms_list = unique_terms
 
-        print("Here")
         for term in terms_list:
             print(term.term_name)
             term_name = term.term_name
