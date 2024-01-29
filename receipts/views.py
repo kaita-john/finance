@@ -419,6 +419,13 @@ class ReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
                 instance.reversal_date = timezone.now()
                 instance.save()
 
+                bank_account = instance.bank_account
+                amount = instance.totalAmount
+                initial_balance = bank_account.balance
+                new_balance = initial_balance - Decimal(amount)
+                bank_account.balance = new_balance
+                bank_account.save()
+
                 receipt_instance = instance
                 trackBalance(
                     receipt_instance.student,

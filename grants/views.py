@@ -1,13 +1,12 @@
 # Create your views here.
 from collections import defaultdict
-from datetime import datetime
 
 from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
@@ -15,18 +14,16 @@ from rest_framework.response import Response
 
 from appcollections.models import Collection
 from appcollections.serializers import CollectionSerializer
-from constants import MANUAL, AUTO, RATIO, PRIORITY
-from financial_years.models import FinancialYear
+from constants import RATIO, PRIORITY
 from grant_items.models import GrantItem
 from grant_items.serializers import GrantItemSerializer
 from invoices.models import Invoice
-from items.models import Item
 from receipts.models import Receipt
 from reportss.models import trackBalance
 from students.models import Student
 from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, generate_unique_code, defaultCurrency, \
     currentAcademicYear, currentTerm, defaultAccountType, currentFinancialYear
-from voteheads.models import VoteheadConfiguration, VoteHead
+from voteheads.models import VoteHead
 from .models import Grant
 from .serializers import GrantSerializer
 
@@ -83,25 +80,16 @@ class GrantCreateView(SchoolIdMixin, generics.CreateAPIView):
                         amount = Decimal(item['amount'])
                         votehead_amounts[votehead_id] += amount
 
-                    total_amount_for_each_votehead = sum(votehead_amounts.values())
-                    students_length = len(serializer.validated_data['students'])
-                    overall_amount = total_amount_for_each_votehead * students_length
-
-                    votehead_amounts_serializable = {
-                        key: str(value * students_length) for key, value in votehead_amounts.items()
-                    }
-                    grant.voteheadamounts = dict(votehead_amounts_serializable)
-
                     assigned_votehead_amounts_serializable = {
                         key: str(value) for key, value in votehead_amounts.items()
                     }
                     grant.assigned_voteheadamounts = dict(assigned_votehead_amounts_serializable)
+                    grant.voteheadamounts = dict(assigned_votehead_amounts_serializable)
 
-                    grant.overall_amount  = Decimal(overall_amount)
                     grant.save()
 
                     bank_account = grant.bankAccount
-                    amount = grant.overall_amount
+                    amount = grant.total_amount
                     initial_balance = bank_account.balance
                     new_balance = initial_balance + Decimal(amount)
                     bank_account.balance = new_balance
@@ -124,7 +112,7 @@ class GrantListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Grant.objects.none()
-        queryset = Grant.objects.filter(school_id=school_id)
+        queryset = Grant.objects.filter(school_id=school_id, deleted=False)
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -171,7 +159,7 @@ class GrantDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
 
                     # Update BankAccount balance
                     bank_account = grant.bankAccount
-                    amount = grant.overall_amount
+                    amount = grant.total_amount
                     initial_balance = bank_account.balance
                     new_balance = initial_balance - Decimal(amount)
                     bank_account.balance = new_balance
@@ -194,19 +182,16 @@ class GrantDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
                         amount = Decimal(item['amount'])
                         votehead_amounts[votehead_id] += amount
 
-                    # Update grant details
-                    total_amount_for_each_votehead = sum(votehead_amounts.values())
-                    overall_amount = total_amount_for_each_votehead * len(serializer.validated_data['students'])
-                    votehead_amounts_serializable = {
+                    assigned_votehead_amounts_serializable = {
                         key: str(value) for key, value in votehead_amounts.items()
                     }
-                    grant.voteheadamounts = dict(votehead_amounts_serializable)
-                    grant.overall_amount = Decimal(overall_amount)
+                    grant.assigned_voteheadamounts = dict(assigned_votehead_amounts_serializable)
+                    grant.voteheadamounts = dict(assigned_votehead_amounts_serializable)
+
                     grant.save()
 
-                    # Update BankAccount balance
                     bank_account = grant.bankAccount
-                    amount = grant.overall_amount
+                    amount = grant.total_amount
                     initial_balance = bank_account.balance
                     new_balance = initial_balance + Decimal(amount)
                     bank_account.balance = new_balance
@@ -228,9 +213,28 @@ class GrantDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
 
         instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response({'detail': 'Grant deleted successfully!'}, status=status.HTTP_200_OK)
 
+        if instance.deleted:
+            return Response({'detail': f"Grant is already deleted"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+
+                bank_account = instance.bankAccount
+                amount = instance.total_amount
+                initial_balance = bank_account.balance
+                new_balance = initial_balance - Decimal(amount)
+                bank_account.balance = new_balance
+                bank_account.save()
+
+                instance.deleted = True
+                instance.deleted_date = timezone.now()
+                instance.save()
+
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({'detail': 'Grant deleted successfully!'}, status=status.HTTP_200_OK)
 
 
 
@@ -416,107 +420,5 @@ def autoGrant(self, request, school_id, auto_configuration_type, itemamount, bur
 
 
 
-class PostGrantDetailView(SchoolIdMixin, generics.UpdateAPIView):
-    queryset = Grant.objects.all()
-    serializer_class = GrantSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
-    lookup_field = 'pk'
-
-    def post(self, request, *args, **kwargs):
-        school_id = self.check_school_id(request)
-        if not school_id:
-            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
-
-        partial = kwargs.pop('partial', False)
-        bursary = self.get_object()
-
-        if bursary.posted:
-            return Response({'detail': "Grant has already been posted"}, status=status.HTTP_400_BAD_REQUEST)
-
-        bursary.posted = True
-        bursary.save()
-
-        serializer = self.get_serializer(bursary, data=request.data, partial=partial)
-        if serializer.is_valid():
-            print(f"22222222")
-            items_data = serializer.get_items(bursary)
-            print(f"Items data is {items_data}")
-            if not items_data:
-                return Response({'detail': "Bursay has zero items"}, status=status.HTTP_400_BAD_REQUEST)
-            for item in items_data:
-                print(f"4444444")
-                print(f"Item is {item}")
-                itemamount = item.get('amount')
-                bursary  = item.get('bursary')
-                itemstudent = item.get('student')
-
-                try:
-                    print(f"5555555555")
-                    configuration = VoteheadConfiguration.objects.get(school_id=school_id)
-                    print("returning 2")
-                except ObjectDoesNotExist:
-                    print("returning 3")
-                    return Response({'detail': "Please set up votehead configuration for this school first!"},status=status.HTTP_400_BAD_REQUEST)
-
-                print(f"66666666666")
-                configuration_type = configuration.configuration_type
-                auto_configuration_type = configuration.auto_configuration_type
-
-                try:
-                    current_financial_year = FinancialYear.objects.get(is_current=True, school=school_id)
-                except ObjectDoesNotExist:
-                    return Response({'detail': f"Current Financial Year not set"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-                if configuration_type == MANUAL:
-                    print("returning 4")
-                    return Response({'detail': "Votehead Configuration set to manual. Change to Auto"}, status=status.HTTP_400_BAD_REQUEST)
-                elif configuration_type == AUTO:
-                    print("returning 5")
-                    print(f"Item bursary is {bursary}")
-                    return autoGrant(self, request, school_id, auto_configuration_type, itemamount, bursary, itemstudent, current_financial_year)
-
-                return JsonResponse({'detail': 'Invalid request'}, status=400)
-
-        else:
-            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class UnPostGrantDetailView(SchoolIdMixin, generics.UpdateAPIView):
-    queryset = Grant.objects.all()
-    serializer_class = GrantSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
-    lookup_field = 'pk'
-
-    def post(self, request, *args, **kwargs):
-        school_id = self.check_school_id(request)
-        if not school_id:
-            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
-
-        bursary = self.get_object()
-
-        if not bursary.posted:
-            return Response({'detail': "This bursary is already unposted"}, status=status.HTTP_400_BAD_REQUEST)
-
-        with transaction.atomic():
-            bursary.posted = False
-            bursary.unposted_date = datetime.now()
-            bursary.save()
-
-            receipts = Receipt.objects.filter(is_reversed = False, school_id=school_id, transaction_code = bursary.id)
-            for receipt in receipts:
-                receipt.is_reversed = True
-                receipt.reversal_date = datetime.now()
-                receipt.save()
-
-                receipt_instance = receipt
-                trackBalance(
-                    receipt_instance.student,
-                    receipt_instance.school_id,
-                    receipt_instance.totalAmount,
-                    "minus",
-                    receipt_instance.term,
-                    receipt_instance.year
-                )
-
-        return Response({'detail': "Grant has been unposted successfully"}, status=status.HTTP_200_OK)

@@ -172,8 +172,19 @@ class VoucherDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
 
+
         voucher = self.get_object()
         voucher.is_deleted = True
         voucher.date_deleted = datetime.now()
         voucher.save()
+
+
+        bank_account = voucher.bank_account
+        amount = voucher.totalAmount
+        initial_balance = bank_account.balance
+        new_balance = initial_balance + Decimal(amount)
+        bank_account.balance = new_balance
+        bank_account.save()
+
+
         return Response({'detail': 'Voucher deleted successfully!'}, status=status.HTTP_200_OK)
