@@ -352,6 +352,9 @@ def autoBursary(self, request, school_id, auto_configuration_type, itemamount, b
                 )
                 newCollection.save()
 
+            bursary.posted = True
+            bursary.save()
+
         return Response({'detail': 'Posting Successful! Receipt and collections created successfully'}, status=status.HTTP_201_CREATED)
     except ValueError as e:
         return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -375,9 +378,6 @@ class PostBursaryDetailView(SchoolIdMixin, generics.UpdateAPIView):
 
         if bursary.posted:
             return Response({'detail': "Bursary has already been posted"}, status=status.HTTP_400_BAD_REQUEST)
-
-        bursary.posted = True
-        bursary.save()
 
         serializer = self.get_serializer(bursary, data=request.data, partial=partial)
         if serializer.is_valid():
