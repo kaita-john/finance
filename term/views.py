@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from academic_year.models import AcademicYear
 from utils import SchoolIdMixin, UUID_from_PrimaryKey, IsAdminOrSuperUser
 from .models import Term
 from .serializers import TermSerializer
@@ -40,7 +41,15 @@ class TermListView(SchoolIdMixin, generics.ListAPIView):
         if not school_id:
             return Term.objects.none()
         queryset = Term.objects.filter(school_id=school_id)
+
+        AcademicYear
+
+
+        academic_year = self.request.query_params.get('academic_year', None)
+        if academic_year:
+            queryset = queryset.filter(academic_year=academic_year)
         return queryset
+
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()

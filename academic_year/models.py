@@ -11,7 +11,7 @@ class ParentModel(models.Model):
         abstract = True
 
 class AcademicYear(ParentModel):
-    academic_year = models.CharField(max_length=255)
+    academic_year = models.CharField(max_length=255, unique=True)
     start_date = models.DateField()
     end_date = models.DateField()
     is_current = models.BooleanField(default=False, null = True)
