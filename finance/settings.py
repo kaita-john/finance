@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     'configurations',
     'mpesa_configs',
     'transactions',
+    'budgets',
 ]
 
 
