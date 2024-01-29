@@ -32,6 +32,7 @@ class Grant(ParentModel):
     voteheadamounts = models.JSONField(default=dict, blank=True, null=True)
     assigned_voteheadamounts = models.JSONField(default=dict, blank=True, null=True)
     total_amount = models.DecimalField(max_digits=15, null=True,blank=True, default=0.00, decimal_places=2)
+    overall_amount = models.DecimalField(max_digits=15, null=True,blank=True, default=0.00, decimal_places=2)
     financial_year = models.ForeignKey(FinancialYear, null=True, on_delete=DO_NOTHING, related_name="grants")
     counter = models.FloatField(null=True, default=None)
 

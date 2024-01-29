@@ -85,7 +85,7 @@ class GrantCreateView(SchoolIdMixin, generics.CreateAPIView):
                     }
                     grant.assigned_voteheadamounts = dict(assigned_votehead_amounts_serializable)
                     grant.voteheadamounts = dict(assigned_votehead_amounts_serializable)
-
+                    grant.total_amount = grant.overall_amount
                     grant.save()
 
                     bank_account = grant.bankAccount
@@ -187,6 +187,7 @@ class GrantDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
                     }
                     grant.assigned_voteheadamounts = dict(assigned_votehead_amounts_serializable)
                     grant.voteheadamounts = dict(assigned_votehead_amounts_serializable)
+                    grant.total_amount = grant.overall_amount
 
                     grant.save()
 
@@ -240,182 +241,6 @@ class GrantDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
 
 
 
-
-
-
-
-
-
-
-
-def autoGrant(self, request, school_id, auto_configuration_type, itemamount, bursary, itemstudent,current_financial_year):
-    try:
-        with transaction.atomic():
-            receipt_no = generate_unique_code("RT")
-            default_Currency = defaultCurrency(school_id)
-            year = currentAcademicYear(school_id)
-            term = currentTerm(school_id)
-            defaultAccounttype = defaultAccountType(school_id)
-            if not default_Currency:
-                Response({'detail': "Default Currency Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
-            if not year:
-                Response({'detail': "Default Academic Year Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
-            if not term:
-                Response({'detail': "Default Term Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
-            if not defaultAccounttype:
-                Response({'detail': "Default Account Type Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                bursary = Grant.objects.get(id=bursary)
-                itemstudent = Student.objects.get(id = itemstudent)
-            except ObjectDoesNotExist:
-                raise ValueError("Student or Grant not found")
-
-            itemamount = Decimal(itemamount)
-            print(f"Item Amount is {itemamount}")
-
-            receipt_instance = Receipt.objects.create(
-                school_id=school_id,
-                student=itemstudent,
-                receipt_No=receipt_no,
-                totalAmount=itemamount,
-                account_type=defaultAccounttype,
-                bank_account=bursary.bankAccount,
-                payment_method=bursary.paymentMethod,
-                term=term,
-                year=year,
-                currency=default_Currency,
-                transaction_code=bursary.id,
-                addition_notes="Grant Payment",
-                financial_year = current_financial_year
-            )
-
-            trackBalance(
-                receipt_instance.student,
-                receipt_instance.school_id,
-                receipt_instance.totalAmount,
-                "plus",
-                receipt_instance.term,
-                receipt_instance.year
-            )
-
-            receipt_instance.save()
-
-
-
-            voteheads = Invoice.objects.filter( term=term, year=year, school_id=school_id, student=itemstudent)
-            votehead_ids = voteheads.values('votehead').distinct()
-            votehead_objects = VoteHead.objects.filter(id__in=votehead_ids)
-
-            totalAmount = receipt_instance.totalAmount
-            numberOfVoteheads = len(votehead_objects)
-
-            overpayment = 0
-
-            if auto_configuration_type == RATIO:
-                eachVoteheadWillGet = totalAmount / numberOfVoteheads
-                for votehead in votehead_objects:
-                    try:
-                        invoice_instance = Invoice.objects.get(votehead=votehead, term=term, year=year, school_id=school_id, student=itemstudent)
-                        if (invoice_instance.paid + eachVoteheadWillGet) > invoice_instance.amount:
-
-                            amountRequired = invoice_instance.amount - invoice_instance.paid
-                            collection_data = {'student': itemstudent.id,'receipt': receipt_instance.id,'amount': amountRequired,'votehead': votehead.id,'school_id': school_id,}
-                            collection_serializer = CollectionSerializer(data=collection_data)
-                            collection_serializer.is_valid(raise_exception=True)
-                            collection_serializer.save()
-
-                            balance = eachVoteheadWillGet - amountRequired
-                            print(f"balance is {balance}")
-
-                            overpayment = overpayment + balance
-
-                        else:
-                            collection_data = {
-                                'student': itemstudent.id,
-                                'receipt': receipt_instance.id,
-                                'amount': eachVoteheadWillGet,
-                                'votehead': votehead.id,
-                                'school_id': school_id,
-                            }
-                            collection_serializer = CollectionSerializer(data=collection_data)
-                            collection_serializer.is_valid(raise_exception=True)
-                            collection_serializer.save()
-
-                    except Invoice.DoesNotExist:
-                        pass
-                    except Invoice.MultipleObjectsReturned:
-                        raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
-
-
-            if auto_configuration_type == PRIORITY:
-                distinct_voteheads = Invoice.objects.filter(term=term, year=year, school_id=school_id, student=itemstudent) \
-                    .values_list('votehead', flat=True) \
-                    .distinct()
-                ordered_voteheads = VoteHead.objects.filter(id__in=distinct_voteheads) \
-                    .order_by(F('priority_number').asc(nulls_first=True))
-
-
-                for index, votehead in enumerate(ordered_voteheads):
-                    print(f"Votehead -> {votehead}, Priority -> {votehead.priority_number}")
-                    if not votehead.is_Overpayment_Default:
-                        if totalAmount > 0:
-                            try:
-                                invoice_instance = Invoice.objects.get(votehead=votehead, term=term, year=year, school_id=school_id, student=itemstudent)
-
-                                if (invoice_instance.paid + totalAmount) > invoice_instance.amount:
-                                    amountRequired = invoice_instance.amount - invoice_instance.paid
-
-                                    collection_data = {
-                                        'student': itemstudent.id,
-                                        'receipt': receipt_instance.id,
-                                        'amount': amountRequired,
-                                        'votehead': votehead.id,
-                                        'school_id': school_id,
-                                    }
-                                    collection_serializer = CollectionSerializer(data=collection_data)
-                                    collection_serializer.is_valid(raise_exception=True)
-                                    collection_serializer.save()
-
-                                    totalAmount = totalAmount - amountRequired
-                                    print(f"Total Amount is {totalAmount}")
-
-                                    if index == len(voteheads) - 1:
-                                        if totalAmount > 0:
-                                            overpayment = overpayment + totalAmount
-                                            print(f"Adding overpayment of {overpayment}")
-
-                                else:
-                                    collectionAmount = totalAmount
-                                    collection = Collection(student = itemstudent,receipt=receipt_instance,amount=collectionAmount,votehead=votehead,school_id=school_id)
-                                    collection.save()
-
-                                    totalAmount = 0.00
-
-                            except Invoice.DoesNotExist:
-                                pass
-                            except Invoice.MultipleObjectsReturned:
-                                raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
-
-
-            if overpayment > 0:
-                overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
-                if not overpayment_votehead:
-                    raise ValueError("Overpayment votehead has not been configured")
-
-                newCollection = Collection(
-                    student=receipt_instance.student,
-                    receipt=receipt_instance,
-                    amount=overpayment,
-                    votehead=overpayment_votehead,
-                    school_id=receipt_instance.school_id,
-                    is_overpayment = True
-                )
-                newCollection.save()
-
-        return Response({'detail': 'Posting Successful! Receipt and collections created successfully'}, status=status.HTTP_201_CREATED)
-    except ValueError as e:
-        return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
