@@ -14,6 +14,7 @@ class AcademicYear(ParentModel):
     academic_year = models.CharField(max_length=255)
     start_date = models.DateField()
     end_date = models.DateField()
+    description = models.CharField(max_length=255, null=True, blank=True, default="Academic year desc")
     is_current = models.BooleanField(default=False, null = True)
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
 
