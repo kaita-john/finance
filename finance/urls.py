@@ -6,7 +6,6 @@ from django.views.static import serve
 from finance import settings
 
 api_version = 'api/v1/'
-
 api_patterns = [
     path(api_version + 'users/', include('appuser.urls')),
     path(api_version + 'schools/', include('school.urls')),
@@ -35,8 +34,9 @@ api_patterns = [
 
     path(api_version + 'grants/', include('grants.urls')),
     path(api_version + 'items/', include('items.urls')),
+    path(api_version + 'config/mpesa/', include('mpesa_configs.urls')),
     path(api_version + 'config/', include('configurations.urls')),
-
+    path(api_version + 'transactions/', include('transactions.urls')),
 
     path(api_version + 'admin/suppliers/', include('suppliers.urls')),
     path(api_version + 'admin/staff/', include('staff.urls')),
@@ -56,6 +56,7 @@ api_patterns = [
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
     path('', include('appuser.urls')),
 ]
+
 
 urlpatterns = api_patterns + [
     path('admin/', admin.site.urls),

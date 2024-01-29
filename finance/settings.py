@@ -81,6 +81,8 @@ INSTALLED_APPS = [
     'grants',
     'grant_items',
     'configurations',
+    'mpesa_configs',
+    'transactions',
 ]
 
 
