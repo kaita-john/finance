@@ -172,12 +172,14 @@ class VoucherDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
 
-
         voucher = self.get_object()
+
+        if voucher.is_deleted:
+            return Response({'detail': f"This Voucher is already deleted"}, status=status.HTTP_400_BAD_REQUEST)
+
         voucher.is_deleted = True
         voucher.date_deleted = datetime.now()
         voucher.save()
-
 
         bank_account = voucher.bank_account
         amount = voucher.totalAmount
