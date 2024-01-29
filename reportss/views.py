@@ -1763,7 +1763,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                         actualvotehead = VoteHead.objects.get(id=votehead_id)
                         if actualvotehead in votehead_list:
                             votehead_name = actualvotehead.vote_head_name
-                            if not actualvotehead.get(votehead_name):
+                            if not collection_votehead.get(votehead_name):
                                 collection_votehead[votehead_name] = {}
                                 collection_votehead[votehead_name]["name"] = votehead_name
                                 collection_votehead[votehead_name]["amount"] = Decimal(amount)
@@ -1793,7 +1793,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
                             actualvotehead = VoteHead.objects.get(id=votehead_id)
                             if actualvotehead in votehead_list:
                                 votehead_name = actualvotehead.vote_head_name
-                                if not actualvotehead.get(votehead_name):
+                                if not collection_votehead.get(votehead_name):
                                     collection_votehead[votehead_name] = {}
                                     collection_votehead[votehead_name]["name"] = votehead_name
                                     collection_votehead[votehead_name]["previous_amount"] = Decimal(amount)
