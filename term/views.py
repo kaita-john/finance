@@ -42,11 +42,8 @@ class TermListView(SchoolIdMixin, generics.ListAPIView):
             return Term.objects.none()
         queryset = Term.objects.filter(school_id=school_id)
 
-        AcademicYear
-
-
         academic_year = self.request.query_params.get('academic_year', None)
-        if academic_year:
+        if academic_year and academic_year != "":
             queryset = queryset.filter(academic_year=academic_year)
         return queryset
 

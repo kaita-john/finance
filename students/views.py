@@ -153,23 +153,23 @@ class StudentBalanceDetailView(SchoolIdMixin, generics.RetrieveAPIView):
             year = request.GET.get('year')
             term = request.GET.get('term')
 
-            if year:
-                if not term:
+            if year and year != "":
+                if not term or term == "":
                     return Response({'detail': f"Both year and term are required"}, status=status.HTTP_400_BAD_REQUEST)
                 try:
                     year = AcademicYear.objects.get(id=year)
                 except ObjectDoesNotExist:
                     year = None
 
-            if term:
-                if not year:
+            if term and term != "":
+                if not year or year == "":
                     return Response({'detail': f"Both year and term are required"}, status=status.HTTP_400_BAD_REQUEST)
                 try:
                     term = Term.objects.get(id=term)
                 except ObjectDoesNotExist:
                     term = None
 
-            if not year and not term:
+            if not year and not term or term == "" and year == "":
                 total_amount_required = Invoice.objects.filter(school_id=school_id, student=student.id).aggregate(total_amount_required=Sum('amount'))['total_amount_required'] or 0.0
                 total_amount_paid0 = Receipt.objects.filter(student_id=student.id, school_id=school_id, is_reversed=False).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
                 total_amount_paid1 = PIKReceipt.objects.filter(student_id=student.id, school_id=school_id, is_posted=True).aggregate(total_amount_paid=Sum('totalAmount'))['total_amount_paid'] or 0.0
@@ -202,7 +202,7 @@ class StudentSearchByAdmissionNumber(APIView, SchoolIdMixin):
 
         admissionNumber = request.GET.get('admission')
 
-        if not admissionNumber:
+        if not admissionNumber or admissionNumber == "":
             return Response({'detail': "Admission Number is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -226,7 +226,7 @@ class GetStudentsByClass(APIView, SchoolIdMixin):
 
         currentClass = request.GET.get('currentClass')
 
-        if not currentClass:
+        if not currentClass or currentClass == "":
             return Response({'detail': "Current Class is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -268,8 +268,8 @@ class GetStudentInvoicedVotehead(SchoolIdMixin, generics.RetrieveAPIView):
                             status=status.HTTP_200_OK)
 
         try:
-            year = get_object_or_404(AcademicYear, id=year) if year else current_academic_year
-            term = get_object_or_404(Term, id=term) if term else current_term
+            year = get_object_or_404(AcademicYear, id=year) if year and year != "" else current_academic_year
+            term = get_object_or_404(Term, id=term) if term and term != "" else current_term
         except Exception as exception:
             return Response({'detail': exception}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -434,6 +434,9 @@ class UploadStudentBalancesView(APIView, SchoolIdMixin):
         due_date = request.GET.get('due_date')
         template_id = request.GET.get('template_id')
 
+        if not template_id or template_id == "":
+            return Response({'detail': f"Template Is A Must"}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             file = SchoolImage.objects.get(id=template_id)
         except ObjectDoesNotExist:
@@ -554,7 +557,7 @@ class UploadSingleStudentBalance(APIView, SchoolIdMixin):
             student_id = request.GET.get('student_id')
             total_balance = request.GET.get('total_balance')
 
-            if not due_date or not student_id or not total_balance:
+            if not due_date or not student_id or student_id == "" or not total_balance or total_balance == "":
                 return Response({'detail': f"Values Due Date, Student And Total Balance are all required."}, status=status.HTTP_400_BAD_REQUEST)
 
             try:

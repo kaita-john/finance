@@ -230,7 +230,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
         structure_term = serialized_data.get('structure_term')
         structure_class = serialized_data.get('structure_class')
 
-        if filter_type == 'student':
+        if filter_type and filter_type == 'student':
             student = serialized_data.get('student')
             if not student:
                 return Response({"detail": "Student ID is required for filter_type 'student'"})
@@ -239,7 +239,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
             return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
-        elif filter_type == 'class':
+        elif filter_type and filter_type == 'class':
             classes = serialized_data.get('classes')
             if not classes:
                 return Response({"detail": "Class ID is required for filter_type 'class'"})
@@ -248,7 +248,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
             return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
-        elif filter_type == 'stream':
+        elif filter_type and filter_type == 'stream':
             classes =serialized_data.get('classes')
             stream =serialized_data.get('stream')
             if not classes or not stream:
@@ -258,7 +258,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
             return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
-        elif filter_type == 'group':
+        elif filter_type and filter_type == 'group':
             group =serialized_data.get('group')
             groupid = group
             if not groupid:
@@ -292,8 +292,11 @@ class InvoiceClassesListView(SchoolIdMixin, generics.ListAPIView):
 
         structure_year = self.request.GET.get('structure_year')
         structure_term = self.request.GET.get('structure_term')
+        
+        if not structure_term or structure_term == "" or not structure_year or structure_year == "":
+            return Response({'detail': f"Both Structure Term and Year are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if structure_year:
+        if structure_year and structure_year != "":
             try:
                 structure_year = UUID(structure_year)
                 if not Invoice.objects.filter(school_id=school_id, year=structure_year).exists():
@@ -301,7 +304,7 @@ class InvoiceClassesListView(SchoolIdMixin, generics.ListAPIView):
             except ValueError:
                 raise ValidationError({"detail": "Invalid UUID for structure_year"})
 
-        if structure_term:
+        if structure_term and structure_term != "":
             try:
                 structure_term = UUID(structure_term)
                 if not Invoice.objects.filter(school_id=school_id, term=structure_term).exists():

@@ -140,7 +140,7 @@ class RoleListView(APIView):
 
     def get(self, request, *args, **kwargs):
         user_id = request.query_params.get('user_id')
-        if user_id:
+        if user_id and user_id != "zx":
             user = get_object_or_404(AppUser, id=user_id)
         else:
             user = request.user

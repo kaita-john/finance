@@ -44,7 +44,7 @@ class DashboardView(SchoolIdMixin, generics.GenericAPIView):
             except ObjectDoesNotExist:
                 current_academic_year = None
 
-            if not accountType:
+            if not accountType or accountType == "":
                 return Response({'detail': f"Account Type is required"}, status=status.HTTP_400_BAD_REQUEST)
 
             receiptsQuerySet = Collection.objects.filter(
