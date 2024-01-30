@@ -20,6 +20,7 @@ from academic_year.models import AcademicYear
 from classes.models import Classes
 from classes.serializers import ClassesSerializer
 from currencies.models import Currency
+from fee_structures.models import FeeStructure
 from fee_structures_items.models import FeeStructureItem
 from schoolgroups.models import SchoolGroup
 from students.models import Student
@@ -449,23 +450,51 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
             start_date = term.begin_date
             end_date = term.end_date
 
-            invoices = Invoice.objects.filter(school_id=school_id, year=academic_year, term=term)
+            overall_amount = Decimal(0.0)
+            feeStructures = FeeStructure.objects.filter(school_id=school_id,academic_year=academic_year,term=term)
 
-            feeStructureItems = FeeStructureItem.objects.filter(school_id=school_id, fee_Structure__academic_year=academic_year, fee_Structure__term=term)
+            unique_classes_list = []
 
-            classes_set = set()
+            for feeStructure in feeStructures:
+                structureYear = feeStructure.academic_year
 
-            for feeStructureItem in feeStructureItems:
-                classes_set.add(
-                    (
-                        feeStructureItem.fee_Structure.classes.id,
-                        feeStructureItem.fee_Structure.classes.classname,
-                        feeStructureItem.fee_Structure.classes.graduation_year,
-                        feeStructureItem.fee_Structure.classes.graduation_month,
-                        feeStructureItem.fee_Structure.academic_year.id,
-                        feeStructureItem.fee_Structure.classes.school_id,
-                    )
+                thevotehead_list = feeStructure.fee_structure_items.values_list('votehead', flat=True).distinct()
+                items = feeStructure.fee_structure_items.all()
+
+                fee_structure_items = {}
+                votehead_list = defaultdict(lambda: defaultdict(Decimal))
+                overall = defaultdict(Decimal)
+
+                for item in items:
+                    boarding_status = item.boardingStatus
+                    votehead_list[item.votehead.vote_head_name][boarding_status] += Decimal(item.amount)
+                    overall[boarding_status] += Decimal(item.amount)
+
+                invoiced_voteheads_list = [
+                    {"votehead": votehead, **amounts}
+                    for votehead, amounts in votehead_list.items()
+                ]
+
+                fee_structure_items['invoiced_voteheads'] = invoiced_voteheads_list
+                fee_structure_items['totals'] = overall
+
+                overall_amount += sum(overall.values())
+
+                class_info = (
+                    feeStructure.classes.id,
+                    feeStructure.classes.classname,
+                    feeStructure.classes.graduation_year,
+                    feeStructure.classes.graduation_month,
+                    feeStructure.academic_year.id,
+                    feeStructure.classes.school_id,
+                    fee_structure_items
                 )
+
+                # Append the class_info to the list
+                unique_classes_list.append(class_info)
+
+            # Filter out duplicate classes based on class id
+            unique_classes_list = {class_info[0]: class_info for class_info in unique_classes_list}.values()
 
             classes_list = [
                 {
@@ -475,40 +504,15 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
                     "graduation_month": class_info[3],
                     "academic_year_id": class_info[4],
                     "school_id": class_info[5],
+                    "fee_structure_items": dict(class_info[6]),
                 }
-                for class_info in classes_set
+                for class_info in unique_classes_list
             ]
-
-            print(f"Invoices is {len(classes_list)}")
-
-            thevotehead_list = list(invoice.votehead for invoice in invoices if invoice.votehead is not None)
-
-            fee_structure_items = {}
-
-            votehead_list = defaultdict(lambda: defaultdict(float))
-            overall = defaultdict(float)
-
-            for votehead in thevotehead_list:
-                print(f"Checking Voteheads {votehead}")
-                for invoice in invoices.filter(votehead=votehead):
-                    boarding_status = invoice.student.boarding_status
-                    votehead_list[votehead.vote_head_name][boarding_status] += float(invoice.amount)
-                    overall[boarding_status] += float(invoice.amount)
-
-            print(f"{classes_list}")
-
-            invoiced_voteheads_list = [
-                {"votehead": votehead, **amounts}
-                for votehead, amounts in votehead_list.items()
-            ]
-
-            fee_structure_items['invoiced_voteheads'] = invoiced_voteheads_list
-            fee_structure_items['totals'] = overall
 
             theobject = {
                 "term_details": TermSerializer(term).data,
                 "class_details": classes_list,
-                "fee_structure_items": fee_structure_items
+                "overall_amount": overall_amount
             }
 
             fullList.append(theobject)
