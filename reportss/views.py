@@ -15,6 +15,7 @@ from academic_year.models import AcademicYear
 from account_types.models import AccountType
 from appcollections.models import Collection
 from bank_accounts.models import BankAccount
+from budgets.models import Budget
 from currencies.serializers import CurrencySerializer
 from financial_years.models import FinancialYear
 from grants.models import Grant
@@ -1662,17 +1663,33 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
 
         overall_total = Decimal(cash_at_hand) + Decimal(cash_at_bank) + Decimal(total_cash) + Decimal(total_bank)
 
-        collection_voteheads_list = [
-            {
-                "votehead": votehead,
-                "cramount": data["cramount"],
-                "dramount": data["dramount"],
-                "name": data["name"],
-                "lf_number": data["lf_number"]
-            }
-            for votehead, data in collectionvoteheadDictionary.items()
-        ]
+        collection_voteheads_list = []
 
+
+        budget = Budget.objects.filter(financialYear=financialyear, school_id=school_id).first()
+
+        for votehead, data in collectionvoteheadDictionary.items():
+            if budget:
+                budget_items = budget.budget_items
+
+                if str(votehead) in budget_items:
+                    votehead_data = Decimal(budget_items[str(votehead)])
+                else:
+                    votehead_data = Decimal("0")
+            else:
+                votehead_data = Decimal("0")
+
+            collection_voteheads_list.append(
+                {
+                    "votehead": votehead,
+                    "cramount": data["cramount"],
+                    "dramount": data["dramount"],
+                    "budget_estimate": votehead_data,
+                    "available_balance": votehead_data - Decimal(data["dramount"]),
+                    "name": data["name"],
+                    "lf_number": data["lf_number"],
+                }
+            )
 
         save_object = {
             "cash_at_hand": cash_at_hand,
