@@ -293,10 +293,10 @@ class InvoiceClassesListView(SchoolIdMixin, generics.ListAPIView):
         structure_year = self.request.GET.get('structure_year')
         structure_term = self.request.GET.get('structure_term')
         
-        if not structure_term or structure_term == "" or not structure_year or structure_year == "":
+        if not structure_term or structure_term == "" or structure_year == "null"  or structure_term == "null" or not structure_year or structure_year == "":
             return Response({'detail': f"Both Structure Term and Year are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if structure_year and structure_year != "":
+        if structure_year and structure_year != "" and structure_year != "null":
             try:
                 structure_year = UUID(structure_year)
                 if not Invoice.objects.filter(school_id=school_id, year=structure_year).exists():
@@ -304,7 +304,7 @@ class InvoiceClassesListView(SchoolIdMixin, generics.ListAPIView):
             except ValueError:
                 raise ValidationError({"detail": "Invalid UUID for structure_year"})
 
-        if structure_term and structure_term != "":
+        if structure_term and structure_term != "" and structure_term != "null":
             try:
                 structure_term = UUID(structure_term)
                 if not Invoice.objects.filter(school_id=school_id, term=structure_term).exists():

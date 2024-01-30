@@ -37,7 +37,7 @@ def getBalance(account_type, month, financial_year, school_id):
         voucher__paymentDate__month=month,
     )
 
-    if financial_year and financial_year != "":
+    if financial_year and financial_year != "" and financial_year != "null":
         collectionQuerySet = collectionQuerySet.filter(receipt__financial_year=financial_year)
         pikQuerySet = pikQuerySet.filter(receipt__financial_year=financial_year)
         expensesQuerySet = expensesQuerySet.filter(voucher__financial_year=financial_year)
@@ -123,7 +123,7 @@ def getBalancesByAccount(accounttype, financial_year, school_id):
         voucher__bank_account__account_type=accounttype,
     )
 
-    if financial_year and financial_year != "":
+    if financial_year and financial_year != "" and financial_year != "null":
         collectionQuerySet = collectionQuerySet.filter(receipt__financial_year=financial_year)
         pikQuerySet = pikQuerySet.filter(receipt__financial_year=financial_year)
         expensesQuerySet = expensesQuerySet.filter(voucher__financial_year=financial_year)
@@ -203,7 +203,7 @@ def getBalancesByFinancialYear(financial_year, school_id):
         school_id=school_id,
     )
 
-    if financial_year and financial_year != "":
+    if financial_year and financial_year != "" and financial_year != "null":
         collectionQuerySet = collectionQuerySet.filter(receipt__financial_year=financial_year)
         pikQuerySet = pikQuerySet.filter(receipt__financial_year=financial_year)
         expensesQuerySet = expensesQuerySet.filter(voucher__financial_year=financial_year)

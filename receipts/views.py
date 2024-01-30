@@ -346,7 +346,7 @@ class ReceiptListView(SchoolIdMixin, generics.ListAPIView):
         queryset = Receipt.objects.filter(school_id=school_id)
 
         is_reversed_param = self.request.query_params.get('reversed', None)
-        if is_reversed_param is not None and is_reversed_param != "":
+        if is_reversed_param is not None and is_reversed_param != "" and is_reversed_param != "null":
             queryset = queryset.filter(is_reversed=True)
             print("It is reversed")
         else:

@@ -44,7 +44,7 @@ class DashboardView(SchoolIdMixin, generics.GenericAPIView):
             except ObjectDoesNotExist:
                 current_academic_year = None
 
-            if not accountType or accountType == "":
+            if not accountType or accountType == "" or accountType == "null":
                 return Response({'detail': f"Account Type is required"}, status=status.HTTP_400_BAD_REQUEST)
 
             receiptsQuerySet = Collection.objects.filter(
@@ -63,13 +63,13 @@ class DashboardView(SchoolIdMixin, generics.GenericAPIView):
                 voucher__bank_account__account_type=accountType
             )
 
-            if range_start_date and range_start_date != "":
+            if range_start_date and range_start_date != "" and range_start_date != "null":
                 start_date = datetime.strptime(range_start_date, '%Y-%m-%d')
                 receiptsQuerySet = receiptsQuerySet.filter(transaction_date__gte=range_start_date)
                 pikQuerySet = pikQuerySet.filter(transaction_date__gte=range_start_date)
                 expensesVouchers = expensesVouchers.filter(voucher__paymentDate__gte=range_start_date)
 
-            if range_end_date and range_end_date != "":
+            if range_end_date and range_end_date != "" and range_end_date != "null":
                 end_date = datetime.strptime(range_end_date, '%Y-%m-%d')
                 receiptsQuerySet = receiptsQuerySet.filter(transaction_date__lte=range_start_date)
                 pikQuerySet = pikQuerySet.filter(transaction_date__lte=range_start_date)

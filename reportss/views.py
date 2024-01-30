@@ -1,5 +1,5 @@
 # Create your views here.
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
@@ -25,10 +25,10 @@ from payment_in_kinds.models import PaymentInKind
 from payment_methods.models import PaymentMethod
 from receipts.models import Receipt
 from receipts.serializers import ReceiptSerializer
-from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, IncomeSummary, ReceivedCheque, \
-    BalanceTracker, OpeningClosingBalances
+from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, IncomeSummary, BalanceTracker, \
+    OpeningClosingBalances
 from reportss.serializers import ReportStudentBalanceSerializer, StudentTransactionsPrintViewSerializer, \
-    IncomeSummarySerializer, ReceivedChequeSerializer
+    IncomeSummarySerializer
 from reportss.utils import getBalance, getBalancesByAccount, getBalancesByFinancialYear
 from students.models import Student
 from students.serializers import StudentSerializer
@@ -149,26 +149,26 @@ class ReportStudentBalanceView(APIView, SchoolIdMixin):
                 print("here")
                 reportsStudentBalanceList = self.calculate(school_id, queryset, startdate, enddate, boardingstatus, term, year)
 
-            if currentClass and currentClass != "":
+            if currentClass and currentClass != "" and currentClass != "null":
                 queryset = queryset.filter(current_Class=currentClass)
                 reportsStudentBalanceList = self.calculate(school_id, queryset, startdate, enddate, boardingstatus, term, year)
 
-            if stream and stream != "":
+            if stream and stream != "" and stream != "null":
                 # if not currentClass:
                 # return Response({'detail': f"Both Class and Stream must be entered to query stream"},status=status.HTTP_400_BAD_REQUEST)
                 queryset = queryset.filter(current_Stream=stream)
                 reportsStudentBalanceList = self.calculate(school_id, queryset, startdate, enddate, boardingstatus, term, year)
 
-            if student and student != "":
+            if student and student != "" and student != "null":
                 queryset = queryset.filter(id=student)
                 print(f"student was passed {queryset}")
                 reportsStudentBalanceList = self.calculate(school_id, queryset, startdate, enddate, boardingstatus, term, year)
 
-            if amountbelow and amountbelow != "":
+            if amountbelow and amountbelow != "" and amountbelow != "null":
                 amountbelow = Decimal(amountbelow)
                 reportsStudentBalanceList = [report for report in reportsStudentBalanceList if report.totalBalance < amountbelow]
 
-            if amountabove and amountabove != "":
+            if amountabove and amountabove != "" and amountabove != "null":
                 amountabove = Decimal(amountabove)
                 print(f"Amount above was passed {reportsStudentBalanceList}")
                 reportsStudentBalanceList = [report for report in reportsStudentBalanceList if report.totalBalance > amountabove]
@@ -203,16 +203,16 @@ class FilterStudents(APIView, SchoolIdMixin):
             if not currentClass or not currentStream or not admissionNumber:
                 pass
 
-            if studentid and studentid != "":
+            if studentid and studentid != "" and studentid  != "null":
                 queryset = queryset.filter(id = studentid)
 
-            if admissionNumber and admissionNumber != "":
+            if admissionNumber and admissionNumber != "" and admissionNumber != "null":
                 queryset = queryset.filter(admission_number = admissionNumber)
 
-            if currentClass and currentClass != "":
+            if currentClass and currentClass != "" and currentClass != "null":
                 queryset = queryset.filter(current_Class = currentClass)
 
-            if currentStream and currentStream != "":
+            if currentStream and currentStream != "" and currentStream != "null":
                 if not currentClass:
                     return Response({'detail': f"Please  student class"}, status=status.HTTP_400_BAD_REQUEST)
                 queryset = queryset.filter(current_Stream = currentStream,  current_Class=currentClass)
@@ -273,25 +273,25 @@ class StudentTransactionsPrint(SchoolIdMixin, generics.RetrieveAPIView):
                 school_id=school_id
             )
 
-            if term and term != "":
+            if term and term != "" and term != "null":
                 querysetInvoices = querysetInvoices.filter(term__id=term)
                 querysetReceipts = querysetReceipts.filter(term__id=term)
                 querysetPIKReceipts = querysetPIKReceipts.filter(term__id=term)
                 querysetBursaries = querysetBursaries.filter(bursary__term__id=term)
 
-            if academicYear and academicYear != "":
+            if academicYear and academicYear != "" and academicYear != "null":
                 querysetInvoices = querysetInvoices.filter(year__id=academicYear)
                 querysetReceipts = querysetReceipts.filter(year__id=academicYear)
                 querysetPIKReceipts = querysetPIKReceipts.filter(year__id=academicYear)
                 querysetBursaries = querysetBursaries.filter(bursary__year__id=academicYear)
 
-            if startdate and startdate != "":
+            if startdate and startdate != "" and startdate != "null":
                 querysetInvoices = querysetInvoices.filter(issueDate__gt = startdate, issueDate__isnull=False)
                 querysetReceipts = querysetReceipts.filter(transaction_date__gt = startdate, transaction_date__isnull=False)
                 querysetPIKReceipts = querysetPIKReceipts.filter(receipt_date__gt = startdate, receipt_date__isnull=False)
                 querysetBursaries = querysetBursaries.filter(bursary__receipt_date__gt = startdate, bursary__receipt_date__isnull=False)
 
-            if enddate and enddate != "":
+            if enddate and enddate != "" and enddate != "null":
                 querysetInvoices = querysetInvoices.filter(issueDate__lte = enddate, issueDate__isnull=False)
                 querysetReceipts = querysetReceipts.filter(transaction_date__lte = enddate,  transaction_date__isnull=False)
                 querysetPIKReceipts = querysetPIKReceipts.filter(receipt_date__lte = enddate, receipt_date__isnull=False)
@@ -414,16 +414,16 @@ class StudentCollectionListView(SchoolIdMixin, generics.RetrieveAPIView):
                 school_id=school_id
             )
 
-            if term and term != "":
+            if term and term != "" and term != "null":
                 queryset = queryset.filter(term__id=term)
 
-            if academicYear and academicYear != "":
+            if academicYear and academicYear != "" and academicYear != "null":
                 queryset = queryset.filter(year__id=academicYear)
 
-            if startdate and startdate != "":
+            if startdate and startdate != "" and startdate != "null":
                 queryset = queryset.filter(transaction_date__gt = startdate, transaction_date__isnull=False)
 
-            if enddate and enddate != "":
+            if enddate and enddate != "" and enddate != "null":
                 queryset = queryset.filter(transaction_date__lte = enddate,transaction_date__isnull=False)
 
             serializer = ReceiptSerializer(queryset, many=True)
@@ -467,17 +467,17 @@ class IncomeSummaryView(SchoolIdMixin, generics.GenericAPIView):
                 school_id=school_id
             )
 
-            if not orderby or orderby == "" or not accounttype or accounttype == "":
+            if not orderby or orderby == "" or orderby == "null" or not accounttype or accounttype == "null" or accounttype == "":
                 return Response({'detail': f"Both orderby and accounttype values must be selected"}, status=status.HTTP_400_BAD_REQUEST)
 
             querysetCollections = querysetCollections.filter(receipt__account_type__id=accounttype)
             querysetPIK = querysetPIK.filter(receipt__bank_account__account_type__id = accounttype)
 
-            if startdate and startdate != "":
+            if startdate and startdate != "" and startdate != "null":
                 querysetCollections = querysetCollections.filter(transaction_date__gt=startdate, transaction_date__isnull=False)
                 querysetPIK = querysetPIK.filter(transaction_date__gt=startdate, transaction_date__isnull=False)
                 querysetGrants = querysetGrants.filter(receipt_date__gt=startdate, receipt_date__isnull=False)
-            if enddate and enddate != "":
+            if enddate and enddate != "" and enddate != "null":
                 querysetCollections = querysetCollections.filter(transaction_date__lte=enddate, transaction_date__isnull=False)
                 querysetPIK = querysetPIK.filter(transaction_date__lte=enddate, transaction_date__isnull=False)
                 querysetGrants = querysetGrants.filter(receipt_date__gt=enddate, receipt_date__isnull=False)
@@ -573,14 +573,14 @@ class ExpenseSummaryView(SchoolIdMixin, generics.GenericAPIView):
                 school_id=school_id
             )
 
-            if not orderby or orderby == "" or not accounttype or accounttype == "":
+            if not orderby or orderby == "" or orderby == "null" or not accounttype or accounttype == "" or accounttype == "null":
                 return Response({'detail': f"Both orderby and accounttype values must be selected"}, status=status.HTTP_400_BAD_REQUEST)
 
             querysetExpenses = querysetExpenses.filter(bank_account__account_type__id=accounttype)
 
-            if startdate and startdate != "":
+            if startdate and startdate != "" and startdate != "null":
                 querysetExpenses = querysetExpenses.filter(paymentDate__gt=startdate, paymentDate__isnull=False)
-            if enddate and enddate != "":
+            if enddate and enddate != "" and enddate != "null":
                 querysetExpenses = querysetExpenses.filter(paymentDate__lte=enddate, paymentDate__isnull=False)
 
 
@@ -746,13 +746,13 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
 
             querySetExpenses = VoucherItem.objects.filter(school_id=school_id, voucher__is_deleted=False)
 
-            if bankaccount and bankaccount != "":
+            if bankaccount and bankaccount != "" and bankaccount != "null":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, bank_account__id = bankaccount)
                 querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__id = bankaccount)
                 querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount = bankaccount)
                 querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__bank_account__id = bankaccount)
 
-            if accounttype and accounttype != "":
+            if accounttype and accounttype != "" and accounttype != "null":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, account_type__id=accounttype)
                 querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__account_type__id=accounttype)
                 querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount__account_type__id=accounttype)
@@ -761,13 +761,13 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
             else:
                 return Response({'detail': f"Account Type is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-            if financialyear and financialyear != "":
+            if financialyear and financialyear != "" and financialyear != "null":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year__id=financialyear)
                 querysetPIK = querysetPIK.filter(school_id=school_id, financial_year__id=financialyear)
                 querySetGrants = querySetGrants.filter(school_id=school_id, financial_year=financialyear)
                 querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__financial_year__id=financialyear)
 
-            if month and month != "":
+            if month and month != "" and month != "null":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, transaction_date__month=month)
                 querysetPIK = querysetPIK.filter(school_id=school_id, receipt_date__month=month)
                 querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__paymentDate__month=month)
@@ -1072,27 +1072,27 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
             classes = request.GET.get('classes')
             stream = request.GET.get('stream')
 
-            if not academicyear or academicyear == "":
+            if not academicyear or academicyear == "" or academicyear == "null":
                 return Response({'detail': f"Academic Year is a must"}, status=status.HTTP_400_BAD_REQUEST)
 
             if not student and not classes and not stream:
                 return Response({'detail': f"Either of Student or Stream or Class should be passed"}, status=status.HTTP_400_BAD_REQUEST)
 
             student_List = []
-            if student and student != "":
+            if student and student != "" and student != "null":
                 try:
                     student = Student.objects.get(id=student, school_id=school_id)
                 except ObjectDoesNotExist:
                     return Response({'detail': f"Invalid Student"}, status=status.HTTP_400_BAD_REQUEST)
                 student_List.append(student)
 
-            if classes and classes != "":
+            if classes and classes != "" and classes != "null":
                 class_students = Student.objects.filter(school_id=school_id, current_Class__id = classes)
                 if class_students:
                     for value in class_students:
                         student_List.append(value)
 
-            if stream and stream != "":
+            if stream and stream != "" and stream != "null":
                 stream_students = Student.objects.filter(current_Stream__id=stream, school_id=school_id)
                 if stream_students:
                     for value in stream_students:
@@ -1115,11 +1115,11 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
                 querySetReceipts = Receipt.objects.filter(school_id=school_id, student=student, is_reversed = False)
                 querysetPIK = PIKReceipt.objects.filter(school_id=school_id, student=student, is_posted=True)
 
-                if financialyear and financialyear != "":
+                if financialyear and financialyear != "" and financialyear != "null":
                     querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year__id=financialyear)
                     querysetPIK = querysetPIK.filter(school_id=school_id, financial_year__id=financialyear)
 
-                if academicyear and academicyear != "":
+                if academicyear and academicyear != "" and academicyear != "null":
                     querySetReceipts = querySetReceipts.filter(school_id=school_id, year__id = academicyear)
                     querysetPIK = querysetPIK.filter(school_id=school_id, year__id = academicyear)
 
@@ -1333,7 +1333,7 @@ class LedgerView(SchoolIdMixin, generics.GenericAPIView):
         financialyear = request.GET.get('financialyear')
         votehead = request.GET.get('votehead')
 
-        if not financialyear or financialyear == "" or not votehead or votehead == "":
+        if not financialyear or financialyear == "" or financialyear == "null" or not votehead or votehead == "" or votehead == "null":
             return Response({'detail': f"Both financial year and votehead are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         check_if_object_exists(VoteHead, votehead)
@@ -1493,7 +1493,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
         month = request.GET.get('month')
 
 
-        if not financialyear or financialyear=="" or not accounttype or accounttype == "" or not month or month == "":
+        if not financialyear or financialyear=="" or financialyear == "null" or not accounttype or accounttype == "" or accounttype == "null" or not month or month == "" or month == "null":
             return Response({'detail': f"Account Type, Financial Year and Month are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
