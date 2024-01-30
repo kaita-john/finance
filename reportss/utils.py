@@ -57,11 +57,11 @@ def getBalance(account_type, month, financial_year, school_id):
 
     for grant in querysetGrants:
         if grant.paymentMethod.is_cash == True:
-            cash_at_hand += Decimal(grant.amount)
+            cash_at_hand += Decimal(grant.overall_amount)
         elif grant.paymentMethod.is_bank == True:
-            cash_at_bank += Decimal(grant.amount)
+            cash_at_bank += Decimal(grant.overall_amount)
         elif grant.paymentMethod.is_cheque == True:
-            cash_at_bank += Decimal(grant.amount)
+            cash_at_bank += Decimal(grant.overall_amount)
 
 
     for collection in collectionQuerySet:
@@ -144,11 +144,11 @@ def getBalancesByAccount(accounttype, financial_year, school_id):
 
     for grant in querysetGrants:
         if grant.paymentMethod.is_cash == True:
-            cash_at_hand += Decimal(grant.amount)
+            cash_at_hand += Decimal(grant.overall_amount)
         elif grant.paymentMethod.is_bank == True:
-            cash_at_bank += Decimal(grant.amount)
+            cash_at_bank += Decimal(grant.overall_amount)
         elif grant.paymentMethod.is_cheque == True:
-            cash_at_bank += Decimal(grant.amount)
+            cash_at_bank += Decimal(grant.overall_amount)
 
     for collection in collectionQuerySet:
         if collection.receipt.payment_method.is_cash == True:
@@ -224,11 +224,11 @@ def getBalancesByFinancialYear(financial_year, school_id):
 
     for grant in querysetGrants:
         if grant.paymentMethod.is_cash == True:
-            cash_at_hand += Decimal(grant.amount)
+            cash_at_hand += Decimal(grant.overall_amount)
         elif grant.paymentMethod.is_bank == True:
-            cash_at_bank += Decimal(grant.amount)
+            cash_at_bank += Decimal(grant.overall_amount)
         elif grant.paymentMethod.is_cheque == True:
-            cash_at_bank += Decimal(grant.amount)
+            cash_at_bank += Decimal(grant.overall_amount)
 
     for collection in collectionQuerySet:
         if collection.receipt.payment_method.is_cash == True:
