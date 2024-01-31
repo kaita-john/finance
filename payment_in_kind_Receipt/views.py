@@ -117,7 +117,7 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
                             raise ValueError(f"Amount entered is more than required balance for votehead {invoice_instance.votehead.vote_head_name}")
 
                     except Invoice.DoesNotExist:
-                        pass
+                        overpayment += created_Pik.amount
                     except Invoice.MultipleObjectsReturned:
                         raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
 

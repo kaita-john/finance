@@ -28,7 +28,7 @@ RATIO = 'RATIO'
 
 
 CONFIGURATION_CHOICES = [
-    (MANUAL, 'RATIO'),
+    (MANUAL, 'MANUAL'),
     (AUTO, 'AUTO'),
 ]
 

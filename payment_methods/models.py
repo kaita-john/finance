@@ -11,6 +11,7 @@ class PaymentMethod(ParentModel):
     is_bank = models.BooleanField(default=False, null=True)
     is_cheque = models.BooleanField(default=False, null=True)
     school = models.ForeignKey(School, default=None, null=True, on_delete=DO_NOTHING, related_name="paymentmethods")
+    is_integration_default = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.name:

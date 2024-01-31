@@ -1,11 +1,14 @@
 # Create your views here.
 
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from tespython import MpesaInit
 from utils import SchoolIdMixin, UUID_from_PrimaryKey
 from .models import Mpesaconfig
 from .serializers import MpesaconfigSerializer
@@ -93,3 +96,46 @@ class MpesaconfigDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({'detail': 'Record deleted successfully'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+class MpesaCallBackView(APIView):
+    @csrf_exempt
+    def post(self, request):
+        data = request.data
+        mpesa = MpesaInit(None)
+
+        try:
+            mpesa.callback(data)
+        except Exception as e:
+            print(f"Exception: {e}")
+
+        if mpesa:
+            return Response({"details": "Success"}, status=status.HTTP_200_OK)
+        return Response({"details": "Failed"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+class RegisterMpesaValidationandCallBackView(SchoolIdMixin, APIView):
+    @csrf_exempt
+    def post(self, request):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        mpesa = MpesaInit(school_id)
+
+        try:
+            mpesa.register_confirmation_and_validation_url()
+            print(f"registered successfully")
+        except Exception as exception:
+            return Response({'detail': exception}, status=status.HTTP_400_BAD_REQUEST)
+
+        if mpesa:
+            return Response({"details": "Success"}, status=status.HTTP_200_OK)
+        return Response({"details": "Failed"}, status=status.HTTP_400_BAD_REQUEST)

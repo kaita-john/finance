@@ -14,6 +14,8 @@ class Mpesaconfig(models.Model):
     access_token_url = models.CharField(max_length=255, blank=True, null=True, default='https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials')
     checkout_url = models.CharField(max_length=255, blank=True, null=True, default='https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest')
     callback_url = models.CharField(max_length=255, blank=True, null=True, default='https://tafatalk.co.ke/api/v1/payments/callback')
+    registration_url = models.CharField(max_length=255, blank=True, null=True, default='https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl')
+    token_url = models.CharField(max_length=255, blank=True, null=True, default='https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials')
 
     def save(self, *args, **kwargs):
         super(Mpesaconfig, self).save(*args, **kwargs)

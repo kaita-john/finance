@@ -38,6 +38,7 @@ api_patterns = [
     path(api_version + 'config/', include('configurations.urls')),
     path(api_version + 'transactions/', include('transactions.urls')),
     path(api_version + 'budgets/', include('budgets.urls')),
+    path(api_version + 'configurations/', include('mpesa_configs.urls')),
 
     path(api_version + 'admin/suppliers/', include('suppliers.urls')),
     path(api_version + 'admin/staff/', include('staff.urls')),

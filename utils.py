@@ -17,13 +17,16 @@ from rest_framework.response import Response
 from academic_year.models import AcademicYear
 from account_types.models import AccountType
 from appcollections.models import Collection
+from bank_accounts.models import BankAccount
 from currencies.models import Currency
 from finance.settings import SIMPLE_JWT
 from financial_years.models import FinancialYear
 from payment_in_kinds.models import PaymentInKind
+from payment_methods.models import PaymentMethod
 from reportss.models import OpeningClosingBalances
 from school.models import School
 from term.models import Term
+from voteheads.models import VoteHead
 from voucher_items.models import VoucherItem
 
 
@@ -191,11 +194,35 @@ def defaultCurrency(school_id):
         return None
 
 
+
+def defaultOverpaymentVoteHead(school_id):
+    try:
+        return VoteHead.objects.get(is_Overpayment_Default=True, school_id=school_id)
+    except VoteHead.DoesNotExist:
+        return None
+
 def defaultAccountType(school_id):
     try:
         return AccountType.objects.get(is_default=True, school = school_id)
     except AccountType.DoesNotExist:
         return None
+
+
+
+def defaultBankAccount(school_id):
+    try:
+        return BankAccount.objects.get(is_default=True, school = school_id)
+    except BankAccount.DoesNotExist:
+        return None
+
+
+
+def defaultIntegrationPaymentMethod(school_id):
+    try:
+        return PaymentMethod.objects.get(is_integration_default=True, school = school_id)
+    except PaymentMethod.DoesNotExist:
+        return None
+
 
 
 def check_if_object_exists(Model, obj_id):

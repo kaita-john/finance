@@ -234,3 +234,21 @@ class MpesaGateway:
 
         transaction.save()
         return True
+
+
+
+
+
+
+
+
+
+
+
+    def callback(self, data):
+        status = self.check_status(data)
+        transaction = self.getTransactionObjectWithSimilarCheckoutRequestId(data)
+
+        if not transaction:
+            checkout_request_id = data["Body"]["stkCallback"]["CheckoutRequestID"]
+            raise Exception(f"Transaction with reference Id {checkout_request_id} not found!")
