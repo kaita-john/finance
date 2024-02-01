@@ -30,7 +30,7 @@ class TermCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class TermListView(SchoolIdMixin, generics.ListAPIView):
+class TermListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = TermSerializer
     permission_classes = [IsAuthenticated]
 

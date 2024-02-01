@@ -71,44 +71,51 @@ def manualCollection(self, request, school_id, current_financial_year):
             collections_data = request.data.get('collections_values', [])
 
             sum_Invoice_Amount = 0
-            for collection_data in collections_data:
-                collection_data['receipt'] = receipt_instance.id
-                collection_data['school_id'] = school_id
-                collection_data['student'] = receipt_instance.student.id
-                collection_serializer = CollectionSerializer(data=collection_data)
-                collection_serializer.is_valid(raise_exception=True)
-                created_collection = collection_serializer.save()
+            overpayment = 0
 
-                votehead_instance = created_collection.votehead
-                term_instance = created_collection.receipt.term
-                year_instance = created_collection.receipt.year
-                student = created_collection.receipt.student
+            if not collections_data:
+                overpayment += receipt_instance.totalAmount
+            if collections_data:
+                for collection_data in collections_data:
+                    collection_data['receipt'] = receipt_instance.id
+                    collection_data['school_id'] = school_id
+                    collection_data['student'] = receipt_instance.student.id
+                    collection_serializer = CollectionSerializer(data=collection_data)
+                    collection_serializer.is_valid(raise_exception=True)
+                    created_collection = collection_serializer.save()
 
-                try:
-                    invoice_instance = Invoice.objects.get(votehead=votehead_instance, term=term_instance, year=year_instance, school_id=school_id, student=student)
+                    votehead_instance = created_collection.votehead
+                    term_instance = created_collection.receipt.term
+                    year_instance = created_collection.receipt.year
+                    student = created_collection.receipt.student
 
-                    if (invoice_instance.paid + created_collection.amount) > invoice_instance.amount:
-                        raise ValueError("Transaction 1 cancelled: Total paid amount exceeds total invoice amount")
-                    else:
-                        sum_Invoice_Amount += invoice_instance.amount
+                    try:
+                        invoice_instance = Invoice.objects.get(votehead=votehead_instance, term=term_instance, year=year_instance, school_id=school_id, student=student)
 
-                except Invoice.DoesNotExist:
-                    print("Invoice does not exist")
-                    pass
-                except Invoice.MultipleObjectsReturned:
-                    raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
+                        if (invoice_instance.paid + created_collection.amount) > invoice_instance.amount:
+                            raise ValueError("Transaction 1 cancelled: Total paid amount exceeds total invoice amount")
+                        else:
+                            sum_Invoice_Amount += invoice_instance.amount
+
+                    except Invoice.DoesNotExist:
+                        print("Invoice does not exist")
+                        pass
+                    except Invoice.MultipleObjectsReturned:
+                        raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
+
 
             if receipt_instance.totalAmount > sum_Invoice_Amount:
 
                 overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True, school_id=school_id).first()
                 if not overpayment_votehead:
                     raise ValueError("No VoteHead found with is_Overpayment_Default set to true")
+                overpayment += sum_Invoice_Amount - receipt_instance.totalAmount
 
-                overpayment_Amount = sum_Invoice_Amount - receipt_instance.totalAmount
+            if overpayment > 0:
                 newCollection = Collection(
                     student=receipt_instance.student,
                     receipt=receipt_instance,
-                    amount=overpayment_Amount,
+                    amount=Decimal(overpayment),
                     votehead=overpayment_votehead,
                     school_id=receipt_instance.school_id,
                     is_overpayment = True
@@ -324,8 +331,8 @@ class ReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
 
         configuration_type = configuration.configuration_type
         auto_configuration_type = configuration.auto_configuration_type
-        if configuration_type == MANUAL:
 
+        if configuration_type == MANUAL:
             return manualCollection(self, request, school_id, current_financial_year)
 
         elif configuration_type == AUTO:
