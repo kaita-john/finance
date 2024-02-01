@@ -1,8 +1,9 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import DO_NOTHING
 
-from school.models import School
 from models import ParentModel
+from school.models import School
 
 
 class PaymentMethod(ParentModel):
@@ -16,6 +17,9 @@ class PaymentMethod(ParentModel):
     def save(self, *args, **kwargs):
         if self.name:
             self.name = self.name.upper()
+        if not any([self.is_cash, self.is_bank, self.is_cheque]):
+            raise ValidationError('Select at least one payment method (is_cash, is_bank, or is_cheque).')
+
         super().save(*args, **kwargs)
 
     def __str__(self):

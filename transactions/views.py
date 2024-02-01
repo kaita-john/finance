@@ -36,7 +36,7 @@ class TransactionListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Transaction.objects.none()
-        queryset = Transaction.objects.filter(school=school_id)
+        queryset = Transaction.objects.filter(school_id=school_id)
         return queryset
 
     def list(self, request, *args, **kwargs):

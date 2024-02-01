@@ -5,7 +5,6 @@ from academic_year.models import AcademicYear
 from bank_accounts.models import BankAccount
 from configurations.models import Configuration
 from currencies.models import Currency
-from financial_years.models import FinancialYear
 from models import ParentModel
 from payment_methods.models import PaymentMethod
 from schoolgroups.models import SchoolGroup
