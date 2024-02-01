@@ -17,7 +17,7 @@ from reportss.models import trackBalance
 from students.models import Student
 from transactions.models import Transaction
 from utils import currentAcademicYear, currentFinancialYear, currentTerm, defaultAccountType, defaultCurrency, \
-    defaultBankAccount, defaultOverpaymentVoteHead, generate_unique_code, defaultIntegrationPaymentMethod
+    defaultBankAccount, defaultOverpaymentVoteHead, generate_unique_code, default_MpesaPaymentMethod
 from voteheads.models import VoteheadConfiguration, VoteHead
 
 
@@ -216,7 +216,7 @@ class MpesaInit:
                     accounttype = defaultAccountType(school_id)
                     currency = defaultCurrency(school_id)
                     bankAccount = defaultBankAccount(school_id)
-                    default_integration_paymentmethod = defaultIntegrationPaymentMethod(school_id)
+                    thedefault_MpesaPaymentMethod = default_MpesaPaymentMethod(school_id)
 
                     if not academic_year:
                         to_receipt  = False
@@ -236,7 +236,7 @@ class MpesaInit:
                     if not bankAccount:
                         to_receipt = False
                         print(f"Not 6")
-                    if not default_integration_paymentmethod:
+                    if not thedefault_MpesaPaymentMethod:
                         print(f"Not 7")
                         to_receipt = False
 
@@ -266,7 +266,7 @@ class MpesaInit:
                                         totalAmount = Decimal(amount_paid),
                                         account_type=accounttype,
                                         bank_account = bankAccount,
-                                        payment_method = default_integration_paymentmethod,
+                                        payment_method = thedefault_MpesaPaymentMethod,
                                         term = term,
                                         year = academic_year,
                                         currency=currency,
@@ -325,7 +325,7 @@ class MpesaInit:
                                             totalAmount=Decimal(amount_paid),
                                             account_type=accounttype,
                                             bank_account=bankAccount,
-                                            payment_method=default_integration_paymentmethod,
+                                            payment_method=thedefault_MpesaPaymentMethod,
                                             term=term,
                                             year=academic_year,
                                             currency=currency,
@@ -374,7 +374,7 @@ class MpesaInit:
                                         totalAmount=Decimal(amount_paid),
                                         account_type=accounttype,
                                         bank_account=bankAccount,
-                                        payment_method=default_integration_paymentmethod,
+                                        payment_method=thedefault_MpesaPaymentMethod,
                                         term=term,
                                         year=academic_year,
                                         currency=currency,

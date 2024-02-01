@@ -222,9 +222,9 @@ def defaultBankAccount(school_id):
     except BankAccount.DoesNotExist:
         return None
 
-def defaultIntegrationPaymentMethod(school_id):
+def default_MpesaPaymentMethod(school_id):
     try:
-        return PaymentMethod.objects.get(is_integration_default=True, school = school_id)
+        return PaymentMethod.objects.get(is_mpesa_default=True, school = school_id)
     except PaymentMethod.DoesNotExist:
         return None
 
@@ -346,7 +346,7 @@ class DefaultMixin:
         getdefaultArrearVoteHead = defaultArrearVoteHead(school_id)
         getdefaultAccountType = defaultAccountType(school_id)
         getdefaultBankAccount = defaultBankAccount(school_id)
-        getdefaultIntegrationPaymentMethod = defaultIntegrationPaymentMethod(school_id)
+        getdefaultIntegrationPaymentMethod = default_MpesaPaymentMethod(school_id)
 
         if not getdefaultconfiguration:
             raise ValidationError({'detail': 'Configuration of Receipts and Voucher Numbering not set!'})
