@@ -53,8 +53,8 @@ class BursaryCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
 
             items_data = serializer.validated_data.pop('items_list', [])
 
-            if schoolgroup:
-                if not studentamount:
+            if schoolgroup and schoolgroup != "" and schoolgroup != "null":
+                if not studentamount or studentamount == "" or studentamount == "null":
                     return Response({'detail': f"Enter amount for each student"}, status=status.HTTP_400_BAD_REQUEST)
 
                 groupStudents = Student.objects.filter(groups__icontains=str(schoolgroup), school_id=school_id)

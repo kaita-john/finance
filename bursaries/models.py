@@ -36,8 +36,8 @@ class Bursary(ParentModel):
             self.institutionAddress = self.institutionAddress.upper()
 
         if not self.counter:
-            school_filter = {'school_id': self.school_id}  # Add school filter here
-            schooltwo_filter = {'school': self.school_id}  # Add school filter here
+            school_filter = {'school_id': self.school_id}
+            schooltwo_filter = {'school': self.school_id}
 
             if Bursary.objects.filter(**school_filter).count() == 0:
                 start_at_value = Configuration.objects.filter(**schooltwo_filter).values('bursary_start_at').first().get(
