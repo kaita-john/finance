@@ -28,7 +28,7 @@ from payment_methods.models import PaymentMethod
 from reportss.models import OpeningClosingBalances
 from school.models import School
 from term.models import Term
-from voteheads.models import VoteHead
+from voteheads.models import VoteHead, VoteheadConfiguration
 from voucher_items.models import VoucherItem
 
 
@@ -234,14 +234,17 @@ def defaultMpesaConfiguration(school_id):
     except Mpesaconfig.DoesNotExist:
         return None
 
-
 def defaultconfiguration(school_id):
     try:
         return Configuration.objects.get(school = school_id)
     except Configuration.DoesNotExist:
         return None
 
-
+def defaultVoteHeadConfiguration(school_id):
+    try:
+        return VoteheadConfiguration.objects.get(school = school_id)
+    except VoteheadConfiguration.DoesNotExist:
+        return None
 
 
 
@@ -333,6 +336,7 @@ class DefaultMixin:
     def check_defaults(self, request, school_id):
 
         getdefaultconfiguration = defaultconfiguration(school_id)
+        getdefaultVoteHeadConfiguration = defaultVoteHeadConfiguration(school_id)
         # getdefaultMpesaConfiguration = defaultMpesaConfiguration(school_id)
         getcurrentTerm = currentTerm(school_id)
         getcurrentAcademicYear = currentAcademicYear(school_id)
@@ -344,9 +348,10 @@ class DefaultMixin:
         getdefaultBankAccount = defaultBankAccount(school_id)
         getdefaultIntegrationPaymentMethod = defaultIntegrationPaymentMethod(school_id)
 
-
         if not getdefaultconfiguration:
             raise ValidationError({'detail': 'Configuration of Receipts and Voucher Numbering not set!'})
+        if not getdefaultVoteHeadConfiguration:
+            raise ValidationError({'detail': 'VoteHead Configuration Not Set For This Schoool!'})
         # if not getdefaultMpesaConfiguration:
         #     raise ValidationError({'detail': 'Configuration of Mpesa not set for this school!'})
         if not getcurrentTerm:

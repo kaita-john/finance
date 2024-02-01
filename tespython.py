@@ -75,8 +75,6 @@ import requests
 
 
 
-
-
 class MpesaInit:
     def __init__(self, school_id):
 
@@ -178,144 +176,196 @@ class MpesaInit:
             student = None
 
         try:
-            school = Mpesaconfig.objects.get(paybill_number=paybill)
-            school_id = school.school_id
+            from django.db import transaction
+            with transaction.atomic():
 
-            status = "PENDING"
-            if student == None:
+                school = Mpesaconfig.objects.get(paybill_number=paybill)
+                school_id = school.school_id
+
                 status = "PENDING"
+                if student == None:
+                    status = "PENDING"
 
-            transaction = Transaction.objects.create(
-                mobile=mobile_number,
-                purpose="FEES",
-                transid=transaction_id,
-                timestamp=transaction_time,
-                amount=Decimal(amount_paid),
-                student=student,
-                school_id=school_id,
-                status=status,
-                paid_by=paid_by,
-                transaction_type=transaction_type,
-                thirdPartyTransID=thirdPartyTransID,
-                orgAccountBalance = orgAccountBalance,
-                invoiceNumber = invoiceNumber,
-            )
+                transaction = Transaction.objects.create(
+                    mobile=mobile_number,
+                    purpose="FEES",
+                    transid=transaction_id,
+                    timestamp=transaction_time,
+                    amount=Decimal(amount_paid),
+                    student=student,
+                    school_id=school_id,
+                    status=status,
+                    paid_by=paid_by,
+                    transaction_type=transaction_type,
+                    thirdPartyTransID=thirdPartyTransID,
+                    orgAccountBalance = orgAccountBalance,
+                    invoiceNumber = invoiceNumber,
+                )
 
-            print(f"Transactions created")
-
-
-            if student != None:
-                print(f"student is not null")
-                to_receipt = True
-
-                receipt_no = generate_unique_code("RT")
-                academic_year = currentAcademicYear(school_id)
-                term = currentTerm(school_id)
-                financial_year = currentFinancialYear(school_id)
-                accounttype = defaultAccountType(school_id)
-                currency = defaultCurrency(school_id)
-                bankAccount = defaultBankAccount(school_id)
-                default_integration_paymentmethod = defaultIntegrationPaymentMethod(school_id)
-
-                if not academic_year:
-                    to_receipt  = False
-                    print(f"Not 1")
-                if not term:
-                    to_receipt = False
-                    print(f"Not 2")
-                if not financial_year:
-                    to_receipt = False
-                    print(f"Not 3")
-                if not accounttype:
-                    to_receipt = False
-                    print(f"Not 4")
-                if not currency:
-                    to_receipt = False
-                    print(f"Not 5")
-                if not bankAccount:
-                    to_receipt = False
-                    print(f"Not 6")
-                if not default_integration_paymentmethod:
-                    print(f"Not 7")
-                    to_receipt = False
-
-                if not to_receipt:
-                    print(f"It is not to receippt")
-                    transaction.status = "PENDING"
-                    transaction.save()
-                else:
-
-                    try:
-                        votehead_configuration = VoteheadConfiguration.objects.get(school_id=school_id)
-                        votehead_configuration_type = votehead_configuration.configuration_type
-
-                        if votehead_configuration_type == "MANUAL":
-
-                            overpayment_votehead = defaultOverpaymentVoteHead(school_id)
-                            if not overpayment_votehead:
-                                transaction.status = "PENDING"
-                                transaction.save()
-                            else:
-
-                                thereceipt = Receipt.objects.create(
-                                    school_id=school_id,
-                                    student = student,
-                                    receipt_date = datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
-                                    receipt_No = receipt_no,
-                                    totalAmount = Decimal(amount_paid),
-                                    account_type=accounttype,
-                                    bank_account = bankAccount,
-                                    payment_method = default_integration_paymentmethod,
-                                    term = term,
-                                    year = academic_year,
-                                    currency=currency,
-                                    transaction_code = transID,
-                                    transaction_date = datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
-                                    addition_notes = "Mpesa Payment",
-                                    student_class = student.current_Class,
-                                    financial_year = financial_year
-                                )
-
-                                Collection.objects.create(
-                                    student = student,
-                                    transaction_date=datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
-                                    receipt=thereceipt,
-                                    amount = Decimal(amount_paid),
-                                    votehead=overpayment_votehead,
-                                    school_id=school_id,
-                                    is_overpayment = True
-                                )
-
-                                trackBalance(student,school_id,Decimal(amount_paid),"plus",term,academic_year)
-
-                                bank_account = bankAccount
-                                amount = thereceipt.totalAmount
-                                initial_balance = bank_account.balance
-                                new_balance = initial_balance + Decimal(amount)
-                                bank_account.balance = new_balance
-                                bank_account.save()
-
-                                transaction.status = "COMPLETE"
-                                transaction.save()
+                print(f"Transactions created")
 
 
-                        elif votehead_configuration_type == "AUTO":
+                if student != None:
+                    print(f"student is not null")
+                    to_receipt = True
 
-                            print(f"11111")
-                            auto_configuration_type = votehead_configuration.auto_configuration_type
+                    receipt_no = generate_unique_code("RT")
+                    academic_year = currentAcademicYear(school_id)
+                    term = currentTerm(school_id)
+                    financial_year = currentFinancialYear(school_id)
+                    accounttype = defaultAccountType(school_id)
+                    currency = defaultCurrency(school_id)
+                    bankAccount = defaultBankAccount(school_id)
+                    default_integration_paymentmethod = defaultIntegrationPaymentMethod(school_id)
 
-                            student = student
-                            voteheads = Invoice.objects.filter(term=term, year=academic_year, school_id=school_id,student=student)
+                    if not academic_year:
+                        to_receipt  = False
+                        print(f"Not 1")
+                    if not term:
+                        to_receipt = False
+                        print(f"Not 2")
+                    if not financial_year:
+                        to_receipt = False
+                        print(f"Not 3")
+                    if not accounttype:
+                        to_receipt = False
+                        print(f"Not 4")
+                    if not currency:
+                        to_receipt = False
+                        print(f"Not 5")
+                    if not bankAccount:
+                        to_receipt = False
+                        print(f"Not 6")
+                    if not default_integration_paymentmethod:
+                        print(f"Not 7")
+                        to_receipt = False
 
-                            if not voteheads:
-                                print(f"1.1.1.1.1")
+                    if not to_receipt:
+                        print(f"It is not to receippt")
+                        transaction.status = "PENDING"
+                        transaction.save()
+                    else:
+
+                        try:
+                            votehead_configuration = VoteheadConfiguration.objects.get(school_id=school_id)
+                            votehead_configuration_type = votehead_configuration.configuration_type
+
+                            if votehead_configuration_type == "MANUAL":
+
                                 overpayment_votehead = defaultOverpaymentVoteHead(school_id)
                                 if not overpayment_votehead:
-                                    print(f"1.2.2.2.2.2")
                                     transaction.status = "PENDING"
                                     transaction.save()
                                 else:
-                                    print(f"1.3.3.3.3")
+
+                                    thereceipt = Receipt.objects.create(
+                                        school_id=school_id,
+                                        student = student,
+                                        receipt_date = datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
+                                        receipt_No = receipt_no,
+                                        totalAmount = Decimal(amount_paid),
+                                        account_type=accounttype,
+                                        bank_account = bankAccount,
+                                        payment_method = default_integration_paymentmethod,
+                                        term = term,
+                                        year = academic_year,
+                                        currency=currency,
+                                        transaction_code = transID,
+                                        transaction_date = datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
+                                        addition_notes = "Mpesa Payment",
+                                        student_class = student.current_Class,
+                                        financial_year = financial_year
+                                    )
+
+                                    Collection.objects.create(
+                                        student = student,
+                                        transaction_date=datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
+                                        receipt=thereceipt,
+                                        amount = Decimal(amount_paid),
+                                        votehead=overpayment_votehead,
+                                        school_id=school_id,
+                                        is_overpayment = True
+                                    )
+
+                                    trackBalance(student,school_id,Decimal(amount_paid),"plus",term,academic_year)
+
+                                    bank_account = bankAccount
+                                    amount = thereceipt.totalAmount
+                                    initial_balance = bank_account.balance
+                                    new_balance = initial_balance + Decimal(amount)
+                                    bank_account.balance = new_balance
+                                    bank_account.save()
+
+                                    transaction.status = "COMPLETE"
+                                    transaction.save()
+
+
+                            elif votehead_configuration_type == "AUTO":
+
+                                print(f"11111")
+                                auto_configuration_type = votehead_configuration.auto_configuration_type
+
+                                student = student
+                                voteheads = Invoice.objects.filter(term=term, year=academic_year, school_id=school_id,student=student)
+
+                                if not voteheads:
+                                    print(f"1.1.1.1.1")
+                                    overpayment_votehead = defaultOverpaymentVoteHead(school_id)
+                                    if not overpayment_votehead:
+                                        print(f"1.2.2.2.2.2")
+                                        transaction.status = "PENDING"
+                                        transaction.save()
+                                    else:
+                                        print(f"1.3.3.3.3")
+                                        thereceipt = Receipt.objects.create(
+                                            school_id=school_id,
+                                            student=student,
+                                            receipt_date=datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
+                                            receipt_No=receipt_no,
+                                            totalAmount=Decimal(amount_paid),
+                                            account_type=accounttype,
+                                            bank_account=bankAccount,
+                                            payment_method=default_integration_paymentmethod,
+                                            term=term,
+                                            year=academic_year,
+                                            currency=currency,
+                                            transaction_code=transID,
+                                            transaction_date=datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
+                                            addition_notes="Mpesa Payment",
+                                            student_class=student.current_Class,
+                                            financial_year=financial_year
+                                        )
+
+                                        Collection.objects.create(
+                                            student=student,
+                                            transaction_date=datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
+                                            receipt=thereceipt,
+                                            amount=Decimal(amount_paid),
+                                            votehead=overpayment_votehead,
+                                            school_id=school_id,
+                                            is_overpayment=True
+                                        )
+
+                                        trackBalance(student, school_id, Decimal(amount_paid), "plus", term, academic_year)
+
+
+                                        bank_account = bankAccount
+                                        amount = thereceipt.totalAmount
+                                        initial_balance = bank_account.balance
+                                        new_balance = initial_balance + Decimal(amount)
+                                        bank_account.balance = new_balance
+                                        bank_account.save()
+
+                                        transaction.status = "COMPLETE"
+                                        transaction.save()
+
+                                else:
+                                    print(f"1.4.4.4.4.4")
+                                    votehead_ids = voteheads.values('votehead').distinct()
+                                    votehead_objects = VoteHead.objects.filter(id__in=votehead_ids)
+                                    totalAmount = Decimal(amount_paid)
+                                    numberOfVoteheads = len(votehead_objects)
+
                                     thereceipt = Receipt.objects.create(
                                         school_id=school_id,
                                         student=student,
@@ -335,159 +385,109 @@ class MpesaInit:
                                         financial_year=financial_year
                                     )
 
-                                    Collection.objects.create(
-                                        student=student,
-                                        transaction_date=datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
-                                        receipt=thereceipt,
-                                        amount=Decimal(amount_paid),
-                                        votehead=overpayment_votehead,
-                                        school_id=school_id,
-                                        is_overpayment=True
-                                    )
-
                                     trackBalance(student, school_id, Decimal(amount_paid), "plus", term, academic_year)
 
 
-                                    bank_account = bankAccount
+                                    overpayment = 0
+
+                                    if auto_configuration_type == RATIO:
+                                        print(f"1.5.5.5.5")
+                                        eachVoteheadWillGet = totalAmount / numberOfVoteheads
+                                        for votehead in votehead_objects:
+                                            try:
+                                                invoice_instance = Invoice.objects.get(votehead=votehead, term=term, year=academic_year,school_id=school_id, student=student)
+                                                if (invoice_instance.paid + eachVoteheadWillGet) > invoice_instance.amount:
+                                                    print(f"1.6.6.6.6")
+                                                    amountRequired = invoice_instance.amount - invoice_instance.paid
+
+                                                    collection_data = {'student': student.id, 'receipt': thereceipt.id, 'amount': amountRequired, 'votehead': votehead.id, 'school_id': school_id}
+                                                    collection_serializer = CollectionSerializer(data=collection_data)
+                                                    collection_serializer.is_valid(raise_exception=True)
+                                                    collection_serializer.save()
+
+                                                    balance = eachVoteheadWillGet - amountRequired
+                                                    print(f"balance is {balance}")
+                                                    if balance > 0:
+                                                        overpayment = overpayment + balance
+
+                                                else:
+                                                    print(f"1.7.7.7.7")
+                                                    collection_data = {'student': student.id,'receipt': thereceipt.id,'amount': eachVoteheadWillGet,'votehead': votehead.id,'school_id': school_id}
+                                                    collection_serializer = CollectionSerializer(data=collection_data)
+                                                    collection_serializer.is_valid(raise_exception=True)
+                                                    collection_serializer.save()
+
+                                            except Invoice.DoesNotExist:
+                                                print(f"1.8.8.8.8")
+                                                overpayment += Decimal(amount_paid)
+                                            except Invoice.MultipleObjectsReturned:
+                                                raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
+
+                                    if auto_configuration_type == PRIORITY:
+                                        print(f"1.9.9.9.9")
+                                        distinct_voteheads = Invoice.objects.filter(term=term, year=academic_year, school_id=school_id, student=student).values_list('votehead', flat=True).distinct()
+                                        ordered_voteheads = VoteHead.objects.filter(id__in=distinct_voteheads).order_by(F('priority_number').asc(nulls_first=True))
+
+                                        for index, votehead in enumerate(ordered_voteheads):
+                                            print(f"Votehead -> {votehead}, Priority -> {votehead.priority_number}")
+                                            if not votehead.is_Overpayment_Default:
+                                                print(f"2.0.0.0")
+                                                if totalAmount > 0:
+                                                    try:
+                                                        invoice_instance = Invoice.objects.get(votehead=votehead, term=term, year=academic_year, school_id=school_id, student=student)
+
+                                                        if (invoice_instance.paid + totalAmount) > invoice_instance.amount:
+                                                            amountRequired = invoice_instance.amount - invoice_instance.paid
+
+                                                            collection_data = {'student': student.id,'receipt': thereceipt.id,'amount': amountRequired,'votehead': votehead.id,'school_id': school_id}
+                                                            collection_serializer = CollectionSerializer(data=collection_data)
+                                                            collection_serializer.is_valid(raise_exception=True)
+                                                            collection_serializer.save()
+
+                                                            totalAmount = totalAmount - amountRequired
+
+                                                            if index == len(voteheads) - 1:
+                                                                if totalAmount > 0:
+                                                                    overpayment = overpayment + totalAmount
+
+                                                        else:
+                                                            collectionAmount = totalAmount
+                                                            collection = Collection(student=student, receipt=thereceipt,amount=collectionAmount, votehead=votehead,school_id=school_id)
+                                                            collection.save()
+
+                                                            totalAmount = 0.00
+
+                                                    except Invoice.DoesNotExist:
+                                                        overpayment += Decimal(amount_paid)
+                                                    except Invoice.MultipleObjectsReturned:
+                                                        raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
+
+                                    if overpayment > 0:
+                                        print(f"2.1.1.1.1")
+                                        overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True, school_id=school_id).first()
+                                        if not overpayment_votehead:
+                                            print(f"2.2.2.2.2")
+                                            raise ValueError("Overpayment votehead has not been configured")
+
+                                        newCollection = Collection(student=student,receipt=thereceipt,amount=overpayment,votehead=overpayment_votehead,school_id=school_id.school_id,is_overpayment=True )
+                                        newCollection.save()
+
+                                    bank_account = thereceipt.bank_account
                                     amount = thereceipt.totalAmount
                                     initial_balance = bank_account.balance
                                     new_balance = initial_balance + Decimal(amount)
                                     bank_account.balance = new_balance
                                     bank_account.save()
 
+
                                     transaction.status = "COMPLETE"
                                     transaction.save()
 
-                            else:
-                                print(f"1.4.4.4.4.4")
-                                votehead_ids = voteheads.values('votehead').distinct()
-                                votehead_objects = VoteHead.objects.filter(id__in=votehead_ids)
-                                totalAmount = Decimal(amount_paid)
-                                numberOfVoteheads = len(votehead_objects)
+                                    print(f"2.3.3.3.3")
 
-                                thereceipt = Receipt.objects.create(
-                                    school_id=school_id,
-                                    student=student,
-                                    receipt_date=datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
-                                    receipt_No=receipt_no,
-                                    totalAmount=Decimal(amount_paid),
-                                    account_type=accounttype,
-                                    bank_account=bankAccount,
-                                    payment_method=default_integration_paymentmethod,
-                                    term=term,
-                                    year=academic_year,
-                                    currency=currency,
-                                    transaction_code=transID,
-                                    transaction_date=datetime.strptime(transTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d"),
-                                    addition_notes="Mpesa Payment",
-                                    student_class=student.current_Class,
-                                    financial_year=financial_year
-                                )
-
-                                trackBalance(student, school_id, Decimal(amount_paid), "plus", term, academic_year)
-
-
-                                overpayment = 0
-
-                                if auto_configuration_type == RATIO:
-                                    print(f"1.5.5.5.5")
-                                    eachVoteheadWillGet = totalAmount / numberOfVoteheads
-                                    for votehead in votehead_objects:
-                                        try:
-                                            invoice_instance = Invoice.objects.get(votehead=votehead, term=term, year=academic_year,school_id=school_id, student=student)
-                                            if (invoice_instance.paid + eachVoteheadWillGet) > invoice_instance.amount:
-                                                print(f"1.6.6.6.6")
-                                                amountRequired = invoice_instance.amount - invoice_instance.paid
-
-                                                collection_data = {'student': student.id, 'receipt': thereceipt.id, 'amount': amountRequired, 'votehead': votehead.id, 'school_id': school_id}
-                                                collection_serializer = CollectionSerializer(data=collection_data)
-                                                collection_serializer.is_valid(raise_exception=True)
-                                                collection_serializer.save()
-
-                                                balance = eachVoteheadWillGet - amountRequired
-                                                print(f"balance is {balance}")
-                                                if balance > 0:
-                                                    overpayment = overpayment + balance
-
-                                            else:
-                                                print(f"1.7.7.7.7")
-                                                collection_data = {'student': student.id,'receipt': thereceipt.id,'amount': eachVoteheadWillGet,'votehead': votehead.id,'school_id': school_id}
-                                                collection_serializer = CollectionSerializer(data=collection_data)
-                                                collection_serializer.is_valid(raise_exception=True)
-                                                collection_serializer.save()
-
-                                        except Invoice.DoesNotExist:
-                                            print(f"1.8.8.8.8")
-                                            overpayment += Decimal(amount_paid)
-                                        except Invoice.MultipleObjectsReturned:
-                                            raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
-
-                                if auto_configuration_type == PRIORITY:
-                                    print(f"1.9.9.9.9")
-                                    distinct_voteheads = Invoice.objects.filter(term=term, year=academic_year, school_id=school_id, student=student).values_list('votehead', flat=True).distinct()
-                                    ordered_voteheads = VoteHead.objects.filter(id__in=distinct_voteheads).order_by(F('priority_number').asc(nulls_first=True))
-
-                                    for index, votehead in enumerate(ordered_voteheads):
-                                        print(f"Votehead -> {votehead}, Priority -> {votehead.priority_number}")
-                                        if not votehead.is_Overpayment_Default:
-                                            print(f"2.0.0.0")
-                                            if totalAmount > 0:
-                                                try:
-                                                    invoice_instance = Invoice.objects.get(votehead=votehead, term=term, year=academic_year, school_id=school_id, student=student)
-
-                                                    if (invoice_instance.paid + totalAmount) > invoice_instance.amount:
-                                                        amountRequired = invoice_instance.amount - invoice_instance.paid
-
-                                                        collection_data = {'student': student.id,'receipt': thereceipt.id,'amount': amountRequired,'votehead': votehead.id,'school_id': school_id}
-                                                        collection_serializer = CollectionSerializer(data=collection_data)
-                                                        collection_serializer.is_valid(raise_exception=True)
-                                                        collection_serializer.save()
-
-                                                        totalAmount = totalAmount - amountRequired
-
-                                                        if index == len(voteheads) - 1:
-                                                            if totalAmount > 0:
-                                                                overpayment = overpayment + totalAmount
-
-                                                    else:
-                                                        collectionAmount = totalAmount
-                                                        collection = Collection(student=student, receipt=thereceipt,amount=collectionAmount, votehead=votehead,school_id=school_id)
-                                                        collection.save()
-
-                                                        totalAmount = 0.00
-
-                                                except Invoice.DoesNotExist:
-                                                    overpayment += Decimal(amount_paid)
-                                                except Invoice.MultipleObjectsReturned:
-                                                    raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
-
-                                if overpayment > 0:
-                                    print(f"2.1.1.1.1")
-                                    overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True, school_id=school_id).first()
-                                    if not overpayment_votehead:
-                                        print(f"2.2.2.2.2")
-                                        raise ValueError("Overpayment votehead has not been configured")
-
-                                    newCollection = Collection(student=student,receipt=thereceipt,amount=overpayment,votehead=overpayment_votehead,school_id=school_id.school_id,is_overpayment=True )
-                                    newCollection.save()
-
-                                bank_account = thereceipt.bank_account
-                                amount = thereceipt.totalAmount
-                                initial_balance = bank_account.balance
-                                new_balance = initial_balance + Decimal(amount)
-                                bank_account.balance = new_balance
-                                bank_account.save()
-
-
-                                transaction.status = "COMPLETE"
-                                transaction.save()
-
-                                print(f"2.3.3.3.3")
-
-                    except ObjectDoesNotExist:
-                        transaction.status = "PENDING"
-                        transaction.save()
-
+                        except ObjectDoesNotExist:
+                            transaction.status = "PENDING"
+                            transaction.save()
 
         except ObjectDoesNotExist:
             print(f"School is none")

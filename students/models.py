@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import DO_NOTHING
+from rest_framework.exceptions import ValidationError
 
 from academic_year.models import AcademicYear
 from classes.models import Classes
@@ -13,7 +14,7 @@ class Student(ParentModel):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     gender = models.CharField(max_length=6, default="BOY")
-    admission_number = models.CharField(max_length=20, unique=True)
+    admission_number = models.CharField(max_length=20)
     date_of_admission = models.CharField(max_length=255, null=True, default="None")
     guardian_name = models.CharField(max_length=255)
     guardian_phone = models.CharField(max_length=15)
@@ -33,14 +34,18 @@ class Student(ParentModel):
             self.last_name = self.last_name.upper()
         if self.gender:
             self.gender = self.gender.upper()
-        if self.admission_number:
-            self.admission_number = self.admission_number.upper()
         if self.guardian_name:
             self.guardian_name = self.guardian_name.upper()
         if self.guardian_phone:
             self.guardian_phone = self.guardian_phone.upper()
         if self.boarding_status:
             self.boarding_status = self.boarding_status.upper()
+        if self.admission_number:
+            # self.admission_number = self.admission_number.upper()
+            existing_student = Student.objects.filter(admission_number=self.admission_number,school_id=self.school_id).exclude(pk=self.pk).first()
+            if existing_student:
+                raise ValidationError({'detail': 'Student with the same admission number and school_id already exists.'})
+
         super().save(*args, **kwargs)
 
     def __str__(self):
