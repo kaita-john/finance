@@ -23,17 +23,17 @@ class VoteHead(ParentModel):
             self.folio_number = self.folio_number.upper()
             existing_folio_head = VoteHead.objects.filter(folio_number=self.folio_number,school_id=self.school_id).exclude(pk=self.pk).first()
             if existing_folio_head:
-                raise ValidationError({'detail': 'VoteHead with the same folio number and school_id already exists.'})
+                raise ValidationError({'VoteHead with the same folio number and school_id already exists.'})
 
         if self.priority_number:
             self.priority_number = self.priority_number.upper()
             existing_priority_head = VoteHead.objects.filter(priority_number=self.priority_number,school_id=self.school_id).exclude(pk=self.pk).first()
             if existing_priority_head:
-                raise ValidationError({'detail': 'VoteHead with the same priority number and school_id already exists.'})
+                raise ValidationError({'VoteHead with the same priority number and school_id already exists.'})
 
         existing_votehead = VoteHead.objects.filter(vote_head_name=self.vote_head_name,school_id=self.school_id).exclude(pk=self.pk).first()
         if existing_votehead:
-            raise ValidationError({'detail': 'VoteHead with the same name and school_id already exists.'})
+            raise ValidationError({'VoteHead with the same name and school_id already exists.'})
 
         if self.is_Overpayment_Default:
             VoteHead.objects.filter(school_id=self.school_id).exclude(pk=self.pk).update(is_Overpayment_Default=False)

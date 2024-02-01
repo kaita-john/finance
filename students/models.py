@@ -44,7 +44,7 @@ class Student(ParentModel):
             # self.admission_number = self.admission_number.upper()
             existing_student = Student.objects.filter(admission_number=self.admission_number,school_id=self.school_id).exclude(pk=self.pk).first()
             if existing_student:
-                raise ValidationError({'detail': 'Student with the same admission number and school_id already exists.'})
+                raise ValidationError({'Student with the same admission number and school_id already exists.'})
 
         super().save(*args, **kwargs)
 

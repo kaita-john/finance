@@ -24,7 +24,7 @@ class BankAccount(ParentModel):
             self.account_number = self.account_number.upper()
             existing_account = BankAccount.objects.filter(account_number=self.account_number,school=self.school).exclude(pk=self.pk).first()
             if existing_account:
-                raise ValidationError( {'detail': 'Bank account with the same account number and school already exists.'})
+                raise ValidationError( {'Bank account with the same account number and school already exists.'})
         if self.is_default:
             BankAccount.objects.filter(school=self.school).exclude(pk=self.pk).update(is_default=False)
         super().save(*args, **kwargs)
