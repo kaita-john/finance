@@ -370,6 +370,6 @@ class DefaultMixin:
             raise ValidationError({'detail': 'Default Account Type not set for this school!'})
         if not getdefaultBankAccount:
             raise ValidationError({'detail': 'Default Bank Account not set for this school!'})
-        if not getdefaultIntegrationPaymentMethod:
-            raise ValidationError({'detail': 'Default Integration Payment Method not set for this school!'})
+        # if not getdefaultIntegrationPaymentMethod:
+        #     raise ValidationError({'detail': 'Default Integration Payment Method not set for this school!'})
 
