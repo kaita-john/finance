@@ -12,13 +12,13 @@ class PaymentMethod(ParentModel):
     is_bank = models.BooleanField(default=False, null=True)
     is_cheque = models.BooleanField(default=False, null=True)
     school = models.ForeignKey(School, default=None, null=True, on_delete=DO_NOTHING, related_name="paymentmethods")
-    is_mpesa_default = models.BooleanField(default=False)
+    is_mpesa_integration = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.name:
             self.name = self.name.upper()
-        if not any([self.is_cash, self.is_bank, self.is_cheque, self.is_mpesa_default]):
-            raise ValidationError('Select at least one payment method (is_cash, is_bank, or is_cheque, is_mpesa_default).')
+        if not any([self.is_cash, self.is_bank, self.is_cheque]):
+            raise ValidationError('Select at least one payment method (is_cash, is_bank, or is_cheque).')
 
         super().save(*args, **kwargs)
 

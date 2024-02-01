@@ -224,7 +224,7 @@ def defaultBankAccount(school_id):
 
 def default_MpesaPaymentMethod(school_id):
     try:
-        return PaymentMethod.objects.get(is_mpesa_default=True, school = school_id)
+        return PaymentMethod.objects.get(is_mpesa_integration=True, school = school_id)
     except PaymentMethod.DoesNotExist:
         return None
 
