@@ -242,7 +242,7 @@ def defaultconfiguration(school_id):
 
 def defaultVoteHeadConfiguration(school_id):
     try:
-        return VoteheadConfiguration.objects.get(school = school_id)
+        return VoteheadConfiguration.objects.get(school_id = school_id)
     except VoteheadConfiguration.DoesNotExist:
         return None
 
