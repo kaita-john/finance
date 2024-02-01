@@ -19,8 +19,6 @@ class VoteHead(ParentModel):
     ledget_folio_number_lf = models.CharField(max_length=255,  default=None, blank=True, null=True)
 
     def save(self, *args, **kwargs):
-
-
         if self.folio_number:
             self.folio_number = self.folio_number.upper()
             existing_folio_head = VoteHead.objects.filter(folio_number=self.folio_number,school_id=self.school_id).exclude(pk=self.pk).first()
@@ -42,6 +40,7 @@ class VoteHead(ParentModel):
 
         if self.is_Arrears_Default:
             VoteHead.objects.filter(school_id=self.school_id).exclude(pk=self.pk).update(is_Arrears_Default=False)
+
         super().save(*args, **kwargs)
 
 

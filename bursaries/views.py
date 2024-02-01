@@ -64,6 +64,7 @@ class BursaryCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
 
             try:
                 with transaction.atomic():
+
                     busary = serializer.save()
                     busary.currency = currency
                     busary.save()

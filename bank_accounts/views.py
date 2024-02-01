@@ -28,7 +28,10 @@ class BankAccountCreateView(SchoolIdMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.validated_data['school'] = school
-            self.perform_create(serializer)
+            try:
+                self.perform_create(serializer)
+            except Exception as exception:
+                return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
             return Response({'detail': 'BankAccount created successfully'}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -87,7 +90,10 @@ class BankAccountDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView
                 get_currency = get_object_or_404(Currency, id=currency)
                 serializer.validated_data['currency'] = get_currency
             serializer.validated_data['school_id'] = school_id
-            self.perform_update(serializer)
+            try:
+                self.perform_update(serializer)
+            except Exception as exception:
+                return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
             return Response({'detail': 'BankAccount updated successfully'}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

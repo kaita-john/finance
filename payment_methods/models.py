@@ -18,7 +18,8 @@ class PaymentMethod(ParentModel):
         if self.name:
             self.name = self.name.upper()
         if not any([self.is_cash, self.is_bank, self.is_cheque]):
-            raise ValidationError('Select at least one payment method (is_cash, is_bank, or is_cheque).')
+            raise ValidationError('Select at least one payment method (is_cash, is_bank, or is_cheque, is_mpesa_default).')
+
         super().save(*args, **kwargs)
 
     def __str__(self):

@@ -19,12 +19,10 @@ class PaymentMethodCreateView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-
             try:
                 self.perform_create(serializer)
             except Exception as exception:
                 return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
-
             return Response({'detail': 'PaymentMethod created successfully'}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -65,7 +63,10 @@ class PaymentMethodDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
-            self.perform_update(serializer)
+            try:
+                self.perform_update(serializer)
+            except Exception as exception:
+                return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
             return Response({'detail': 'PaymentMethod updated successfully'}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
