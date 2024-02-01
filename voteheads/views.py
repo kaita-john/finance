@@ -12,7 +12,7 @@ from .models import VoteHead
 from .serializers import VoteHeadSerializer, VoteHeadCreateSerializer
 
 
-class VoteHeadCreateView(SchoolIdMixin, generics.CreateAPIView):
+class VoteHeadCreateView(SchoolIdMixin,  generics.CreateAPIView):
     serializer_class = VoteHeadCreateSerializer
     permission_classes = [IsAuthenticated]
 

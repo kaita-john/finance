@@ -10,7 +10,7 @@ from rest_framework.response import Response
 
 from account_types.models import AccountType
 from currencies.models import Currency
-from utils import SchoolIdMixin, UUID_from_PrimaryKey
+from utils import SchoolIdMixin, UUID_from_PrimaryKey, DefaultMixin
 from .models import BankAccount
 from .serializers import BankAccountSerializer
 

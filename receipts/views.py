@@ -22,7 +22,7 @@ from financial_years.models import FinancialYear
 from invoices.models import Invoice
 from reportss.models import trackBalance
 from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, defaultCurrency, currentAcademicYear, \
-    currentTerm
+    currentTerm, DefaultMixin
 from voteheads.models import VoteHead, VoteheadConfiguration
 from .models import Receipt
 from .serializers import ReceiptSerializer
@@ -301,7 +301,7 @@ def autoCollection(self, request, school_id, auto_configuration_type, current_fi
         return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
+class ReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = ReceiptSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -309,6 +309,7 @@ class ReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         try:
             current_financial_year = FinancialYear.objects.get(is_current=True, school=school_id)
@@ -334,7 +335,7 @@ class ReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class ReceiptListView(SchoolIdMixin, generics.ListAPIView):
+class ReceiptListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = ReceiptSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
     pagination_class = PageNumberPagination
@@ -343,6 +344,8 @@ class ReceiptListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Receipt.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = Receipt.objects.filter(school_id=school_id)
 
         is_reversed_param = self.request.query_params.get('reversed', None)
@@ -370,7 +373,7 @@ class ReceiptListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class ReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class ReceiptDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Receipt.objects.all()
     serializer_class = ReceiptSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -387,6 +390,7 @@ class ReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()

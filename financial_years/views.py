@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from utils import SchoolIdMixin, IsAdminOrSuperUser, close_financial_year
+from utils import SchoolIdMixin, IsAdminOrSuperUser, close_financial_year, DefaultMixin
 from financial_years.models import FinancialYear
 from .serializers import FinancialYearSerializer
 
@@ -39,6 +39,7 @@ class FinancialYearListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return FinancialYear.objects.none()
+
         queryset = FinancialYear.objects.filter(school=school_id)
         return queryset
 
@@ -92,13 +93,14 @@ class FinancialYearDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIVi
         return Response({'detail': 'Record deleted successfully'}, status=status.HTTP_200_OK)
 
 
-class CloseFinancialYearView(APIView, SchoolIdMixin):
+class CloseFinancialYearView(APIView, DefaultMixin, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def get(self, request):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         current_financial_year = request.GET.get('current_financial_year')
         new_financial_year = request.GET.get('new_financial_year')

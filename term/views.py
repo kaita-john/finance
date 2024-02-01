@@ -1,13 +1,12 @@
 # Create your views here.
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import JsonResponse
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from academic_year.models import AcademicYear
-from utils import SchoolIdMixin, UUID_from_PrimaryKey, IsAdminOrSuperUser
+from utils import SchoolIdMixin, UUID_from_PrimaryKey, IsAdminOrSuperUser, DefaultMixin
 from .models import Term
 from .serializers import TermSerializer
 
@@ -30,7 +29,6 @@ class TermCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-from django.http import JsonResponse
 
 class TermListView(SchoolIdMixin, generics.ListAPIView):
     serializer_class = TermSerializer
@@ -99,12 +97,13 @@ class TermDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
 
 
 
-class CurrentTermView(APIView, SchoolIdMixin):
+class CurrentTermView(APIView, DefaultMixin, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
     def get(self, request):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         try:
             student = Term.objects.get(is_current=True, school_id = school_id)

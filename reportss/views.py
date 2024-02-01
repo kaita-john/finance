@@ -34,14 +34,15 @@ from reportss.utils import getBalance, getBalancesByAccount, getBalancesByFinanc
 from students.models import Student
 from students.serializers import StudentSerializer
 from term.models import Term
-from utils import SchoolIdMixin, currentAcademicYear, currentTerm, IsAdminOrSuperUser, check_if_object_exists
+from utils import SchoolIdMixin, currentAcademicYear, currentTerm, IsAdminOrSuperUser, check_if_object_exists, \
+    DefaultMixin
 from voteheads.models import VoteHead
 from voteheads.serializers import VoteHeadSerializer
 from voucher_items.models import VoucherItem
 from vouchers.models import Voucher
 
 
-class ReportStudentBalanceView(APIView, SchoolIdMixin):
+class ReportStudentBalanceView(APIView, DefaultMixin, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def calculate(self, school_id, queryset, startdate, enddate, boardingstatus, term, year):
@@ -129,6 +130,7 @@ class ReportStudentBalanceView(APIView, SchoolIdMixin):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         try:
             queryset = Student.objects.filter(school_id=school_id)
@@ -183,7 +185,7 @@ class ReportStudentBalanceView(APIView, SchoolIdMixin):
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class FilterStudents(APIView, SchoolIdMixin):
+class FilterStudents(APIView, DefaultMixin, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
     model = Student
 
@@ -191,6 +193,7 @@ class FilterStudents(APIView, SchoolIdMixin):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         currentClass = request.GET.get('currentClass')
         currentStream = request.GET.get('currentStream')
@@ -233,7 +236,7 @@ class FilterStudents(APIView, SchoolIdMixin):
             return Response({'detail': f"{exception}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class StudentTransactionsPrint(SchoolIdMixin, generics.RetrieveAPIView):
+class StudentTransactionsPrint(SchoolIdMixin, DefaultMixin, generics.RetrieveAPIView):
     queryset = Student.objects.filter()
     serializer_class = StudentSerializer
     lookup_field = 'pk'
@@ -246,6 +249,7 @@ class StudentTransactionsPrint(SchoolIdMixin, generics.RetrieveAPIView):
             school_id = self.check_school_id(request)
             if not school_id:
                 return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+            self.check_defaults(self.request, school_id)
 
             startdate = request.GET.get('startdate')
             enddate = request.GET.get('enddate')
@@ -388,7 +392,7 @@ class StudentTransactionsPrint(SchoolIdMixin, generics.RetrieveAPIView):
 
 
 
-class StudentCollectionListView(SchoolIdMixin, generics.RetrieveAPIView):
+class StudentCollectionListView(SchoolIdMixin, DefaultMixin, generics.RetrieveAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
     lookup_field = 'pk'
@@ -403,6 +407,7 @@ class StudentCollectionListView(SchoolIdMixin, generics.RetrieveAPIView):
             school_id = self.check_school_id(request)
             if not school_id:
                 return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+            self.check_defaults(self.request, school_id)
 
             startdate = request.GET.get('startdate')
             enddate = request.GET.get('enddate')
@@ -435,7 +440,7 @@ class StudentCollectionListView(SchoolIdMixin, generics.RetrieveAPIView):
         return Response({"detail": serializer.data})
 
 
-class IncomeSummaryView(SchoolIdMixin, generics.GenericAPIView):
+class IncomeSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
@@ -446,6 +451,7 @@ class IncomeSummaryView(SchoolIdMixin, generics.GenericAPIView):
             school_id = self.check_school_id(request)
             if not school_id:
                 return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+            self.check_defaults(self.request, school_id)
 
             orderby = request.GET.get('orderby')
             accounttype = request.GET.get('accounttype')
@@ -553,7 +559,7 @@ class IncomeSummaryView(SchoolIdMixin, generics.GenericAPIView):
         return Response({"detail": thedata})
 
 
-class ExpenseSummaryView(SchoolIdMixin, generics.GenericAPIView):
+class ExpenseSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
@@ -563,6 +569,7 @@ class ExpenseSummaryView(SchoolIdMixin, generics.GenericAPIView):
             school_id = self.check_school_id(request)
             if not school_id:
                 return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+            self.check_defaults(self.request, school_id)
 
             orderby = request.GET.get('orderby')
             accounttype = request.GET.get('accounttype')
@@ -647,7 +654,7 @@ class ExpenseSummaryView(SchoolIdMixin, generics.GenericAPIView):
 
 
 
-class ReceivedChequesView(SchoolIdMixin, generics.GenericAPIView):
+class ReceivedChequesView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
@@ -657,6 +664,7 @@ class ReceivedChequesView(SchoolIdMixin, generics.GenericAPIView):
             school_id = self.check_school_id(request)
             if not school_id:
                 return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+            self.check_defaults(self.request, school_id)
 
             querysetCollections = Collection.objects.filter(
                 receipt__is_reversed=False,
@@ -722,7 +730,7 @@ class ReceivedChequesView(SchoolIdMixin, generics.GenericAPIView):
 
 
 
-class CashBookView(SchoolIdMixin, generics.GenericAPIView):
+class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
@@ -730,6 +738,7 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         try:
             school_id = self.check_school_id(request)
@@ -1053,7 +1062,7 @@ class CashBookView(SchoolIdMixin, generics.GenericAPIView):
 
 
 
-class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
+class FeeRegisterView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
@@ -1061,6 +1070,7 @@ class FeeRegisterView(SchoolIdMixin, generics.GenericAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         try:
             school_id = self.check_school_id(request)
@@ -1318,7 +1328,7 @@ def getMonthly_Balances(month, school_Id):
 
 
 
-class LedgerView(SchoolIdMixin, generics.GenericAPIView):
+class LedgerView(SchoolIdMixin,  DefaultMixin, generics.GenericAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
@@ -1326,6 +1336,7 @@ class LedgerView(SchoolIdMixin, generics.GenericAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         school_id = self.check_school_id(request)
         if not school_id:
@@ -1476,7 +1487,7 @@ class LedgerView(SchoolIdMixin, generics.GenericAPIView):
 
 
 
-class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
+class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
@@ -1484,6 +1495,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         school_id = self.check_school_id(request)
         if not school_id:
@@ -1709,7 +1721,7 @@ class TrialBalanceView(SchoolIdMixin, generics.GenericAPIView):
 
 
 
-class NotesView(SchoolIdMixin, generics.GenericAPIView):
+class NotesView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
@@ -1717,6 +1729,7 @@ class NotesView(SchoolIdMixin, generics.GenericAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         school_id = self.check_school_id(request)
         if not school_id:

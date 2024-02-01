@@ -10,12 +10,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from invoices.models import Invoice
-from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code
+from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, DefaultMixin
 from .models import Collection
 from .serializers import CollectionSerializer
 
 
-class CollectionCreateView(SchoolIdMixin, generics.CreateAPIView):
+class CollectionCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = CollectionSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -23,6 +23,7 @@ class CollectionCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         amount = request.data.get('amount')
         student = request.data.get('student')
@@ -52,7 +53,7 @@ class CollectionCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CollectionListView(SchoolIdMixin, generics.ListAPIView):
+class CollectionListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = CollectionSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -60,6 +61,7 @@ class CollectionListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Collection.objects.none()
+        self.check_defaults(self.request, school_id)
         queryset = Collection.objects.filter(school_id=school_id).order_by('-transaction_date')
         return queryset
 
@@ -78,7 +80,7 @@ class CollectionListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class CollectionDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class CollectionDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -96,6 +98,7 @@ class CollectionDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView)
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -114,6 +117,7 @@ class CollectionDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView)
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
         self.perform_destroy(instance)
@@ -122,7 +126,7 @@ class CollectionDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView)
 
 
 
-class OverpaymentCollectionListView(SchoolIdMixin, generics.ListAPIView):
+class OverpaymentCollectionListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = CollectionSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
     pagination_class = PageNumberPagination
@@ -131,6 +135,7 @@ class OverpaymentCollectionListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Collection.objects.none()
+        self.check_defaults(self.request, school_id)
         queryset = Collection.objects.filter(school_id=school_id, votehead__is_Overpayment_Default=True).order_by('-transaction_date')
         return queryset
 

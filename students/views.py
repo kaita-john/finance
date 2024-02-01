@@ -27,14 +27,14 @@ from receipts.models import Receipt
 from schoolgroups.models import SchoolGroup
 from term.models import Term
 from utils import SchoolIdMixin, UUID_from_PrimaryKey, currentAcademicYear, currentTerm, IsAdminOrSuperUser, \
-    generate_unique_code
+    generate_unique_code, DefaultMixin
 from voteheads.models import VoteHead
 from voteheads.serializers import VoteHeadSerializer
 from .models import Student
 from .serializers import StudentSerializer
 
 
-class StudentCreateView(SchoolIdMixin, generics.CreateAPIView):
+class StudentCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
 
@@ -42,6 +42,7 @@ class StudentCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -65,7 +66,7 @@ class StudentCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class StudentListView(SchoolIdMixin, generics.ListAPIView):
+class StudentListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
 
@@ -73,6 +74,8 @@ class StudentListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Student.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = Student.objects.filter(school_id=school_id)
         return queryset
 
@@ -96,7 +99,7 @@ class StudentListView(SchoolIdMixin, generics.ListAPIView):
         return JsonResponse(serializer.data, safe=False)
 
 
-class StudentDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class StudentDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
@@ -113,6 +116,7 @@ class StudentDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -137,7 +141,7 @@ class StudentDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         return Response({'detail': 'Record deleted successfully'}, status=status.HTTP_200_OK)
 
 
-class StudentBalanceDetailView(SchoolIdMixin, generics.RetrieveAPIView):
+class StudentBalanceDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
     lookup_field = 'pk'
@@ -149,6 +153,7 @@ class StudentBalanceDetailView(SchoolIdMixin, generics.RetrieveAPIView):
             school_id = self.check_school_id(request)
             if not school_id:
                 return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+            self.check_defaults(self.request, school_id)
 
             year = request.GET.get('year')
             term = request.GET.get('term')
@@ -192,13 +197,14 @@ class StudentBalanceDetailView(SchoolIdMixin, generics.RetrieveAPIView):
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class StudentSearchByAdmissionNumber(APIView, SchoolIdMixin):
+class StudentSearchByAdmissionNumber(APIView, DefaultMixin, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def get(self, request):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         admissionNumber = request.GET.get('admission')
 
@@ -216,13 +222,14 @@ class StudentSearchByAdmissionNumber(APIView, SchoolIdMixin):
         return Response({'detail': serialized_data}, status=status.HTTP_200_OK)
 
 
-class GetStudentsByClass(APIView, SchoolIdMixin):
+class GetStudentsByClass(APIView, DefaultMixin, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def get(self, request):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         currentClass = request.GET.get('currentClass')
 
@@ -246,7 +253,7 @@ class GetStudentsByClass(APIView, SchoolIdMixin):
         return Response({'detail': serialized_data}, status=status.HTTP_200_OK)
 
 
-class GetStudentInvoicedVotehead(SchoolIdMixin, generics.RetrieveAPIView):
+class GetStudentInvoicedVotehead(SchoolIdMixin, DefaultMixin, generics.RetrieveAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
     lookup_field = 'pk'
@@ -257,6 +264,7 @@ class GetStudentInvoicedVotehead(SchoolIdMixin, generics.RetrieveAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         year = request.GET.get('year')
         term = request.GET.get('term')
@@ -308,7 +316,7 @@ class GetStudentInvoicedVotehead(SchoolIdMixin, generics.RetrieveAPIView):
 
 
 
-class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
+class UploadStudentCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
 
@@ -316,6 +324,7 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
 
         classes = request.GET.get('classes')
@@ -405,13 +414,14 @@ class UploadStudentCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class UploadStudentBalancesView(APIView, SchoolIdMixin):
+class UploadStudentBalancesView(APIView, DefaultMixin, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def post(self, request):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         try:
             current_financial_year = FinancialYear.objects.get(school=school_id, is_current=True)
@@ -526,13 +536,14 @@ class UploadStudentBalancesView(APIView, SchoolIdMixin):
 
 
 
-class UploadSingleStudentBalance(APIView, SchoolIdMixin):
+class UploadSingleStudentBalance(APIView, DefaultMixin, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def post(self, request):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         try:
 

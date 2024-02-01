@@ -10,12 +10,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from invoices.models import Invoice
-from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code
+from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, DefaultMixin
 from .models import PaymentInKind
 from .serializers import PaymentInKindSerializer
 
 
-class PaymentInKindCreateView(SchoolIdMixin, generics.CreateAPIView):
+class PaymentInKindCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = PaymentInKindSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -23,6 +23,7 @@ class PaymentInKindCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         amount = request.data.get('amount')
         student = request.data.get('student')
@@ -51,7 +52,7 @@ class PaymentInKindCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PaymentInKindListView(SchoolIdMixin, generics.ListAPIView):
+class PaymentInKindListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = PaymentInKindSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -59,6 +60,8 @@ class PaymentInKindListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return PaymentInKind.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = PaymentInKind.objects.filter(school_id=school_id).order_by('-transaction_date')
         return queryset
 
@@ -77,7 +80,7 @@ class PaymentInKindListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class PaymentInKindDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class PaymentInKindDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = PaymentInKind.objects.all()
     serializer_class = PaymentInKindSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -95,6 +98,7 @@ class PaymentInKindDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIVi
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -113,6 +117,7 @@ class PaymentInKindDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIVi
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
         self.perform_destroy(instance)

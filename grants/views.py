@@ -22,13 +22,13 @@ from receipts.models import Receipt
 from reportss.models import trackBalance
 from students.models import Student
 from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, generate_unique_code, defaultCurrency, \
-    currentAcademicYear, currentTerm, defaultAccountType, currentFinancialYear
+    currentAcademicYear, currentTerm, defaultAccountType, currentFinancialYear, DefaultMixin
 from voteheads.models import VoteHead
 from .models import Grant
 from .serializers import GrantSerializer
 
 
-class GrantCreateView(SchoolIdMixin, generics.CreateAPIView):
+class GrantCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = GrantSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -36,6 +36,7 @@ class GrantCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -104,7 +105,7 @@ class GrantCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class GrantListView(SchoolIdMixin, generics.ListAPIView):
+class GrantListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = GrantSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -112,6 +113,8 @@ class GrantListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Grant.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = Grant.objects.filter(school_id=school_id, deleted=False)
         return queryset
 
@@ -124,7 +127,7 @@ class GrantListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class GrantDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class GrantDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Grant.objects.all()
     serializer_class = GrantSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -141,6 +144,7 @@ class GrantDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -212,6 +216,7 @@ class GrantDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
 

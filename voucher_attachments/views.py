@@ -7,12 +7,12 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, IsAdminOrSuperUser
+from utils import SchoolIdMixin, IsAdminOrSuperUser, DefaultMixin
 from .models import VoucherAttachment
 from .serializers import Voucherattachmentserializer
 
 
-class VoucherAttachmentCreateView(SchoolIdMixin, generics.CreateAPIView):
+class VoucherAttachmentCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = Voucherattachmentserializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -20,6 +20,7 @@ class VoucherAttachmentCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -31,7 +32,7 @@ class VoucherAttachmentCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class VoucherAttachmentListView(SchoolIdMixin, generics.ListAPIView):
+class VoucherAttachmentListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = Voucherattachmentserializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -40,6 +41,8 @@ class VoucherAttachmentListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return VoucherAttachment.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = VoucherAttachment.objects.filter(school_id=school_id)
         return queryset
 
@@ -52,7 +55,7 @@ class VoucherAttachmentListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class VoucherAttachmentDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class VoucherAttachmentDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = VoucherAttachment.objects.all()
     serializer_class = Voucherattachmentserializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -70,6 +73,7 @@ class VoucherAttachmentDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyA
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -88,6 +92,7 @@ class VoucherAttachmentDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyA
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
         self.perform_destroy(instance)

@@ -9,12 +9,12 @@ from rest_framework.response import Response
 
 from fee_structures_items.models import FeeStructureItem
 from fee_structures_items.serializers import FeeStructureItemSerializer
-from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, currentAcademicYear
+from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, currentAcademicYear, DefaultMixin
 from .models import FeeStructure
 from .serializers import FeeStructureSerializer
 
 
-class FeeStructureCreateView(SchoolIdMixin, generics.CreateAPIView):
+class FeeStructureCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = FeeStructureSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -22,6 +22,7 @@ class FeeStructureCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -55,7 +56,7 @@ class FeeStructureCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class FeeStructureListView(SchoolIdMixin, generics.ListAPIView):
+class FeeStructureListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = FeeStructureSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -63,6 +64,8 @@ class FeeStructureListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return FeeStructure.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = FeeStructure.objects.filter(school_id=school_id)
         return queryset
 
@@ -75,7 +78,7 @@ class FeeStructureListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class FeeStructureDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class FeeStructureDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = FeeStructure.objects.all()
     serializer_class = FeeStructureSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -92,6 +95,7 @@ class FeeStructureDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIVie
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -123,6 +127,7 @@ class FeeStructureDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIVie
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
         self.perform_destroy(instance)

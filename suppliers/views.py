@@ -6,12 +6,12 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, UUID_from_PrimaryKey
+from utils import SchoolIdMixin, UUID_from_PrimaryKey, DefaultMixin
 from .models import Supplier
 from .serializers import SupplierSerializer
 
 
-class SupplierCreateView(SchoolIdMixin, generics.CreateAPIView):
+class SupplierCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = SupplierSerializer
     permission_classes = [IsAuthenticated]
 
@@ -19,6 +19,7 @@ class SupplierCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -30,7 +31,7 @@ class SupplierCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class SupplierListView(SchoolIdMixin, generics.ListAPIView):
+class SupplierListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = SupplierSerializer
     permission_classes = [IsAuthenticated]
 
@@ -38,6 +39,8 @@ class SupplierListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Supplier.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = Supplier.objects.filter(school=school_id)
         return queryset
 
@@ -49,7 +52,7 @@ class SupplierListView(SchoolIdMixin, generics.ListAPIView):
         return JsonResponse(serializer.data, safe=False)
 
 
-class SupplierDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class SupplierDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
     permission_classes = [IsAuthenticated]
@@ -66,6 +69,7 @@ class SupplierDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -84,6 +88,7 @@ class SupplierDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
         self.perform_destroy(instance)

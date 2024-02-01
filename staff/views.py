@@ -6,12 +6,12 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, UUID_from_PrimaryKey
+from utils import SchoolIdMixin, UUID_from_PrimaryKey, DefaultMixin
 from .models import Staff
 from .serializers import StaffSerializer
 
 
-class StaffCreateView(SchoolIdMixin, generics.CreateAPIView):
+class StaffCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = StaffSerializer
     permission_classes = [IsAuthenticated]
 
@@ -19,6 +19,7 @@ class StaffCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -30,7 +31,7 @@ class StaffCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class StaffListView(SchoolIdMixin, generics.ListAPIView):
+class StaffListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = StaffSerializer
     permission_classes = [IsAuthenticated]
 
@@ -38,6 +39,8 @@ class StaffListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Staff.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = Staff.objects.filter(school=school_id)
         return queryset
 
@@ -49,7 +52,7 @@ class StaffListView(SchoolIdMixin, generics.ListAPIView):
         return JsonResponse(serializer.data, safe=False)
 
 
-class StaffDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class StaffDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Staff.objects.all()
     serializer_class = StaffSerializer
     permission_classes = [IsAuthenticated]
@@ -66,6 +69,7 @@ class StaffDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -84,6 +88,7 @@ class StaffDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
         self.perform_destroy(instance)

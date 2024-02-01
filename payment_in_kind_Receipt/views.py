@@ -23,13 +23,13 @@ from payment_in_kinds.serializers import PaymentInKindSerializer
 from receipts.models import Receipt
 from reportss.models import trackBalance
 from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, defaultCurrency, currentAcademicYear, \
-    currentTerm
+    currentTerm, DefaultMixin
 from voteheads.models import VoteHead
 from .models import PIKReceipt
 from .serializers import PIKReceiptSerializer
 
 
-class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
+class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = PIKReceiptSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -37,6 +37,7 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         try:
             current_financial_year = FinancialYear.objects.get(is_current=True, school=school_id)
@@ -193,7 +194,7 @@ class PIKReceiptCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class PIKReceiptListView(SchoolIdMixin, generics.ListAPIView):
+class PIKReceiptListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = PIKReceiptSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
     pagination_class = PageNumberPagination
@@ -202,6 +203,8 @@ class PIKReceiptListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return PIKReceipt.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = PIKReceipt.objects.filter(school_id=school_id)
 
         is_posted = self.request.query_params.get('posted', None)
@@ -231,7 +234,7 @@ class PIKReceiptListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class PIKReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class PIKReceiptDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = PIKReceipt.objects.all()
     serializer_class = PIKReceiptSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -248,6 +251,7 @@ class PIKReceiptDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView)
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()

@@ -18,9 +18,11 @@ from academic_year.models import AcademicYear
 from account_types.models import AccountType
 from appcollections.models import Collection
 from bank_accounts.models import BankAccount
+from configurations.models import Configuration
 from currencies.models import Currency
 from finance.settings import SIMPLE_JWT
 from financial_years.models import FinancialYear
+from mpesa_configs.models import Mpesaconfig
 from payment_in_kinds.models import PaymentInKind
 from payment_methods.models import PaymentMethod
 from reportss.models import OpeningClosingBalances
@@ -38,6 +40,8 @@ class BaseUserModel(models.Model):
 
     class Meta:
         abstract = True
+
+
 
 
 class SchoolIdMixin:
@@ -167,6 +171,9 @@ def file_upload(instance, filename):
     return os.path.join(upload_to, filename)
 
 
+
+
+
 def currentAcademicYear(school_id):
     try:
         return AcademicYear.objects.get(is_current=True, school_id=school_id)
@@ -179,13 +186,11 @@ def currentFinancialYear(school_id):
     except FinancialYear.DoesNotExist:
         return None
 
-
 def currentTerm(school_id):
     try:
         return Term.objects.get(is_current=True , school_id=school_id)
     except Term.DoesNotExist:
         return None
-
 
 def defaultCurrency(school_id):
     try:
@@ -193,11 +198,15 @@ def defaultCurrency(school_id):
     except Currency.DoesNotExist:
         return None
 
-
-
 def defaultOverpaymentVoteHead(school_id):
     try:
         return VoteHead.objects.get(is_Overpayment_Default=True, school_id=school_id)
+    except VoteHead.DoesNotExist:
+        return None
+
+def defaultArrearVoteHead(school_id):
+    try:
+        return VoteHead.objects.get(is_Arrears_Default=True, school_id=school_id)
     except VoteHead.DoesNotExist:
         return None
 
@@ -207,21 +216,32 @@ def defaultAccountType(school_id):
     except AccountType.DoesNotExist:
         return None
 
-
-
 def defaultBankAccount(school_id):
     try:
         return BankAccount.objects.get(is_default=True, school = school_id)
     except BankAccount.DoesNotExist:
         return None
 
-
-
 def defaultIntegrationPaymentMethod(school_id):
     try:
         return PaymentMethod.objects.get(is_integration_default=True, school = school_id)
     except PaymentMethod.DoesNotExist:
         return None
+
+def defaultMpesaConfiguration(school_id):
+    try:
+        return Mpesaconfig.objects.get(school_id = school_id)
+    except Mpesaconfig.DoesNotExist:
+        return None
+
+
+def defaultconfiguration(school_id):
+    try:
+        return Configuration.objects.get(school = school_id)
+    except Configuration.DoesNotExist:
+        return None
+
+
 
 
 
@@ -231,6 +251,8 @@ def check_if_object_exists(Model, obj_id):
         return True
     except ObjectDoesNotExist:
         return Response({'detail': f"{obj_id} is not a valid uuid"}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 
@@ -300,5 +322,57 @@ def close_financial_year(current_financial_year,new_financial_year, school_id):
 
     except Exception as exception:
         return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+class DefaultMixin:
+    def check_defaults(self, request, school_id):
+
+        getdefaultconfiguration = defaultconfiguration(school_id)
+        # getdefaultMpesaConfiguration = defaultMpesaConfiguration(school_id)
+        getcurrentTerm = currentTerm(school_id)
+        getcurrentAcademicYear = currentAcademicYear(school_id)
+        getcurrentFinancialYear = currentFinancialYear(school_id)
+        getdefaultCurrency = defaultCurrency(school_id)
+        getdefaultOverpaymentVoteHead = defaultOverpaymentVoteHead(school_id)
+        getdefaultArrearVoteHead = defaultArrearVoteHead(school_id)
+        getdefaultAccountType = defaultAccountType(school_id)
+        getdefaultBankAccount = defaultBankAccount(school_id)
+        getdefaultIntegrationPaymentMethod = defaultIntegrationPaymentMethod(school_id)
+
+
+        if not getdefaultconfiguration:
+            raise ValidationError({'detail': 'Configuration of Receipts and Voucher Numbering not set!'})
+        # if not getdefaultMpesaConfiguration:
+        #     raise ValidationError({'detail': 'Configuration of Mpesa not set for this school!'})
+        if not getcurrentTerm:
+            raise ValidationError({'detail': 'Current Term not set for this school!'})
+        if not getcurrentAcademicYear:
+            raise ValidationError({'detail': 'Current Academic Year not set for this school!'})
+        if not getcurrentFinancialYear:
+            raise ValidationError({'detail': 'Current Financial Year not set for this school!'})
+        if not getdefaultCurrency:
+            raise ValidationError({'detail': 'Default Currency not set for this school!'})
+        if not getdefaultOverpaymentVoteHead:
+            raise ValidationError({'detail': 'Default Overpayment VoteHead not set for this school!'})
+        if not getdefaultArrearVoteHead:
+            raise ValidationError({'detail': 'Default Arrears VoteHead not set for this school!'})
+        if not getdefaultAccountType:
+            raise ValidationError({'detail': 'Default Account Type not set for this school!'})
+        if not getdefaultBankAccount:
+            raise ValidationError({'detail': 'Default Bank Account not set for this school!'})
+        if not getdefaultIntegrationPaymentMethod:
+            raise ValidationError({'detail': 'Default Integration Payment Method not set for this school!'})
+
+
+
+
+
+
+
 
 

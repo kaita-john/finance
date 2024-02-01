@@ -6,12 +6,12 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, UUID_from_PrimaryKey
+from utils import SchoolIdMixin, UUID_from_PrimaryKey, DefaultMixin
 from .models import Budget
 from .serializers import BudgetSerializer
 
 
-class BudgetCreateView(SchoolIdMixin, generics.CreateAPIView):
+class BudgetCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = BudgetSerializer
     permission_classes = [IsAuthenticated]
 
@@ -19,6 +19,7 @@ class BudgetCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -35,7 +36,7 @@ class BudgetCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class BudgetListView(SchoolIdMixin, generics.ListAPIView):
+class BudgetListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = BudgetSerializer
     permission_classes = [IsAuthenticated]
 
@@ -43,6 +44,8 @@ class BudgetListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Budget.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = Budget.objects.filter(school_id=school_id)
         return queryset
 
@@ -54,7 +57,7 @@ class BudgetListView(SchoolIdMixin, generics.ListAPIView):
         return JsonResponse(serializer.data, safe=False)
 
 
-class BudgetDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class BudgetDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Budget.objects.all()
     serializer_class = BudgetSerializer
     permission_classes = [IsAuthenticated]
@@ -71,6 +74,7 @@ class BudgetDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()

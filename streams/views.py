@@ -7,12 +7,12 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, UUID_from_PrimaryKey
+from utils import SchoolIdMixin, UUID_from_PrimaryKey, DefaultMixin
 from .models import Stream
 from .serializers import StreamsSerializer
 
 
-class StreamsCreateView(SchoolIdMixin, generics.CreateAPIView):
+class StreamsCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = StreamsSerializer
     permission_classes = [IsAuthenticated]
 
@@ -20,6 +20,7 @@ class StreamsCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -30,7 +31,7 @@ class StreamsCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class StreamsListView(SchoolIdMixin, generics.ListAPIView):
+class StreamsListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = StreamsSerializer
     permission_classes = [IsAuthenticated]
 
@@ -38,6 +39,8 @@ class StreamsListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Stream.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = Stream.objects.filter(school_id=school_id)
         return queryset
 
@@ -50,7 +53,7 @@ class StreamsListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class StreamsDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class StreamsDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Stream.objects.all()
     serializer_class = StreamsSerializer
     permission_classes = [IsAuthenticated]
@@ -67,6 +70,7 @@ class StreamsDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -85,6 +89,7 @@ class StreamsDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
         self.perform_destroy(instance)

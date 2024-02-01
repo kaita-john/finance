@@ -11,7 +11,7 @@ from utils import SchoolIdMixin, fetchAllRoles
 from .serializers import RoleSerializer
 
 
-class RoleCreateView(SchoolIdMixin, generics.CreateAPIView):
+class RoleCreateView(SchoolIdMixin,  generics.CreateAPIView):
     serializer_class = RoleSerializer
     permission_classes = [IsAuthenticated]
 

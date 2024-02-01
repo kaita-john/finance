@@ -23,13 +23,13 @@ from receipts.models import Receipt
 from reportss.models import trackBalance
 from students.models import Student
 from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, generate_unique_code, defaultCurrency, \
-    currentAcademicYear, currentTerm, defaultAccountType
+    currentAcademicYear, currentTerm, defaultAccountType, DefaultMixin
 from voteheads.models import VoteheadConfiguration, VoteHead
 from .models import Bursary
 from .serializers import BursarySerializer
 
 
-class BursaryCreateView(SchoolIdMixin, generics.CreateAPIView):
+class BursaryCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = BursarySerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -37,6 +37,7 @@ class BursaryCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -88,14 +89,17 @@ class BursaryCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class BursaryListView(SchoolIdMixin, generics.ListAPIView):
+class BursaryListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = BursarySerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def get_queryset(self):
         school_id = self.check_school_id(self.request)
+        self.check_defaults(self.request, school_id)
+
         if not school_id:
             return Bursary.objects.none()
+        self.check_defaults(self.request, school_id)
         queryset = Bursary.objects.filter(school_id=school_id)
         return queryset
 
@@ -108,7 +112,7 @@ class BursaryListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class BursaryDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class BursaryDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Bursary.objects.all()
     serializer_class = BursarySerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -125,6 +129,7 @@ class BursaryDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -163,6 +168,7 @@ class BursaryDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
         self.perform_destroy(instance)
@@ -365,7 +371,7 @@ def autoBursary(self, request, school_id, auto_configuration_type, itemamount, b
 
 
 
-class PostBursaryDetailView(SchoolIdMixin, generics.UpdateAPIView):
+class PostBursaryDetailView(SchoolIdMixin, DefaultMixin, generics.UpdateAPIView):
     queryset = Bursary.objects.all()
     serializer_class = BursarySerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -375,6 +381,7 @@ class PostBursaryDetailView(SchoolIdMixin, generics.UpdateAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         bursary = self.get_object()
@@ -428,7 +435,7 @@ class PostBursaryDetailView(SchoolIdMixin, generics.UpdateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UnPostBursaryDetailView(SchoolIdMixin, generics.UpdateAPIView):
+class UnPostBursaryDetailView(SchoolIdMixin, DefaultMixin, generics.UpdateAPIView):
     queryset = Bursary.objects.all()
     serializer_class = BursarySerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -438,6 +445,7 @@ class UnPostBursaryDetailView(SchoolIdMixin, generics.UpdateAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         bursary = self.get_object()
 

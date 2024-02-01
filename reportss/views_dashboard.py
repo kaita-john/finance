@@ -16,12 +16,12 @@ from invoices.models import Invoice
 from payment_in_kinds.models import PaymentInKind
 from students.models import Student
 from students.serializers import StudentSerializer
-from utils import SchoolIdMixin
+from utils import SchoolIdMixin, DefaultMixin
 from voteheads.models import VoteHead
 from voucher_items.models import VoucherItem
 
 
-class DashboardView(SchoolIdMixin, generics.GenericAPIView):
+class DashboardView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
@@ -29,6 +29,7 @@ class DashboardView(SchoolIdMixin, generics.GenericAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         school_id = self.check_school_id(request)
         if not school_id:

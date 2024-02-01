@@ -26,13 +26,14 @@ from schoolgroups.models import SchoolGroup
 from students.models import Student
 from term.models import Term
 from term.serializers import TermSerializer
-from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey, IsAdminOrSuperUser, currentAcademicYear
+from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey, IsAdminOrSuperUser, currentAcademicYear, \
+    DefaultMixin
 from voteheads.models import VoteHead
 from .models import Invoice
 from .serializers import InvoiceSerializer, StructureSerializer, UninvoiceStudentSerializer
 
 
-class InvoiceCreateView(SchoolIdMixin, generics.CreateAPIView):
+class InvoiceCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = InvoiceSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -40,6 +41,7 @@ class InvoiceCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -50,7 +52,7 @@ class InvoiceCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
+class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = InvoiceSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
     pagination_class = PageNumberPagination
@@ -59,6 +61,7 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Invoice.objects.none()
+        self.check_defaults(self.request, school_id)
 
         queryset = Invoice.objects.filter(school_id=school_id)
         return queryset
@@ -79,7 +82,7 @@ class InvoiceListView(SchoolIdMixin, generics.ListAPIView):
         return JsonResponse(serializer.data, safe=False)
 
 
-class InvoiceDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class InvoiceDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -96,6 +99,7 @@ class InvoiceDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -114,6 +118,7 @@ class InvoiceDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
         self.perform_destroy(instance)
@@ -212,7 +217,7 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
 
 
 
-class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
+class InvoiceStructureView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
     serializer_class = StructureSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -220,6 +225,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -281,7 +287,7 @@ class InvoiceStructureView(SchoolIdMixin, generics.GenericAPIView):
 
 
 
-class InvoiceClassesListView(SchoolIdMixin, generics.ListAPIView):
+class InvoiceClassesListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = ClassesSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -289,6 +295,7 @@ class InvoiceClassesListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Invoice.objects.none()
+        self.check_defaults(self.request, school_id)
 
         structure_year = self.request.GET.get('structure_year')
         structure_term = self.request.GET.get('structure_term')
@@ -333,7 +340,7 @@ class InvoiceClassesListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class UnInvoiceStudentView(SchoolIdMixin, generics.GenericAPIView):
+class UnInvoiceStudentView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
     serializer_class = UninvoiceStudentSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -341,6 +348,7 @@ class UnInvoiceStudentView(SchoolIdMixin, generics.GenericAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -383,13 +391,14 @@ class UnInvoiceStudentView(SchoolIdMixin, generics.GenericAPIView):
 
 
 
-class TotalInvoicedAmount(APIView, SchoolIdMixin):
+class TotalInvoicedAmount(APIView, DefaultMixin, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
     def get(self, request):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         structure_year = request.GET.get('structure_year')
         structure_term = request.GET.get('structure_term')
@@ -418,7 +427,7 @@ class TotalInvoicedAmount(APIView, SchoolIdMixin):
 
 
 
-class invoiceView(SchoolIdMixin, generics.GenericAPIView):
+class invoiceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
     serializer_class = InvoiceSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -427,6 +436,7 @@ class invoiceView(SchoolIdMixin, generics.GenericAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Invoice.objects.none()
+        self.check_defaults(self.request, school_id)
 
         academic_year = self.request.GET.get('academic_year')
 

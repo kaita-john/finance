@@ -8,14 +8,14 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, UUID_from_PrimaryKey
+from utils import SchoolIdMixin, UUID_from_PrimaryKey, DefaultMixin
 from .models import SchoolImage
 from .serializers import FileUploadSerializer
 
 
 # views.py
 
-class FileUploadCreateView(SchoolIdMixin, generics.CreateAPIView):
+class FileUploadCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = FileUploadSerializer
     permission_classes = [IsAuthenticated]
 
@@ -23,6 +23,7 @@ class FileUploadCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         title = request.POST.get('title')
         if not title:
@@ -65,7 +66,7 @@ class FileUploadCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class SchoolImageListView(SchoolIdMixin, generics.ListAPIView):
+class SchoolImageListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = FileUploadSerializer
     permission_classes = [IsAuthenticated]
 
@@ -73,6 +74,8 @@ class SchoolImageListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return SchoolImage.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = SchoolImage.objects.filter(school_id=school_id, title="logo")
         return queryset
 
@@ -87,7 +90,7 @@ class SchoolImageListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class SchoolImageDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class SchoolImageDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = SchoolImage.objects.all()
     serializer_class = FileUploadSerializer
     permission_classes = [IsAuthenticated]
@@ -104,6 +107,7 @@ class SchoolImageDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -122,6 +126,7 @@ class SchoolImageDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
         self.perform_destroy(instance)

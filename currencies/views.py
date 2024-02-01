@@ -7,7 +7,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, UUID_from_PrimaryKey
+from utils import SchoolIdMixin, UUID_from_PrimaryKey, DefaultMixin
 from .models import Currency
 from .serializers import CurrencySerializer
 
@@ -39,6 +39,7 @@ class CurrencyListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Currency.objects.none()
+
         queryset = Currency.objects.filter(school=school_id)
         return queryset
 

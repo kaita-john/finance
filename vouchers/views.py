@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from financial_years.models import FinancialYear
-from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey
+from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, DefaultMixin
 from voucher_attachments.serializers import Voucherattachmentserializer
 from voucher_items.models import VoucherItem
 from voucher_items.serializers import VoucherItemSerializer
@@ -19,7 +19,7 @@ from .models import Voucher
 from .serializers import VoucherSerializer
 
 
-class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
+class VoucherCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = VoucherSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -27,6 +27,7 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         try:
             current_financial_year = FinancialYear.objects.get(is_current=True, school=school_id)
@@ -100,7 +101,7 @@ class VoucherCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class VoucherListView(SchoolIdMixin, generics.ListAPIView):
+class VoucherListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = VoucherSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -108,6 +109,8 @@ class VoucherListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Voucher.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = Voucher.objects.filter(school_id=school_id, is_deleted=False)
         return queryset
 
@@ -120,7 +123,7 @@ class VoucherListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class VoucherDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class VoucherDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Voucher.objects.all()
     serializer_class = VoucherSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -137,6 +140,7 @@ class VoucherDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -171,6 +175,7 @@ class VoucherDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         voucher = self.get_object()
 

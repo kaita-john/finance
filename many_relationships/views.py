@@ -8,12 +8,13 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey
+from items.serializers import ItemSerializer
+from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, DefaultMixin
 from .models import Vehicle
 from .serializers import VehicleSerializer
 
 
-class VehicleCreateView(SchoolIdMixin, generics.CreateAPIView):
+class VehicleCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = VehicleSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -21,6 +22,7 @@ class VehicleCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -57,7 +59,7 @@ class VehicleCreateView(SchoolIdMixin, generics.CreateAPIView):
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class VehicleListView(SchoolIdMixin, generics.ListAPIView):
+class VehicleListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = VehicleSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -65,6 +67,8 @@ class VehicleListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Vehicle.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = Vehicle.objects.filter(school_id=school_id)
         return queryset
 
@@ -77,7 +81,7 @@ class VehicleListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class VehicleDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class VehicleDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Vehicle.objects.all()
     serializer_class = VehicleSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -94,6 +98,7 @@ class VehicleDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -103,7 +108,7 @@ class VehicleDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
 
             # Create or update associated VehicleItem instances
             fee_structure_items_data = request.data.get('fee_structure_items', [])
-            fee_structure_items_serializer = VehicleItemSerializer(data=fee_structure_items_data, many=True)
+            fee_structure_items_serializer = ItemSerializer(data=fee_structure_items_data, many=True)
             if fee_structure_items_serializer.is_valid():
                 fee_structure_items_serializer.save(fee_structure=instance)
             else:

@@ -7,12 +7,12 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from utils import SchoolIdMixin, IsAdminOrSuperUser
+from utils import SchoolIdMixin, IsAdminOrSuperUser, DefaultMixin
 from .models import VoucherItem
 from .serializers import VoucherItemSerializer
 
 
-class VoucherItemCreateView(SchoolIdMixin, generics.CreateAPIView):
+class VoucherItemCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
     serializer_class = VoucherItemSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -20,6 +20,7 @@ class VoucherItemCreateView(SchoolIdMixin, generics.CreateAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -31,7 +32,7 @@ class VoucherItemCreateView(SchoolIdMixin, generics.CreateAPIView):
 
 
 
-class VoucherItemListView(SchoolIdMixin, generics.ListAPIView):
+class VoucherItemListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = VoucherItemSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
 
@@ -40,6 +41,8 @@ class VoucherItemListView(SchoolIdMixin, generics.ListAPIView):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return VoucherItem.objects.none()
+        self.check_defaults(self.request, school_id)
+
         queryset = VoucherItem.objects.filter(school_id=school_id)
         return queryset
 
@@ -52,7 +55,7 @@ class VoucherItemListView(SchoolIdMixin, generics.ListAPIView):
 
 
 
-class VoucherItemDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):
+class VoucherItemDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = VoucherItem.objects.all()
     serializer_class = VoucherItemSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -70,6 +73,7 @@ class VoucherItemDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -88,6 +92,7 @@ class VoucherItemDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView
         school_id = self.check_school_id(request)
         if not school_id:
             return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
 
         instance = self.get_object()
         self.perform_destroy(instance)
