@@ -323,6 +323,7 @@ class ReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
         except ObjectDoesNotExist:
             return Response({'detail': f"Current Financial Year not set"}, status=status.HTTP_400_BAD_REQUEST)
 
+        print("Print here")
 
         try:
             configuration = VoteheadConfiguration.objects.get(school_id=school_id)

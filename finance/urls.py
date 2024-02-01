@@ -29,7 +29,6 @@ api_patterns = [
     path(api_version + 'files/', include('file_upload.urls')),
     path(api_version + 'web/', include('web.urls')),
     path(api_version + 'receipts/', include('receipts.urls')),
-    path(api_version + 'receipts/', include('receipts.urls')),
     path(api_version + 'bursaries/', include('bursaries.urls')),
 
     path(api_version + 'grants/', include('grants.urls')),
