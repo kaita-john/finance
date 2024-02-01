@@ -368,11 +368,3 @@ class DefaultMixin:
         if not getdefaultIntegrationPaymentMethod:
             raise ValidationError({'detail': 'Default Integration Payment Method not set for this school!'})
 
-
-
-
-
-
-
-
-

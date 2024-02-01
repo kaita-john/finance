@@ -1166,7 +1166,7 @@ class FeeRegisterView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                     for receipt in querySetReceipts:
                         voteheadDictionary = {}
                         if receipt.transaction_date == dateinstance:
-                            receipt_number = receipt.receipt_No
+                            receipt_number = receipt.counter
                             balance_before = "0.0"
                             amount_paid = "0.0"
                             balance_after = "0.0"
@@ -1204,7 +1204,7 @@ class FeeRegisterView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                     for pik in querysetPIK:
                         voteheadDictionary = {}
                         if pik.receipt_date == dateinstance:
-                            receipt_number = pik.receipt_No
+                            receipt_number = pik.counter
                             balance_before = "0.0"
                             amount_paid = "0.0"
                             balance_after = "0.0"
