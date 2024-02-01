@@ -25,7 +25,7 @@ class Grant(ParentModel):
     deleted = models.BooleanField(default=False, null=True)
     deleted_date = models.DateField(null=True)
     receipt_date = models.DateField(default=None, null=True)
-    schoolgroup = models.ForeignKey(SchoolGroup, default=None, null=True, on_delete=DO_NOTHING, related_name="grants")
+    all_students = models.BooleanField(default=False, null=True)
     currency = models.ForeignKey(Currency, default=None, null=True, on_delete=DO_NOTHING, related_name="grants")
     studentamount = models.DecimalField(max_digits=15, null=True, default=0.00, decimal_places=2)
     students = models.JSONField(default=list)

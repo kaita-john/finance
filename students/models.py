@@ -26,6 +26,7 @@ class Student(ParentModel):
     current_Term = models.ForeignKey(Term, default=None, null=True, on_delete=DO_NOTHING, related_name="students")
     groups = models.JSONField(default=list, blank=True, null=True)
     invoice_Student = models.BooleanField(default=False, null=True)
+    is_graduated = models.BooleanField(default=False, null=True)
 
     def save(self, *args, **kwargs):
         if self.first_name:

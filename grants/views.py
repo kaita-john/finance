@@ -55,9 +55,9 @@ class GrantCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
 
             items_data = serializer.validated_data.pop('items_list', [])
 
-            schoolgroup = serializer.validated_data.get('schoolgroup')
-            if schoolgroup and schoolgroup != "null" and schoolgroup != "":
-                groupStudents = Student.objects.filter(groups__icontains=str(schoolgroup), school_id=school_id)
+            all_students = serializer.validated_data.get('all_students')
+            if all_students and all_students != "null" and all_students != "":
+                groupStudents = Student.objects.filter(is_graduated=False, school_id=school_id)
                 student_ids = [student.id for student in groupStudents]
                 serializer.validated_data['students'] = student_ids
 
