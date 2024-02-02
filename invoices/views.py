@@ -478,15 +478,18 @@ class invoiceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 votehead_list = defaultdict(lambda: defaultdict(Decimal))
                 overall = defaultdict(Decimal)
 
+                invoiced_voteheads_list = []
+
                 for item in items:
                     boarding_status = item.boardingStatus
                     votehead_list[item.votehead.vote_head_name][boarding_status] += Decimal(item.amount)
                     overall[boarding_status] += Decimal(item.amount)
-
-                invoiced_voteheads_list = [
-                    {"votehead": votehead, **amounts}
-                    for votehead, amounts in votehead_list.items()
-                ]
+                    data =  {
+                        "votehead": votehead_list[item.votehead.vote_head_name],
+                        "boardingStatus": votehead_list[item.votehead.vote_head_name][boarding_status],
+                        "amount": Decimal(item.amount)
+                    }
+                    invoiced_voteheads_list.append(data)
 
                 fee_structure_items['invoiced_voteheads'] = invoiced_voteheads_list
                 fee_structure_items['totals'] = overall
