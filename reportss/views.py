@@ -1421,7 +1421,7 @@ class LedgerView(SchoolIdMixin,  DefaultMixin, generics.GenericAPIView):
                     theamount = Decimal(amount)
                     try:
                         if str(votehead_id) == votehead:
-                            if grant.transaction_date.month == monthnumber:
+                            if grant.receipt_date.month == monthnumber:
                                 collection_amount = theamount
                                 total_month_collection_amount += collection_amount
 
