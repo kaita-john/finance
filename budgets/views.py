@@ -24,9 +24,6 @@ class BudgetCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
-            # existing_instances = Budget.objects.filter(school_id = school_id).count()
-            # if existing_instances > 1:
-            #     return Response({'detail': f"Budget already saved. Edit existing configuration"}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 self.perform_create(serializer)
             except Exception as exception:
@@ -58,6 +55,7 @@ class BudgetListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
         return JsonResponse(serializer.data, safe=False)
 
 
+
 class BudgetDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Budget.objects.all()
     serializer_class = BudgetSerializer
@@ -82,7 +80,13 @@ class BudgetDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestr
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
-            self.perform_update(serializer)
+            try:
+                budget_items_data = request.data.get('budget_items', [])
+                instance.budget_items = budget_items_data
+                instance.save()
+                self.perform_update(serializer)
+            except Exception as exception:
+                return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
             return Response({'detail': 'Budget updated successfully'}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
