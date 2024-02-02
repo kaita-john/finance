@@ -458,7 +458,6 @@ class IncomeSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             startdate = request.GET.get('startdate')
             enddate = request.GET.get('enddate')
 
-
             querysetGrants = Grant.objects.filter(
                 deleted = False,
                 school_id=school_id
@@ -1567,12 +1566,12 @@ class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                             if grant.paymentMethod:
                                 method = "BANK" if grant.paymentMethod.is_cheque else "CASH" if grant.paymentMethod.is_cash else "BANK" if grant.paymentMethod.is_bank else "NONE"
                             if method == "CASH":
-                                total_cash += Decimal(grant.overall_amount)
+                                total_cash += Decimal(theamount)
                             if method == "BANK":
-                                total_bank += Decimal(grant.overall_amount)
+                                total_bank += Decimal(theamount)
                             if method == "NONE":
-                                total_cash += Decimal(grant.overall_amount)
-                            collectionvoteheadDictionary[f"{votehead_id}"]["cramount"] += grant.overall_amount
+                                total_cash += Decimal(theamount)
+                            collectionvoteheadDictionary[f"{votehead_id}"]["cramount"] += theamount
 
                     except VoteHead.DoesNotExist:
                         pass
