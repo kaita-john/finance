@@ -1,10 +1,10 @@
 from django.db import models
-from django.db.models import JSONField, DO_NOTHING
+from django.db.models import DO_NOTHING
 
 from academic_year.models import AcademicYear
 from classes.models import Classes
-from term.models import Term
 from models import ParentModel
+from term.models import Term
 from utils import currentAcademicYear
 
 
