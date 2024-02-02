@@ -481,7 +481,7 @@ class invoiceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 for item in items:
                     boarding_status = item.boardingStatus
                     votehead_list[item.votehead.vote_head_name][boarding_status] += Decimal(item.amount)
-                    overall[item.votehead.vote_head_name] += Decimal(item.amount)
+                    overall[boarding_status] += Decimal(item.amount)
 
                 invoiced_voteheads_list = [
                     {"votehead": votehead, **amounts}
