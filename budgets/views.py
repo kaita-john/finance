@@ -25,7 +25,7 @@ class BudgetCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
 
-            existing_instances = Budget.objects.count()
+            existing_instances = Budget.objects.filter(school_id = school_id).count()
             if existing_instances > 1:
                 return Response({'detail': f"Budget already saved. Edit existing configuration"}, status=status.HTTP_400_BAD_REQUEST)
 

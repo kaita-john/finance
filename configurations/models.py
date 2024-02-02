@@ -12,10 +12,6 @@ class Configuration(models.Model):
     voucher_start_at = models.IntegerField(default=0.00)
     school = models.UUIDField(max_length=255, blank=True, null=True)
 
-    # def save(self, *args, **kwargs):
-    #     existing_instances = Configuration.objects.count()
-    #     if existing_instances < 1:
-    #         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.id}"

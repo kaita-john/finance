@@ -27,7 +27,7 @@ class MpesaconfigCreateView(SchoolIdMixin, generics.CreateAPIView):
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
 
-            existing_instances = Mpesaconfig.objects.count()
+            existing_instances = Mpesaconfig.objects.filter(school_id = school_id).count()
             if existing_instances >= 1:
                 return Response({'detail': f"Mpesaconfig already saved. Edit existing configuration"}, status=status.HTTP_400_BAD_REQUEST)
 
