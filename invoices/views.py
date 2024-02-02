@@ -485,8 +485,8 @@ class invoiceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                     votehead_list[item.votehead.vote_head_name][boarding_status] += Decimal(item.amount)
                     overall[boarding_status] += Decimal(item.amount)
                     data =  {
-                        "votehead": votehead_list[item.votehead.vote_head_name],
-                        "boardingStatus": votehead_list[item.votehead.vote_head_name][boarding_status],
+                        "votehead": item.votehead.vote_head_name,
+                        "boardingStatus": boarding_status,
                         "amount": Decimal(item.amount)
                     }
                     invoiced_voteheads_list.append(data)
