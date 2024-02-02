@@ -1420,7 +1420,7 @@ class LedgerView(SchoolIdMixin,  DefaultMixin, generics.GenericAPIView):
                 for votehead_id, amount in votehead_distribution.items():
                     theamount = Decimal(amount)
                     try:
-                        if str(grant.votehead.id) == votehead_id:
+                        if str(votehead_id) == votehead:
                             if grant.transaction_date.month == monthnumber:
                                 collection_amount = theamount
                                 total_month_collection_amount += collection_amount
