@@ -24,12 +24,13 @@ class BudgetCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.validated_data['school_id'] = school_id
-
-            existing_instances = Budget.objects.filter(school_id = school_id).count()
-            if existing_instances > 1:
-                return Response({'detail': f"Budget already saved. Edit existing configuration"}, status=status.HTTP_400_BAD_REQUEST)
-
-            self.perform_create(serializer)
+            # existing_instances = Budget.objects.filter(school_id = school_id).count()
+            # if existing_instances > 1:
+            #     return Response({'detail': f"Budget already saved. Edit existing configuration"}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                self.perform_create(serializer)
+            except Exception as exception:
+                return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
             return Response({'detail': 'Budget created successfully'}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
