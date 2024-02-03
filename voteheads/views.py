@@ -41,13 +41,19 @@ class VoteHeadListView(SchoolIdMixin, generics.ListAPIView):
         if not school_id:
             return VoteHead.objects.none()
         queryset = VoteHead.objects.filter(school_id=school_id)
+        account_type = self.request.query_params.get('account_type', None)
+        if account_type and account_type != "" and account_type != "null":
+            queryset = queryset.filter(account_type__id = account_type)
         return queryset
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        if not queryset.exists():
-            return JsonResponse({}, status=200)
-        serializer = self.get_serializer(queryset, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        try:
+            queryset = self.get_queryset()
+            if not queryset.exists():
+                return JsonResponse([], safe=False, status=200)
+            serializer = self.get_serializer(queryset, many=True)
+            return JsonResponse(serializer.data, safe=False)
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class VoteHeadDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIView):

@@ -1,5 +1,6 @@
 from django.db import models
 
+from account_types.models import AccountType
 from bank_accounts.models import BankAccount
 from configurations.models import Configuration
 from expense_categories.models import ExpenseCategory
@@ -13,7 +14,7 @@ from suppliers.models import Supplier
 # models.py
 class Voucher(ParentModel):
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
-
+    accountType = models.ForeignKey(AccountType, default=None, null=True, on_delete=models.CASCADE, related_name="vouchers")
     recipientType = models.CharField(max_length=255, blank=True, null=True)
     staff = models.ForeignKey(Staff, default=None, null=True, on_delete=models.SET_NULL, related_name="vouchers")
     supplier = models.ForeignKey(Supplier, default=None, null=True, on_delete=models.SET_NULL, related_name="vouchers")
