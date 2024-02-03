@@ -308,7 +308,7 @@ class StudentTransactionsPrint(SchoolIdMixin, DefaultMixin, generics.RetrieveAPI
                 term_name = getattr(value.term, 'term_name', None)
                 year_name = getattr(value.year, 'academic_year', None)
                 student_class = getattr(value, 'student_class', None)
-                transaction_date = getattr(value, 'transaction_date', None)
+                transaction_date = getattr(value, 'dateofcreation', None)
                 description = f"{student_class}-{term_name}-{year_name}"
 
                 item = StudentTransactionsPrintView(
@@ -325,7 +325,7 @@ class StudentTransactionsPrint(SchoolIdMixin, DefaultMixin, generics.RetrieveAPI
                 term_name = getattr(value.term, 'term_name', None)
                 year_name = getattr(value.year, 'academic_year', None)
                 student_class = getattr(value, 'student_class', None)
-                transaction_date = getattr(value, 'receipt_date', None)
+                transaction_date = getattr(value, 'dateofcreation', None)
                 description = f"{student_class}-{term_name}-{year_name}"
 
                 item = StudentTransactionsPrintView(
@@ -342,7 +342,7 @@ class StudentTransactionsPrint(SchoolIdMixin, DefaultMixin, generics.RetrieveAPI
                 term_name = getattr(value.bursary.term, 'term_name', None)
                 year_name = getattr(value.bursary.year, 'academic_year', None)
                 student_class = getattr(value, 'student_class', None)
-                transaction_date = getattr(value.bursary, 'receipt_date', None)
+                transaction_date = getattr(value.bursary, 'dateofcreation', None)
                 description = f"{student_class}-{term_name}-{year_name}"
 
                 item = StudentTransactionsPrintView(
@@ -359,7 +359,7 @@ class StudentTransactionsPrint(SchoolIdMixin, DefaultMixin, generics.RetrieveAPI
                 term_name = getattr(value.term, 'term_name', None)
                 year_name = getattr(value.year, 'academic_year', None)
                 student_class = getattr(value, 'classes', None)
-                transaction_date = getattr(value, 'issueDate', None)
+                transaction_date = getattr(value, 'dateofcreation', None)
                 description = f"{student_class}-{term_name}-{year_name}"
 
                 item = StudentTransactionsPrintView(
