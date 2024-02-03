@@ -420,24 +420,84 @@ class StudentCollectionListView(SchoolIdMixin, DefaultMixin, generics.RetrieveAP
                 school_id=school_id
             )
 
+            querysetPIKReceipts = PIKReceipt.objects.filter(
+                is_posted=True,
+                student_id=student.id,
+                school_id=school_id
+            )
+
             if term and term != "" and term != "null":
                 queryset = queryset.filter(term__id=term)
+                querysetPIKReceipts = querysetPIKReceipts.filter(term__id=term)
 
             if academicYear and academicYear != "" and academicYear != "null":
                 queryset = queryset.filter(year__id=academicYear)
+                querysetPIKReceipts = querysetPIKReceipts.filter(year__id=academicYear)
 
             if startdate and startdate != "" and startdate != "null":
                 queryset = queryset.filter(transaction_date__gt = startdate, transaction_date__isnull=False)
+                querysetPIKReceipts = querysetPIKReceipts.filter(receipt_date__gt = startdate, receipt_date__isnull=False)
 
             if enddate and enddate != "" and enddate != "null":
                 queryset = queryset.filter(transaction_date__lte = enddate,transaction_date__isnull=False)
+                querysetPIKReceipts = querysetPIKReceipts.filter(receipt_date__lte = enddate,receipt_date__isnull=False)
 
-            serializer = ReceiptSerializer(queryset, many=True)
+
+            data = []
+
+            for pik_receipt in querysetPIKReceipts:
+                receipt_Date = pik_receipt.receipt_date
+                creation_Date = pik_receipt.dateofcreation
+                mode_of_payment = "PIK"
+                receipt_no = pik_receipt.receipt_No
+                transaction_code = "N|A"
+                amount = pik_receipt.totalAmount
+                receipt_id = pik_receipt.id
+
+                data.append({
+                    "receipt_Date": receipt_Date,
+                    "creation_Date": creation_Date,
+                    "mode_of_payment": mode_of_payment,
+                    "receipt_no": receipt_no,
+                    "transaction_code": transaction_code,
+                    "amount": amount,
+                    "receipt_id": receipt_id
+                })
+
+
+            for receipt in queryset:
+
+                payment_method_name = getattr(receipt.payment_method, 'name', None)
+                if receipt.payment_method:
+                    payment_method_name = receipt.payment_method.name
+                else:
+                    payment_method_name = None
+
+                receipt_Date = receipt.receipt_date
+                creation_Date = receipt.dateofcreation
+                mode_of_payment = payment_method_name
+                receipt_no = receipt.receipt_No
+                transaction_code = receipt.transaction_code
+                amount = receipt.totalAmount
+                receipt_id = receipt.id
+
+
+
+                data.append({
+                    "receipt_Date": receipt_Date,
+                    "creation_Date": creation_Date,
+                    "mode_of_payment": mode_of_payment,
+                    "receipt_no": receipt_no,
+                    "transaction_code": transaction_code,
+                    "amount": amount,
+                    "receipt_id": receipt_id
+                })
+
 
         except Exception as exception:
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"detail": serializer.data})
+        return Response({"detail": data})
 
 
 class IncomeSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
