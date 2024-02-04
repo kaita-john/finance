@@ -58,7 +58,7 @@ class GrantCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
             all_students = serializer.validated_data.get('all_students')
             if all_students and all_students != "null" and all_students != "":
                 groupStudents = Student.objects.filter(is_graduated=False, school_id=school_id)
-                student_ids = [student.id for student in groupStudents]
+                student_ids = [str(student.id) for student in groupStudents]
                 serializer.validated_data['students'] = student_ids
 
             votehead_amounts = defaultdict(Decimal)
