@@ -948,7 +948,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                     {
                         "date": dateinstance,
                         "description": f"GRANT",
-                        "receipt_range": grant_receipt_range,
+                        "receipt_range": result,
                         "cash": grant_cash,
                         "bank": grant_bank,
                         "inkind": inkind,
