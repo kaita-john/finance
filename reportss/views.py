@@ -1072,7 +1072,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                     listofVouchers.append(
                         {
                             "date": dateinstance,
-                            "description": "Expense",
+                            "description": person,
                             "receipt_range": voucher.voucher.counter,
                             "cash": cash,
                             "bank": bank,
