@@ -939,7 +939,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                         #     print(f"Receipt range is {receipt_range}")
                         #     grant_result = f"{min(grant_receipt_range)} - {max(grant_receipt_range)}"
 
-                        print(f" Testing Votehead {grantvoteheadDictionary}")
+                        print(f" Testing Votehead {grantvoteheadDictionary} on {grant.receipt_date}")
 
                         listofreceipts.append(
                             {
