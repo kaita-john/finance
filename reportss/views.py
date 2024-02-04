@@ -888,17 +888,13 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
             for dateinstance in listofdateofcreations:
                 receipt_range = []
-                grant_receipt_range = []
                 total_amount = Decimal("0.0")
 
                 cash = Decimal(opencash)
                 bank = Decimal(openbank)
                 inkind = Decimal("0.0")
 
-
                 voteheadDictionary = {}
-
-                grantvoteheadDictionary = {}
 
                 for grant in querySetGrants:
 
@@ -923,15 +919,15 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
                             try:
                                 actualvotehead = VoteHead.objects.get(id=votehead_id)
-                                if actualvotehead.vote_head_name not in grantvoteheadDictionary:
-                                    grantvoteheadDictionary[actualvotehead.vote_head_name] = theamount
+                                if actualvotehead.vote_head_name not in voteheadDictionary:
+                                    voteheadDictionary[actualvotehead.vote_head_name] = theamount
                                 else:
-                                    grantvoteheadDictionary[actualvotehead.vote_head_name] += theamount
-                                if actualvotehead.vote_head_name not in universalgrantvoteheadDictionary_collection_voteheads:
-                                    universalgrantvoteheadDictionary_collection_voteheads[
+                                    voteheadDictionary[actualvotehead.vote_head_name] += theamount
+                                if actualvotehead.vote_head_name not in universalvoteheadDictionary_collection_voteheads:
+                                    universalvoteheadDictionary_collection_voteheads[
                                         actualvotehead.vote_head_name] = theamount
                                 else:
-                                    universalgrantvoteheadDictionary_collection_voteheads[
+                                    universalvoteheadDictionary_collection_voteheads[
                                         actualvotehead.vote_head_name] += theamount
 
                             except VoteHead.DoesNotExist:
@@ -950,8 +946,8 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                                 "bank": grant_bank,
                                 "inkind": inkind,
                                 "total_amount": Decimal(grant.overall_amount),
-                                "voteheads": grantvoteheadDictionary,
-                                "summary": universalgrantvoteheadDictionary_collection_voteheads,
+                                "voteheads": voteheadDictionary,
+                                "summary": universalvoteheadDictionary_collection_voteheads,
                             }
                         )
 
