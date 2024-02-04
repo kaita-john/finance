@@ -957,7 +957,6 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
 
 
-c
 
                 for receipt in querySetReceipts:
                     if receipt.transaction_date == dateinstance:
