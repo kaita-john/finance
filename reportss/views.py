@@ -18,6 +18,7 @@ from bank_accounts.models import BankAccount
 from budgets.models import Budget
 from currencies.serializers import CurrencySerializer
 from financial_years.models import FinancialYear
+from grant_items.models import GrantItem
 from grants.models import Grant
 from invoices.models import Invoice
 from items.models import Item
@@ -518,8 +519,13 @@ class IncomeSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             startdate = request.GET.get('startdate')
             enddate = request.GET.get('enddate')
 
-            querysetGrants = Grant.objects.filter(
-                deleted = False,
+            try:
+                AccountType.objects.get(id=accounttype)
+            except ObjectDoesNotExist:
+                return Response({'detail': f"Invalid Account Type Id"}, status=status.HTTP_400_BAD_REQUEST)
+
+            querysetGrants = GrantItem.objects.filter(
+                grant__deleted = False,
                 school_id=school_id
             )
 
@@ -536,22 +542,23 @@ class IncomeSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             if not orderby or orderby == "" or orderby == "null" or not accounttype or accounttype == "null" or accounttype == "":
                 return Response({'detail': f"Both orderby and accounttype values must be selected"}, status=status.HTTP_400_BAD_REQUEST)
 
-            querysetCollections = querysetCollections.filter(receipt__account_type__id=accounttype)
-            querysetPIK = querysetPIK.filter(receipt__bank_account__account_type__id = accounttype)
+            querysetCollections = querysetCollections.filter(receipt__account_type =accounttype)
+            querysetPIK = querysetPIK.filter(receipt__bank_account__account_type  = accounttype)
+            querysetGrants = querysetGrants.filter(grant__bankAccount__account_type = accounttype)
 
             if startdate and startdate != "" and startdate != "null":
                 querysetCollections = querysetCollections.filter(transaction_date__gt=startdate, transaction_date__isnull=False)
                 querysetPIK = querysetPIK.filter(transaction_date__gt=startdate, transaction_date__isnull=False)
-                querysetGrants = querysetGrants.filter(receipt_date__gt=startdate, receipt_date__isnull=False)
+                querysetGrants = querysetGrants.filter(grant__receipt_date__gt=startdate, grant__receipt_date__isnull=False)
             if enddate and enddate != "" and enddate != "null":
                 querysetCollections = querysetCollections.filter(transaction_date__lte=enddate, transaction_date__isnull=False)
                 querysetPIK = querysetPIK.filter(transaction_date__lte=enddate, transaction_date__isnull=False)
-                querysetGrants = querysetGrants.filter(receipt_date__gt=enddate, receipt_date__isnull=False)
+                querysetGrants = querysetGrants.filter(grant__receipt_date__gt=enddate, grant__receipt_date__isnull=False)
 
             incomeSummaryList = []
 
 
-            paymentMethods = PaymentMethod.objects.filter(school__id = school_id)
+            paymentMethods = PaymentMethod.objects.all()
 
             if orderby == "paymentmode":
                 for paymentmode in paymentMethods:
@@ -566,9 +573,9 @@ class IncomeSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                         if pik.receipt.payment_method == paymentmode:
                             totalAmount += pik.amount
 
-                    for grant in querysetGrants:
-                        if grant.paymentMethod == paymentmode:
-                            totalAmount += grant.overall_amount
+                    for grantitem in querysetGrants:
+                        if grantitem.grant.paymentMethod == paymentmode:
+                            totalAmount += grantitem.amount
 
                     item = IncomeSummary(
                         votehead_name=paymentmode_name,
@@ -577,8 +584,8 @@ class IncomeSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                     item.save()
                     incomeSummaryList.append(item)
 
+            voteheads = VoteHead.objects.filter(school_id=school_id, account_type = accounttype)
 
-            voteheads = VoteHead.objects.filter(school_id=school_id)
             if orderby == "votehead":
                 for votehead in voteheads:
                     totalAmount = Decimal('0.0')
@@ -591,6 +598,10 @@ class IncomeSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                     for pik in querysetPIK:
                         if pik.votehead == votehead:
                             totalAmount += pik.amount
+
+                    for grantItem in querysetGrants:
+                        if grantItem.votehead == votehead:
+                            totalAmount += grantItem.amount
 
                     item = IncomeSummary(
                         votehead_name=votehead_name,
@@ -653,7 +664,7 @@ class ExpenseSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
             incomeSummaryList = []
 
-            paymentMethods = PaymentMethod.objects.filter(school__id = school_id)
+            paymentMethods = PaymentMethod.objects.all()
 
             if orderby == "paymentmode":
                 for paymentmode in paymentMethods:
