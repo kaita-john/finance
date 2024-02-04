@@ -28,7 +28,7 @@ class Grant(ParentModel):
     all_students = models.BooleanField(default=False, null=True)
     currency = models.ForeignKey(Currency, default=None, null=True, on_delete=DO_NOTHING, related_name="grants")
     studentamount = models.DecimalField(max_digits=15, null=True, default=0.00, decimal_places=2)
-    students = models.JSONField(default=list)
+    students = models.JSONField(default=list, null=True)
     voteheadamounts = models.JSONField(default=dict, blank=True, null=True)
     assigned_voteheadamounts = models.JSONField(default=dict, blank=True, null=True)
     total_amount = models.DecimalField(max_digits=15, null=True,blank=True, default=0.00, decimal_places=2)
