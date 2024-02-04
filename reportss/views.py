@@ -569,8 +569,8 @@ class IncomeSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                         if collection.receipt.payment_method == paymentmode:
                             totalAmount += collection.amount
 
-                    for pik in querysetPIK:
-                        if pik.receipt.payment_method == paymentmode:
+                    if paymentmode.is_cash:
+                        for pik in querysetPIK:
                             totalAmount += pik.amount
 
                     for grantitem in querysetGrants:
