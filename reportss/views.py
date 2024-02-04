@@ -898,10 +898,9 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
                 voteheadDictionary = {}
 
+                grantvoteheadDictionary = {}
 
                 for grant in querySetGrants:
-
-                    grantvoteheadDictionary = {}
 
                     grant_cash = Decimal(opencash)
                     grant_bank = Decimal(openbank)
@@ -916,7 +915,6 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                             grant_bank += Decimal(grant.overall_amount)
                         if method == "NONE":
                             inkind += Decimal(grant.overall_amount)
-
 
                         votehead_distribution = grant.voteheadamounts
 
@@ -959,7 +957,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
 
 
-
+c
 
                 for receipt in querySetReceipts:
                     if receipt.transaction_date == dateinstance:
