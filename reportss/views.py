@@ -944,7 +944,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                         listofreceipts.append(
                             {
                                 "date": dateinstance,
-                                "description": f"GRANT | {grant.institution}",
+                                "description": f"{grant.institution}",
                                 "receipt_range": grant.counter,
                                 "cash": grant_cash,
                                 "bank": grant_bank,
