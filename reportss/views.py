@@ -965,7 +965,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
                 for pikreceipt in querysetPIK:
                     if pikreceipt.receipt_date == dateinstance:
-                        inkind += Decimal(pikreceipt.totalAmount)
+                        cash += Decimal(pikreceipt.totalAmount)
                         counter = pikreceipt.counter
                         amount = Decimal(pikreceipt.totalAmount)
                         receipt_range.append(counter)
