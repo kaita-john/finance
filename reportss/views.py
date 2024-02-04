@@ -1053,24 +1053,33 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                         else:
                             universalvoteheadDictionary_payment_voteheads[f"{voucher.votehead.vote_head_name}"] += Decimal(voucher.amount)
 
-                total_expenses_cash += cash
-                total_expenses_bank += bank
+                    total_expenses_cash += cash
+                    total_expenses_bank += bank
 
-                result = ""
-                if receipt_range:
-                    result = f"{min(receipt_range)} - {max(receipt_range)}"
+                    # result = ""
+                    # if receipt_range:
+                    #     result = f"{min(receipt_range)} - {max(receipt_range)}"
 
-                listofVouchers.append(
-                    {
-                        "date": dateinstance,
-                        "description": "Expense",
-                        "receipt_range": result,
-                        "cash": cash,
-                        "bank": bank,
-                        "total_amount": total_amount,
-                        "voteheads": voteheadDictionary,
-                    }
-                )
+                    receipient_type = voucher.voucher.recipientType
+                    if receipient_type == "OTHER":
+                        person = voucher.voucher.other
+                    elif receipient_type == "STAFF":
+                        person = f"{voucher.voucher.staff.fname} {voucher.voucher.staff.lname}"
+                    else:
+                        person = f"{voucher.voucher.supplier.contactPerson}"
+
+
+                    listofVouchers.append(
+                        {
+                            "date": dateinstance,
+                            "description": "Expense",
+                            "receipt_range": voucher.voucher.counter,
+                            "cash": cash,
+                            "bank": bank,
+                            "total_amount": Decimal(voucher.amount),
+                            "voteheads": voteheadDictionary,
+                        }
+                    )
 
             if not month:
                 total_opening_balance = Decimal(0.0)
