@@ -890,6 +890,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 receipt_range = []
                 grant_receipt_range = []
                 total_amount = Decimal("0.0")
+                grant_total_amount = Decimal("0.0")
 
                 cash = Decimal(opencash)
                 bank = Decimal(openbank)
@@ -905,7 +906,6 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
 
                 for grant in querySetGrants:
-                    grantvoteheadDictionary = {}
 
                     if grant.receipt_date == dateinstance:
                         method = "NONE"
@@ -917,6 +917,9 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                             grant_bank += Decimal(grant.overall_amount)
                         if method == "NONE":
                             inkind += Decimal(grant.overall_amount)
+
+                        grant_total_amount += Decimal(grant.overall_amount)
+
 
                         votehead_distribution = grant.voteheadamounts
 
@@ -943,6 +946,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 if grant_receipt_range:
                     print(f"Receipt range is {receipt_range}")
                     result = f"{min(grant_receipt_range)} - {max(grant_receipt_range)}"
+
 
                 listofreceipts.append(
                     {
