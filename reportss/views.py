@@ -890,22 +890,21 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 receipt_range = []
                 grant_receipt_range = []
                 total_amount = Decimal("0.0")
-                grant_total_amount = Decimal("0.0")
 
                 cash = Decimal(opencash)
                 bank = Decimal(openbank)
-
-                grant_cash = Decimal(opencash)
-                grant_bank = Decimal(openbank)
-
                 inkind = Decimal("0.0")
 
 
                 voteheadDictionary = {}
-                grantvoteheadDictionary = {}
 
 
                 for grant in querySetGrants:
+
+                    grantvoteheadDictionary = {}
+
+                    grant_cash = Decimal(opencash)
+                    grant_bank = Decimal(openbank)
 
                     if grant.receipt_date == dateinstance:
                         method = "NONE"
@@ -917,9 +916,6 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                             grant_bank += Decimal(grant.overall_amount)
                         if method == "NONE":
                             inkind += Decimal(grant.overall_amount)
-
-                        grant_total_amount += Decimal(grant.overall_amount)
-                        grant_receipt_range.append(grant.counter)
 
 
                         votehead_distribution = grant.voteheadamounts
@@ -943,25 +939,23 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                             except VoteHead.DoesNotExist:
                                 pass
 
+                        # if grant_receipt_range:
+                        #     print(f"Receipt range is {receipt_range}")
+                        #     grant_result = f"{min(grant_receipt_range)} - {max(grant_receipt_range)}"
 
-                grant_result = ""
-                if grant_receipt_range:
-                    print(f"Receipt range is {receipt_range}")
-                    grant_result = f"{min(grant_receipt_range)} - {max(grant_receipt_range)}"
-
-                    listofreceipts.append(
-                        {
-                            "date": dateinstance,
-                            "description": f"GRANT",
-                            "receipt_range": grant_result,
-                            "cash": grant_cash,
-                            "bank": grant_bank,
-                            "inkind": inkind,
-                            "total_amount": total_amount,
-                            "voteheads": grantvoteheadDictionary,
-                            "summary": universalgrantvoteheadDictionary_collection_voteheads,
-                        }
-                    )
+                        listofreceipts.append(
+                            {
+                                "date": dateinstance,
+                                "description": f"GRANT | {grant.institution}",
+                                "receipt_range": grant.counter,
+                                "cash": grant_cash,
+                                "bank": grant_bank,
+                                "inkind": inkind,
+                                "total_amount": Decimal(grant.overall_amount),
+                                "voteheads": grantvoteheadDictionary,
+                                "summary": universalgrantvoteheadDictionary_collection_voteheads,
+                            }
+                        )
 
 
 
