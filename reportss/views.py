@@ -949,20 +949,19 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                     print(f"Receipt range is {receipt_range}")
                     grant_result = f"{min(grant_receipt_range)} - {max(grant_receipt_range)}"
 
-
-                listofreceipts.append(
-                    {
-                        "date": dateinstance,
-                        "description": f"GRANT",
-                        "receipt_range": grant_result,
-                        "cash": grant_cash,
-                        "bank": grant_bank,
-                        "inkind": inkind,
-                        "total_amount": total_amount,
-                        "voteheads": grantvoteheadDictionary,
-                        "summary": universalgrantvoteheadDictionary_collection_voteheads,
-                    }
-                )
+                    listofreceipts.append(
+                        {
+                            "date": dateinstance,
+                            "description": f"GRANT",
+                            "receipt_range": grant_result,
+                            "cash": grant_cash,
+                            "bank": grant_bank,
+                            "inkind": inkind,
+                            "total_amount": total_amount,
+                            "voteheads": grantvoteheadDictionary,
+                            "summary": universalgrantvoteheadDictionary_collection_voteheads,
+                        }
+                    )
 
 
 
