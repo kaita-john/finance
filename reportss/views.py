@@ -919,7 +919,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                             inkind += Decimal(grant.overall_amount)
 
                         grant_total_amount += Decimal(grant.overall_amount)
-                        receipt_range.append(grant.counter)
+                        grant_receipt_range.append(grant.counter)
 
 
                         votehead_distribution = grant.voteheadamounts
