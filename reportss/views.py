@@ -651,6 +651,9 @@ class ExpenseSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 school_id=school_id
             )
 
+            if not AccountType.objects.filter(id=accounttype, school_id=school_id).exists():
+                return Response({'detail': f"Invalid Account Type Id"}, status=status.HTTP_400_BAD_REQUEST)
+
             if not orderby or orderby == "" or orderby == "null" or not accounttype or accounttype == "" or accounttype == "null":
                 return Response({'detail': f"Both orderby and accounttype values must be selected"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -684,7 +687,7 @@ class ExpenseSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                     incomeSummaryList.append(item)
 
 
-            voteheads = VoteHead.objects.filter(school_id=school_id)
+            voteheads = VoteHead.objects.filter(school_id=school_id, account_type = accounttype)
             if orderby == "votehead":
                 for votehead in voteheads:
                     totalAmount = Decimal('0.0')
