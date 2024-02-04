@@ -870,6 +870,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
             listofreceipts = []
             universalvoteheadDictionary_collection_voteheads = {}
+            universalgrantvoteheadDictionary_collection_voteheads = {}
 
             total_receipt_cash = Decimal(0.0)
             total_receipt_bank = Decimal(0.0)
@@ -888,43 +889,71 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             for dateinstance in listofdateofcreations:
                 receipt_range = []
                 total_amount = Decimal("0.0")
+
                 cash = Decimal(opencash)
                 bank = Decimal(openbank)
+
+                grant_cash = Decimal(opencash)
+                grant_bank = Decimal(openbank)
+
                 inkind = Decimal("0.0")
+
+
                 voteheadDictionary = {}
+                grantvoteheadDictionary = {}
+
+
 
                 for grant in querySetGrants:
+                    grantvoteheadDictionary = {}
+
                     if grant.receipt_date == dateinstance:
                         method = "NONE"
                         if grant.paymentMethod:
                             method = "BANK" if grant.paymentMethod.is_cheque else "CASH" if grant.paymentMethod.is_cash else "BANK" if grant.paymentMethod.is_bank else "NONE"
                         if method == "CASH":
-                            cash += Decimal(grant.overall_amount)
+                            grant_cash += Decimal(grant.overall_amount)
                         if method == "BANK":
-                            bank += Decimal(grant.overall_amount)
+                            grant_bank += Decimal(grant.overall_amount)
                         if method == "NONE":
                             inkind += Decimal(grant.overall_amount)
 
-                    votehead_distribution = grant.voteheadamounts
+                        votehead_distribution = grant.voteheadamounts
 
-                    for votehead_id, amount in votehead_distribution.items():
-                        theamount = Decimal(amount)
+                        for votehead_id, amount in votehead_distribution.items():
+                            theamount = Decimal(amount)
 
-                        try:
-                            actualvotehead = VoteHead.objects.get(id=votehead_id)
-                            if actualvotehead.vote_head_name not in voteheadDictionary:
-                                voteheadDictionary[actualvotehead.vote_head_name] = theamount
-                            else:
-                                voteheadDictionary[actualvotehead.vote_head_name] += theamount
-                            if actualvotehead.vote_head_name not in universalvoteheadDictionary_collection_voteheads:
-                                universalvoteheadDictionary_collection_voteheads[
-                                    actualvotehead.vote_head_name] = theamount
-                            else:
-                                universalvoteheadDictionary_collection_voteheads[
-                                    actualvotehead.vote_head_name] += theamount
+                            try:
+                                actualvotehead = VoteHead.objects.get(id=votehead_id)
+                                if actualvotehead.vote_head_name not in grantvoteheadDictionary:
+                                    grantvoteheadDictionary[actualvotehead.vote_head_name] = theamount
+                                else:
+                                    grantvoteheadDictionary[actualvotehead.vote_head_name] += theamount
+                                if actualvotehead.vote_head_name not in universalgrantvoteheadDictionary_collection_voteheads:
+                                    universalgrantvoteheadDictionary_collection_voteheads[
+                                        actualvotehead.vote_head_name] = theamount
+                                else:
+                                    universalgrantvoteheadDictionary_collection_voteheads[
+                                        actualvotehead.vote_head_name] += theamount
 
-                        except VoteHead.DoesNotExist:
-                            pass
+                            except VoteHead.DoesNotExist:
+                                pass
+
+                        listofreceipts.append(
+                            {
+                                "date": dateinstance,
+                                "description": f"GRANT | {grant.institution}",
+                                "receipt_range": grant.counter,
+                                "cash": cash,
+                                "bank": bank,
+                                "inkind": inkind,
+                                "total_amount": total_amount,
+                                "voteheads": grantvoteheadDictionary,
+                                "summary": universalgrantvoteheadDictionary_collection_voteheads,
+                            }
+                        )
+
+
 
 
 
@@ -997,7 +1026,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 listofreceipts.append(
                     {
                         "date" : dateinstance,
-                        "description": "Income",
+                        "description": "FEES",
                         "receipt_range": result,
                         "cash": cash,
                         "bank": bank,
