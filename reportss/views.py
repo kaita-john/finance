@@ -868,6 +868,8 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             grant_voteheads = list({grant_item.votehead.vote_head_name for grant in querySetGrants for grant_item in GrantItem.objects.filter(grant=grant)})
             combined_voteheads = list(set(receipt_voteheads + pik_voteheads + grant_voteheads))
 
+            print(f"List of voteheads is {combined_voteheads}")
+
             overall_votehead_amounts = defaultdict(Decimal)
             cash_overall_total = Decimal(0)
             bank_overall_total = Decimal(0)
