@@ -908,12 +908,17 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                         grant_total = grant_cash + grant_bank
 
                         thevoteheads = defaultdict(Decimal)
-                        votehead_distribution = grant.voteheadamounts
-                        for votehead_id, amount in votehead_distribution.items():
-                            actualvotehead = VoteHead.objects.filter(id=votehead_id).first()
-                            if actualvotehead and actualvotehead.vote_head_name in combined_voteheads:
-                                thevoteheads[actualvotehead.vote_head_name] += Decimal(amount)
-                                overall_votehead_amounts[actualvotehead.vote_head_name] += Decimal(amount)
+                        for thevotehead in combined_voteheads:
+
+                            votehead_distribution = grant.voteheadamounts
+                            for votehead_id, amount in votehead_distribution.items():
+                                actualvotehead = VoteHead.objects.filter(id=votehead_id).first()
+                                if actualvotehead and actualvotehead.vote_head_name == thevotehead:
+                                    thevoteheads[actualvotehead.vote_head_name] += Decimal(amount)
+                                    overall_votehead_amounts[actualvotehead.vote_head_name] += Decimal(amount)
+                                else:
+                                    thevoteheads[thevotehead] += Decimal(0)
+
 
 
                         receipt_list.append({
@@ -944,10 +949,14 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
                         collections = Collection.objects.filter(receipt=receipt)
                         for collection in collections:
-                            votehead_name = collection.votehead.vote_head_name
-                            if votehead_name in combined_voteheads:
-                                thereceipt_voteheads[votehead_name] += Decimal(collection.amount)
-                                overall_votehead_amounts[votehead_name] += Decimal(collection.amount)
+
+                            for thevotehead in combined_voteheads:
+                                votehead_name = collection.votehead.vote_head_name
+                                if votehead_name == thevotehead:
+                                    thereceipt_voteheads[votehead_name] += Decimal(collection.amount)
+                                    overall_votehead_amounts[votehead_name] += Decimal(collection.amount)
+                                else:
+                                    thereceipt_voteheads[thevotehead] += Decimal(0)
 
 
                 for pikreceipt in querysetPIK:
@@ -959,10 +968,15 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
                     piks = PaymentInKind.objects.filter(receipt=pikreceipt)
                     for pik in piks:
-                        votehead_name = pik.votehead.vote_head_name
-                        if votehead_name in combined_voteheads:
-                            thereceipt_voteheads[votehead_name] += Decimal(pik.amount)
-                            overall_votehead_amounts[votehead_name] += Decimal(pik.amount)
+
+                        for thevotehead in combined_voteheads:
+                            votehead_name = pik.votehead.vote_head_name
+                            if votehead_name == thevotehead:
+                                thereceipt_voteheads[votehead_name] += Decimal(pik.amount)
+                                overall_votehead_amounts[votehead_name] += Decimal(pik.amount)
+                            else:
+                                thereceipt_voteheads[thevotehead] += Decimal(0)
+
 
 
                 receipt_receptrange = f"{min(receipt_range)} - {max(receipt_range)}" if receipt_range else "None"
@@ -1005,9 +1019,14 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                             voucher_bank_overall_total += amount
 
                         thevoteheads = defaultdict(Decimal)
-                        if voucher.votehead.vote_head_name in voucher_votehead_list:
-                            thevoteheads[voucher.votehead.vote_head_name] += amount
-                            overall_votehead_amounts_voucher[voucher.votehead.vote_head_name] += amount
+
+                        for thevotehead in voucher_votehead_list:
+                            if voucher.votehead.vote_head_name  == thevotehead:
+                                thevoteheads[voucher.votehead.vote_head_name] += amount
+                                overall_votehead_amounts_voucher[voucher.votehead.vote_head_name] += amount
+                            else:
+                                thevoteheads[thevotehead] = Decimal(0)
+
 
                         receipient_type = voucher.voucher.recipientType
                         if receipient_type == "OTHER":
