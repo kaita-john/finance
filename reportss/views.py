@@ -17,6 +17,7 @@ from account_types.models import AccountType
 from appcollections.models import Collection
 from bank_accounts.models import BankAccount
 from budgets.models import Budget
+from bursaries.models import Bursary
 from currencies.serializers import CurrencySerializer
 from financial_years.models import FinancialYear
 from grant_items.models import GrantItem
@@ -828,40 +829,48 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             querysetPIK = PIKReceipt.objects.filter(school_id=school_id, is_posted=True)
             querySetGrants = Grant.objects.filter(school_id=school_id, deleted = False)
             querySetExpenses = VoucherItem.objects.filter(school_id=school_id, voucher__is_deleted=False)
+            querySetBursary = Bursary.objects.filter(school_id=school_id, posted=True)
+
 
             if bankaccount and bankaccount != "" and bankaccount != "null":
-                querySetReceipts = querySetReceipts.filter(school_id=school_id, bank_account__id=bankaccount)
-                querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__id=bankaccount)
-                querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount__id=bankaccount)
-                querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__bank_account__id=bankaccount)
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, bank_account=bankaccount)
+                querysetPIK = querysetPIK.filter(school_id=school_id, bank_account=bankaccount)
+                querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount=bankaccount)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__bank_account=bankaccount)
+                querySetBursary = querySetBursary.filter(school_id=school_id, bankAccount=bankaccount)
 
             if accounttype and accounttype != "" and accounttype != "null":
-                querySetReceipts = querySetReceipts.filter(school_id=school_id, account_type__id=accounttype)
-                querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__account_type__id=accounttype)
-                querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount__account_type__id=accounttype)
-                querySetExpenses = querySetExpenses.filter(school_id=school_id,voucher__bank_account__account_type__id=accounttype)
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, account_type=accounttype)
+                querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__account_type=accounttype)
+                querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount__account_type=accounttype)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id,voucher__bank_account__account_type=accounttype)
+                querySetBursary = querySetBursary.filter(school_id=school_id, bankAccount__account_type=bankaccount)
             else:
                 return Response({'detail': f"Account Type is required"}, status=status.HTTP_400_BAD_REQUEST)
 
             if financialyear and financialyear != "" and financialyear != "null":
-                querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year__id=financialyear)
-                querysetPIK = querysetPIK.filter(school_id=school_id, financial_year__id=financialyear)
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year=financialyear)
+                querysetPIK = querysetPIK.filter(school_id=school_id, financial_year=financialyear)
                 querySetGrants = querySetGrants.filter(school_id=school_id, financial_year=financialyear)
-                querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__financial_year__id=financialyear)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__financial_year=financialyear)
+                querySetBursary = querySetBursary.filter(school_id=school_id, financial_year=financialyear)
 
             if month and month != "" and month != "null":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, transaction_date__month=month)
                 querysetPIK = querysetPIK.filter(school_id=school_id, receipt_date__month=month)
                 querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__paymentDate__month=month)
                 querySetGrants = querySetGrants.filter(school_id=school_id, receipt_date__month=month)
+                querySetBursary = querySetBursary.filter(school_id=school_id, receipt_date__month=month)
 
 
-            listofdateofcreations = []
-            listofdateofcreations.extend(querySetReceipts.values_list('transaction_date', flat=True))
-            listofdateofcreations.extend(querysetPIK.values_list('receipt_date', flat=True))
-            listofdateofcreations.extend(querySetGrants.values_list('receipt_date', flat=True))
-            listofdateofcreations = sorted(list(set(listofdateofcreations)))
-            listofdateofcreations = list(listofdateofcreations)
+
+            listofdateofcreations = sorted(set(
+                    querySetReceipts.values_list('transaction_date', flat=True).distinct() |
+                    querysetPIK.values_list('receipt_date', flat=True).distinct() |
+                    querySetGrants.values_list('receipt_date', flat=True).distinct() |
+                    querySetBursary.values_list('bursary__receipt_date', flat=True).distinct()
+                )
+            )
 
             receipt_voteheads = list({thecollection.votehead.vote_head_name for thereceipt in querySetReceipts for thecollection in Collection.objects.filter(receipt=thereceipt)})
             pik_voteheads = list({pik.votehead.vote_head_name for pikReceipt in querysetPIK for pik in PaymentInKind.objects.filter(receipt=pikReceipt)})
@@ -891,6 +900,35 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 receipt_bank = Decimal(openbank)
                 thereceipt_voteheads = defaultdict(Decimal)
 
+
+                #BURSARIES
+                for bursary in querySetBursary:
+                    if bursary.receipt_date == dateinstance:
+                        bursary_cash = Decimal(0)
+                        bursary_bank = Decimal(0)
+                        bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount']
+                        method = "BANK" if bursary.paymentMethod and bursary.paymentMethod.is_cheque else "CASH" if bursary.paymentMethod and bursary.paymentMethod.is_cash else "NONE"
+                        if method == "CASH" or method == "NONE":
+                            bursary_cash += bursary_total_amount
+                            cash_overall_total += bursary_total_amount
+                        if method == "BANK":
+                            bursary_bank += bursary_total_amount
+                            bank_overall_total += bursary_total_amount
+                        bursary_total = bursary_cash + bursary_bank
+
+                        thevoteheads = defaultdict(Decimal)
+                        for thevotehead in combined_voteheads:
+                            thevoteheads[thevotehead] += Decimal(0)
+
+                        receipt_list.append({
+                                "date": dateinstance,
+                                "description": f"{bursary.institution}",
+                                "receipt_range": bursary.counter,
+                                "cash": bursary_cash,
+                                "bank": bursary_bank,
+                                "total_amount": bursary_total,
+                                "voteheads": thevoteheads,
+                            })
 
                 # GRANTS
                 for grant in querySetGrants:
@@ -930,6 +968,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                                 "total_amount": grant_total,
                                 "voteheads": thevoteheads,
                             })
+
 
 
                 # RECEIPTS
@@ -994,9 +1033,8 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
 
             # VOUCHERS
-            listofVoucherDateCreations = querySetExpenses.values_list('voucher__paymentDate', flat=True)
-            listofVoucherDateCreations = list(set(listofVoucherDateCreations))
-            listofVoucherDateCreations = sorted(list(listofVoucherDateCreations))
+            listofVoucherDateCreations = sorted(set(querySetExpenses.values_list('voucher__paymentDate', flat=True).distinct()))
+
             voucher_votehead_list = list({voucher_item.votehead.vote_head_name for voucher_item in querySetExpenses })
             overall_votehead_amounts_voucher = defaultdict(Decimal)
             listofVouchers = []
