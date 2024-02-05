@@ -293,7 +293,7 @@ def close_financial_year(current_financial_year,new_financial_year, school_id):
             closing_cash_at_bank += Decimal(collection.amount)
 
     for pik in pikQuerySet:
-        closing_cash_at_hand += Decimal(pik.amoount)
+        closing_cash_at_hand += Decimal(pik.amount)
 
     for voucheritem in expensesQuerySet:
         if voucheritem.receipt.payment_Method.is_cash == True:
