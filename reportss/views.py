@@ -1034,7 +1034,8 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                         elif receipient_type == "STAFF":
                             person = f"{voucher.voucher.staff.fname} {voucher.voucher.staff.lname}"
                         else:
-                            person = f"{voucher.voucher.supplier.contactPerson}"
+                            # person = f"{voucher.voucher.supplier.contactPerson}"
+                            person = f"SUPPLIER"
 
                         listofVouchers.append(
                             {
