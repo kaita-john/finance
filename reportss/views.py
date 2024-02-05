@@ -856,25 +856,23 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 querySetGrants = querySetGrants.filter(school_id=school_id, receipt_date__month=month)
 
 
-
             listofdateofcreations = []
             listofdateofcreations.extend(querySetReceipts.values_list('transaction_date', flat=True))
             listofdateofcreations.extend(querysetPIK.values_list('receipt_date', flat=True))
             listofdateofcreations.extend(querySetGrants.values_list('receipt_date', flat=True))
-
             listofdateofcreations = sorted(list(set(listofdateofcreations)))
             listofdateofcreations = list(listofdateofcreations)
 
+            receipt_voteheads = list({thecollection.votehead.vote_head_name for thereceipt in querySetReceipts for thecollection in Collection.objects.filter(receipt=thereceipt)})
+            pik_voteheads = list({pik.votehead.vote_head_name for pikReceipt in querysetPIK for pik in PaymentInKind.objects.filter(receipt=pikReceipt)})
+            grant_voteheads = list({grant_item.votehead.vote_head_name for grant in querySetGrants for grant_item in GrantItem.objects.filter(grant=grant)})
+            combined_voteheads = list(set(receipt_voteheads + pik_voteheads + grant_voteheads))
 
-            listofreceipts = []
-            universalvoteheadDictionary_collection_voteheads = {}
-            universalgrantvoteheadDictionary_collection_voteheads = defaultdict(Decimal)
+            overall_votehead_amounts = defaultdict(Decimal)
+            cash_overall_total = Decimal(0)
+            bank_overall_total = Decimal(0)
+            receipt_list = []
 
-            total_receipt_cash = Decimal(0.0)
-            total_receipt_bank = Decimal(0.0)
-
-            total_expenses_cash = Decimal(0.0)
-            total_expenses_bank = Decimal(0.0)
 
             if not month:
                 opening_balance = Decimal(0.0)
@@ -885,210 +883,151 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 openbank = getBalance(accounttype, month, financialyear, school_id)["bank"]
 
             for dateinstance in listofdateofcreations:
+
                 receipt_range = []
-                total_amount = Decimal("0.0")
+                receipt_cash = Decimal(opencash)
+                receipt_bank = Decimal(openbank)
+                thereceipt_voteheads = defaultdict(Decimal)
 
-                cash = Decimal(opencash)
-                bank = Decimal(openbank)
-                inkind = Decimal("0.0")
 
-                voteheadDictionary = {}
-                grantvoteheadDictionary = defaultdict(Decimal)
-
+                # GRANTS
                 for grant in querySetGrants:
-
-                    grant_cash = Decimal(opencash)
-                    grant_bank = Decimal(openbank)
-
                     if grant.receipt_date == dateinstance:
-                        method = "NONE"
-                        if grant.paymentMethod:
-                            method = "BANK" if grant.paymentMethod.is_cheque else "CASH" if grant.paymentMethod.is_cash else "BANK" if grant.paymentMethod.is_bank else "NONE"
-                        if method == "CASH":
-                            grant_cash += Decimal(grant.overall_amount)
+                        grant_cash = Decimal(0)
+                        grant_bank = Decimal(0)
+                        grant_overall_amount = Decimal(grant.overall_amount)
+                        method = "BANK" if grant.paymentMethod and grant.paymentMethod.is_cheque else "CASH" if grant.paymentMethod and grant.paymentMethod.is_cash else "NONE"
+                        if method == "CASH" or method == "NONE":
+                            grant_cash += grant_overall_amount
+                            cash_overall_total += grant_overall_amount
                         if method == "BANK":
-                            grant_bank += Decimal(grant.overall_amount)
-                        if method == "NONE":
-                            inkind += Decimal(grant.overall_amount)
+                            grant_bank += grant_overall_amount
+                            bank_overall_total += grant_overall_amount
+                        grant_total = grant_cash + grant_bank
 
+                        thevoteheads = defaultdict(Decimal)
                         votehead_distribution = grant.voteheadamounts
                         for votehead_id, amount in votehead_distribution.items():
-                            theamount = Decimal(amount)
                             actualvotehead = VoteHead.objects.filter(id=votehead_id).first()
-                            if actualvotehead:
-                                grantvoteheadDictionary[actualvotehead.vote_head_name] += theamount
-                                universalgrantvoteheadDictionary_collection_voteheads[
-                                    actualvotehead.vote_head_name] += theamount
+                            if actualvotehead and actualvotehead.vote_head_name in combined_voteheads:
+                                thevoteheads[actualvotehead.vote_head_name] += Decimal(amount)
+                                overall_votehead_amounts[actualvotehead.vote_head_name] += Decimal(amount)
 
-                        listofreceipts.append(
-                            {
+
+                        receipt_list.append({
                                 "date": dateinstance,
                                 "description": f"{grant.institution}",
                                 "receipt_range": grant.counter,
                                 "cash": grant_cash,
                                 "bank": grant_bank,
-                                "inkind": inkind,
-                                "total_amount": Decimal(grant.overall_amount),
-                                "voteheads": grantvoteheadDictionary,
-                                "summary": universalgrantvoteheadDictionary_collection_voteheads,
-                            }
-                        )
+                                "total_amount": grant_total,
+                                "voteheads": thevoteheads,
+                            })
 
 
-
-
+                # RECEIPTS
                 for receipt in querySetReceipts:
                     if receipt.transaction_date == dateinstance:
-                        method = "NONE"
-                        if receipt.payment_method:
-                            method = "BANK" if receipt.payment_method.is_cheque else "CASH" if receipt.payment_method.is_cash else "BANK" if receipt.payment_method.is_bank else "NONE"
-                        if method == "CASH":
-                            cash += Decimal(receipt.totalAmount)
+                        receipt_overall_amount = Decimal(receipt.totalAmount)
+                        method = "BANK" if receipt.payment_method and receipt.payment_method.is_cheque else "CASH" if receipt.payment_method and receipt.payment_method.is_cash else "NONE"
+                        if method == "CASH" or method == "NONE":
+                            receipt_cash += receipt_overall_amount
+                            cash_overall_total += receipt_overall_amount
                         if method == "BANK":
-                            bank += Decimal(receipt.totalAmount)
-                        if method == "NONE":
-                            inkind += Decimal(receipt.totalAmount)
+                            receipt_bank += receipt_overall_amount
+                            bank_overall_total += receipt_overall_amount
 
                         counter = receipt.counter
-                        amount = Decimal(receipt.totalAmount)
                         receipt_range.append(counter)
-                        total_amount += amount
-                        if "total_amount" not in universalvoteheadDictionary_collection_voteheads:
-                            universalvoteheadDictionary_collection_voteheads[f"total_amount"] = Decimal(amount)
-                        else:
-                            universalvoteheadDictionary_collection_voteheads[f"total_amount"] += Decimal(amount)
 
-                    collections = Collection.objects.filter(receipt=receipt)
-                    for collection in collections:
-                        if collection.votehead.vote_head_name not in voteheadDictionary:
-                            voteheadDictionary[f"{collection.votehead.vote_head_name}"] = Decimal(collection.amount)
-                        else:
-                            voteheadDictionary[f"{collection.votehead.vote_head_name}"] += Decimal(collection.amount)
-
-                        if collection.votehead.vote_head_name not in universalvoteheadDictionary_collection_voteheads:
-                            universalvoteheadDictionary_collection_voteheads[f"{collection.votehead.vote_head_name}"] = Decimal(collection.amount)
-                        else:
-                            universalvoteheadDictionary_collection_voteheads[f"{collection.votehead.vote_head_name}"] += Decimal(collection.amount)
-
+                        collections = Collection.objects.filter(receipt=receipt)
+                        for collection in collections:
+                            votehead_name = collection.votehead.vote_head_name
+                            if votehead_name in combined_voteheads:
+                                thereceipt_voteheads[votehead_name] += Decimal(collection.amount)
+                                overall_votehead_amounts[votehead_name] += Decimal(collection.amount)
 
 
                 for pikreceipt in querysetPIK:
                     if pikreceipt.receipt_date == dateinstance:
-                        cash += Decimal(pikreceipt.totalAmount)
+                        receipt_cash += Decimal(pikreceipt.totalAmount)
                         counter = pikreceipt.counter
-                        amount = Decimal(pikreceipt.totalAmount)
                         receipt_range.append(counter)
-                        total_amount += amount
+                        cash_overall_total += Decimal(pikreceipt.totalAmount)
 
                     piks = PaymentInKind.objects.filter(receipt=pikreceipt)
                     for pik in piks:
-                        if pik.votehead.vote_head_name not in voteheadDictionary:
-                            voteheadDictionary[f"{pik.votehead.vote_head_name}"] = pik.amount
-                        else:
-                            voteheadDictionary[f"{pik.votehead.vote_head_name}"] += pik.amount
-                        if pik.votehead.vote_head_name not in universalvoteheadDictionary_collection_voteheads:
-                            universalvoteheadDictionary_collection_voteheads[f"{pik.votehead.vote_head_name}"] = pik.amount
-                        else:
-                            universalvoteheadDictionary_collection_voteheads[f"{pik.votehead.vote_head_name}"] += pik.amount
+                        votehead_name = pik.votehead.vote_head_name
+                        if votehead_name in combined_voteheads:
+                            thereceipt_voteheads[votehead_name] += Decimal(pik.amount)
+                            overall_votehead_amounts[votehead_name] += Decimal(pik.amount)
 
 
-                result = ""
-                if receipt_range:
-                    print(f"Receipt range is {receipt_range}")
-                    result = f"{min(receipt_range)} - {max(receipt_range)}"
+                receipt_receptrange = f"{min(receipt_range)} - {max(receipt_range)}" if receipt_range else "None"
+                receipt_list.append({
+                    "date": dateinstance,
+                    "description": f"FEES",
+                    "receipt_range": receipt_receptrange,
+                    "cash": receipt_cash,
+                    "bank": receipt_bank,
+                    "total_amount": receipt_cash + receipt_bank,
+                    "voteheads": thereceipt_voteheads,
+                })
 
-                print(f"Total amount for date {dateinstance}: {total_amount}")
-                print(f"voteheadDictionary for date {dateinstance}: {voteheadDictionary}")
 
-                total_receipt_cash += cash
-                total_receipt_bank += bank
 
-                listofreceipts.append(
-                    {
-                        "date" : dateinstance,
-                        "description": "FEES",
-                        "receipt_range": result,
-                        "cash": cash,
-                        "bank": bank,
-                        "inkind": inkind,
-                        "total_amount": total_amount,
-                        "voteheads": voteheadDictionary,
-                        "summary": universalvoteheadDictionary_collection_voteheads,
-                    }
-                )
 
-            #EXPENSES OR VOUCHERS
-            listofVoucherDateCreations = []
-            listofVoucherDateCreations.extend(querySetExpenses.values_list('voucher__paymentDate', flat=True))
+            # VOUCHERS
+            listofVoucherDateCreations = querySetExpenses.values_list('voucher__paymentDate', flat=True)
             listofVoucherDateCreations = list(set(listofVoucherDateCreations))
-            listofVoucherDateCreations = list(listofVoucherDateCreations)
-
+            listofVoucherDateCreations = sorted(list(listofVoucherDateCreations))
+            voucher_votehead_list = list({voucher_item.votehead.vote_head_name for voucher_item in querySetExpenses })
+            overall_votehead_amounts_voucher = defaultdict(Decimal)
             listofVouchers = []
-            universalvoteheadDictionary_payment_voteheads = {}
+            voucher_cash_overall_total = Decimal(0)
+            voucher_bank_overall_total = Decimal(0)
 
             for dateinstance in listofVoucherDateCreations:
-                receipt_range = []
-                total_amount = Decimal("0.0")
-                cash = Decimal("0.0")
-                bank = Decimal("0.0")
-                voteheadDictionary = {}
                 for voucher in querySetExpenses:
+                    voucher_cash = Decimal("0.0")
+                    voucher_bank = Decimal("0.0")
+                    amount = Decimal(voucher.amount)
+
                     if voucher.voucher.paymentDate == dateinstance:
-                        method = "BANK" if voucher.voucher.payment_Method.is_cheque else "CASH" if voucher.voucher.payment_Method.is_cash else "BANK" if voucher.voucher.payment_Method.is_bank else "NONE"
-                        if method == "CASH":
-                            cash += Decimal(voucher.amount)
-                        if method == "BANK":
-                            bank += Decimal(voucher.amount)
-                        if method == "NONE":
-                            cash += Decimal(voucher.amount)
+                        method = "BANK" if voucher.voucher.payment_Method and voucher.voucher.payment_Method.is_cheque else "CASH" if voucher.voucher.payment_Method and voucher.voucher.payment_Method.is_cash else "NONE"
+                        if method == "CASH" or method == "NONE":
+                            voucher_cash += amount
+                            voucher_cash_overall_total += amount
+                        elif method == "BANK":
+                            voucher_bank += amount
+                            voucher_bank_overall_total += amount
 
-                        counter = voucher.voucher.counter
-                        amount = Decimal(voucher.amount)
-                        receipt_range.append(counter)
-                        total_amount += amount
-                        if "total_amount" not in universalvoteheadDictionary_payment_voteheads:
-                            universalvoteheadDictionary_payment_voteheads[f"total_amount"] = Decimal(amount)
+                        thevoteheads = defaultdict(Decimal)
+                        if voucher.votehead.vote_head_name in voucher_votehead_list:
+                            thevoteheads[voucher.votehead.vote_head_name] += amount
+                            overall_votehead_amounts_voucher[voucher.votehead.vote_head_name] += amount
+
+                        receipient_type = voucher.voucher.recipientType
+                        if receipient_type == "OTHER":
+                            person = voucher.voucher.other
+                        elif receipient_type == "STAFF":
+                            person = f"{voucher.voucher.staff.fname} {voucher.voucher.staff.lname}"
                         else:
-                            universalvoteheadDictionary_payment_voteheads[f"total_amount"] += Decimal(amount)
+                            person = f"{voucher.voucher.supplier.contactPerson}"
+
+                        listofVouchers.append(
+                            {
+                                "date": dateinstance,
+                                "description": person,
+                                "receipt_range": voucher.voucher.counter,
+                                "cash": voucher_cash,
+                                "bank": voucher_bank,
+                                "total_amount": Decimal(voucher.amount),
+                                "voteheads": thevoteheads,
+                            }
+                        )
 
 
-                        if voucher.votehead.vote_head_name not in voteheadDictionary:
-                            voteheadDictionary[f"{voucher.votehead.vote_head_name}"] = Decimal(voucher.amount)
-                        else:
-                            voteheadDictionary[f"{voucher.votehead.vote_head_name}"] += Decimal(voucher.amount)
-
-                        if voucher.votehead.vote_head_name not in universalvoteheadDictionary_payment_voteheads:
-                            universalvoteheadDictionary_payment_voteheads[f"{voucher.votehead.vote_head_name}"] = Decimal(voucher.amount)
-                        else:
-                            universalvoteheadDictionary_payment_voteheads[f"{voucher.votehead.vote_head_name}"] += Decimal(voucher.amount)
-
-                    total_expenses_cash += cash
-                    total_expenses_bank += bank
-
-                    # result = ""
-                    # if receipt_range:
-                    #     result = f"{min(receipt_range)} - {max(receipt_range)}"
-
-                    receipient_type = voucher.voucher.recipientType
-                    if receipient_type == "OTHER":
-                        person = voucher.voucher.other
-                    elif receipient_type == "STAFF":
-                        person = f"{voucher.voucher.staff.fname} {voucher.voucher.staff.lname}"
-                    else:
-                        person = f"{voucher.voucher.supplier.contactPerson}"
-
-
-                    listofVouchers.append(
-                        {
-                            "date": dateinstance,
-                            "description": person,
-                            "receipt_range": voucher.voucher.counter,
-                            "cash": cash,
-                            "bank": bank,
-                            "total_amount": Decimal(voucher.amount),
-                            "voteheads": voteheadDictionary,
-                        }
-                    )
 
             if not month:
                 total_opening_balance = Decimal(0.0)
@@ -1099,15 +1038,15 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 opening_cash = getBalance(accounttype, month, financialyear, school_id)["cash"]
                 opening_bank = getBalance(accounttype, month, financialyear, school_id)["bank"]
 
-            total_expense = sum(voucher.get("total_amount", 0) for voucher in listofVouchers)
-            total_collection = sum(collection.get("total_amount", 0) for collection in listofreceipts)
-            total_collectioncash = sum(collection.get("cash", 0) for collection in listofreceipts)
-            total_collectionbank = sum(collection.get("bank", 0) for collection in listofreceipts)
+            total_expense = voucher_cash_overall_total + voucher_bank_overall_total
+            total_collection = Decimal(cash_overall_total) + Decimal(bank_overall_total)
 
-            total_expensecash = sum(collection.get("cash", 0) for collection in listofVouchers)
-            total_expensebank = sum(collection.get("bank", 0) for collection in listofVouchers)
+            total_collectioncash = cash_overall_total
+            total_collectionbank = bank_overall_total
 
-            total_total_expense =  Decimal(total_expensecash) + Decimal(total_expensebank),
+            total_expensecash = voucher_cash_overall_total
+            total_expensebank = voucher_bank_overall_total
+            total_total_expense = Decimal(total_expensecash) + Decimal(total_expensebank),
 
             total_total_collection = Decimal(total_collectioncash) + Decimal(total_collectionbank)
             total_closing_balance = (Decimal(total_opening_balance) + Decimal(total_total_collection)) - Decimal(total_expense)
@@ -1117,7 +1056,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
 
             thedata = {
 
-                "receipts" : listofreceipts,
+                "receipts": receipt_list,
                 "payments": listofVouchers,
 
                 "opening_cash": opening_cash,
@@ -1139,10 +1078,11 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 "total_expensebank": total_expensebank,
                 "total_total_expense": total_total_expense,
 
-                "total_payment_voteheads": universalvoteheadDictionary_payment_voteheads,
-                "total_collection_voteheads": universalvoteheadDictionary_collection_voteheads,
+                "total_payment_voteheads": overall_votehead_amounts_voucher,
+                "total_collection_voteheads": overall_votehead_amounts,
 
             }
+
 
         except Exception as exception:
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
