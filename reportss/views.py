@@ -899,118 +899,119 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 grantvoteheadDictionary = {}
 
                 for grant in querySetGrants:
-
                     grant_cash = Decimal(opencash)
                     grant_bank = Decimal(openbank)
-
                     if grant.receipt_date == dateinstance:
-                        method = "NONE"
-                        if grant.paymentMethod:
-                            method = "BANK" if grant.paymentMethod.is_cheque else "CASH" if grant.paymentMethod.is_cash else "BANK" if grant.paymentMethod.is_bank else "NONE"
-                        if method == "CASH":
-                            grant_cash += Decimal(grant.overall_amount)
-                        if method == "BANK":
-                            grant_bank += Decimal(grant.overall_amount)
-                        if method == "NONE":
-                            inkind += Decimal(grant.overall_amount)
+                        if grant.bankAccount.account_type == accounttype:
+                            method = "NONE"
+                            if grant.paymentMethod:
+                                method = "BANK" if grant.paymentMethod.is_cheque else "CASH" if grant.paymentMethod.is_cash else "BANK" if grant.paymentMethod.is_bank else "NONE"
+                            if method == "CASH":
+                                grant_cash += Decimal(grant.overall_amount)
+                            if method == "BANK":
+                                grant_bank += Decimal(grant.overall_amount)
+                            if method == "NONE":
+                                inkind += Decimal(grant.overall_amount)
 
-                        votehead_distribution = grant.voteheadamounts
+                            votehead_distribution = grant.voteheadamounts
 
-                        for votehead_id, amount in votehead_distribution.items():
-                            theamount = Decimal(amount)
+                            for votehead_id, amount in votehead_distribution.items():
+                                theamount = Decimal(amount)
 
-                            try:
-                                actualvotehead = VoteHead.objects.get(id=votehead_id)
-                                if actualvotehead.vote_head_name not in grantvoteheadDictionary:
-                                    grantvoteheadDictionary[actualvotehead.vote_head_name] = theamount
-                                else:
-                                    grantvoteheadDictionary[actualvotehead.vote_head_name] += theamount
-                                if actualvotehead.vote_head_name not in universalgrantvoteheadDictionary_collection_voteheads:
-                                    universalgrantvoteheadDictionary_collection_voteheads[
-                                        actualvotehead.vote_head_name] = theamount
-                                else:
-                                    universalgrantvoteheadDictionary_collection_voteheads[
-                                        actualvotehead.vote_head_name] += theamount
+                                try:
+                                    actualvotehead = VoteHead.objects.get(id=votehead_id)
+                                    if actualvotehead.vote_head_name not in grantvoteheadDictionary:
+                                        grantvoteheadDictionary[actualvotehead.vote_head_name] = theamount
+                                    else:
+                                        grantvoteheadDictionary[actualvotehead.vote_head_name] += theamount
+                                    if actualvotehead.vote_head_name not in universalgrantvoteheadDictionary_collection_voteheads:
+                                        universalgrantvoteheadDictionary_collection_voteheads[
+                                            actualvotehead.vote_head_name] = theamount
+                                    else:
+                                        universalgrantvoteheadDictionary_collection_voteheads[
+                                            actualvotehead.vote_head_name] += theamount
 
-                            except VoteHead.DoesNotExist:
-                                pass
+                                except VoteHead.DoesNotExist:
+                                    pass
 
-                        # if grant_receipt_range:
-                        #     print(f"Receipt range is {receipt_range}")
-                        #     grant_result = f"{min(grant_receipt_range)} - {max(grant_receipt_range)}"
+                            # if grant_receipt_range:
+                            #     print(f"Receipt range is {receipt_range}")
+                            #     grant_result = f"{min(grant_receipt_range)} - {max(grant_receipt_range)}"
 
-                        print(f" Testing Votehead {grantvoteheadDictionary} on {grant.receipt_date}")
+                            print(f" Testing Votehead {grantvoteheadDictionary} on {grant.receipt_date}")
 
-                        listofreceipts.append(
-                            {
-                                "date": dateinstance,
-                                "description": f"{grant.institution}",
-                                "receipt_range": grant.counter,
-                                "cash": grant_cash,
-                                "bank": grant_bank,
-                                "inkind": inkind,
-                                "total_amount": Decimal(grant.overall_amount),
-                                "voteheads": grantvoteheadDictionary,
-                                "summary": universalgrantvoteheadDictionary_collection_voteheads,
-                            }
-                        )
+                            listofreceipts.append(
+                                {
+                                    "date": dateinstance,
+                                    "description": f"{grant.institution}",
+                                    "receipt_range": grant.counter,
+                                    "cash": grant_cash,
+                                    "bank": grant_bank,
+                                    "inkind": inkind,
+                                    "total_amount": Decimal(grant.overall_amount),
+                                    "voteheads": grantvoteheadDictionary,
+                                    "summary": universalgrantvoteheadDictionary_collection_voteheads,
+                                }
+                            )
 
 
 
 
                 for receipt in querySetReceipts:
                     if receipt.transaction_date == dateinstance:
-                        method = "NONE"
-                        if receipt.payment_method:
-                            method = "BANK" if receipt.payment_method.is_cheque else "CASH" if receipt.payment_method.is_cash else "BANK" if receipt.payment_method.is_bank else "NONE"
-                        if method == "CASH":
-                            cash += Decimal(receipt.totalAmount)
-                        if method == "BANK":
-                            bank += Decimal(receipt.totalAmount)
-                        if method == "NONE":
-                            inkind += Decimal(receipt.totalAmount)
+                        if receipt.account_type == accounttype:
+                            method = "NONE"
+                            if receipt.payment_method:
+                                method = "BANK" if receipt.payment_method.is_cheque else "CASH" if receipt.payment_method.is_cash else "BANK" if receipt.payment_method.is_bank else "NONE"
+                            if method == "CASH":
+                                cash += Decimal(receipt.totalAmount)
+                            if method == "BANK":
+                                bank += Decimal(receipt.totalAmount)
+                            if method == "NONE":
+                                inkind += Decimal(receipt.totalAmount)
 
-                        counter = receipt.counter
-                        amount = Decimal(receipt.totalAmount)
-                        receipt_range.append(counter)
-                        total_amount += amount
-                        if "total_amount" not in universalvoteheadDictionary_collection_voteheads:
-                            universalvoteheadDictionary_collection_voteheads[f"total_amount"] = Decimal(amount)
-                        else:
-                            universalvoteheadDictionary_collection_voteheads[f"total_amount"] += Decimal(amount)
+                            counter = receipt.counter
+                            amount = Decimal(receipt.totalAmount)
+                            receipt_range.append(counter)
+                            total_amount += amount
+                            if "total_amount" not in universalvoteheadDictionary_collection_voteheads:
+                                universalvoteheadDictionary_collection_voteheads[f"total_amount"] = Decimal(amount)
+                            else:
+                                universalvoteheadDictionary_collection_voteheads[f"total_amount"] += Decimal(amount)
 
-                    collections = Collection.objects.filter(receipt=receipt)
-                    for collection in collections:
-                        if collection.votehead.vote_head_name not in voteheadDictionary:
-                            voteheadDictionary[f"{collection.votehead.vote_head_name}"] = Decimal(collection.amount)
-                        else:
-                            voteheadDictionary[f"{collection.votehead.vote_head_name}"] += Decimal(collection.amount)
+                            collections = Collection.objects.filter(receipt=receipt)
+                            for collection in collections:
+                                if collection.votehead.vote_head_name not in voteheadDictionary:
+                                    voteheadDictionary[f"{collection.votehead.vote_head_name}"] = Decimal(collection.amount)
+                                else:
+                                    voteheadDictionary[f"{collection.votehead.vote_head_name}"] += Decimal(collection.amount)
 
-                        if collection.votehead.vote_head_name not in universalvoteheadDictionary_collection_voteheads:
-                            universalvoteheadDictionary_collection_voteheads[f"{collection.votehead.vote_head_name}"] = Decimal(collection.amount)
-                        else:
-                            universalvoteheadDictionary_collection_voteheads[f"{collection.votehead.vote_head_name}"] += Decimal(collection.amount)
+                                if collection.votehead.vote_head_name not in universalvoteheadDictionary_collection_voteheads:
+                                    universalvoteheadDictionary_collection_voteheads[f"{collection.votehead.vote_head_name}"] = Decimal(collection.amount)
+                                else:
+                                    universalvoteheadDictionary_collection_voteheads[f"{collection.votehead.vote_head_name}"] += Decimal(collection.amount)
 
 
 
                 for pikreceipt in querysetPIK:
                     if pikreceipt.receipt_date == dateinstance:
-                        cash += Decimal(pikreceipt.totalAmount)
-                        counter = pikreceipt.counter
-                        amount = Decimal(pikreceipt.totalAmount)
-                        receipt_range.append(counter)
-                        total_amount += amount
+                        if pikreceipt.bank_account.account_type == accounttype:
+                            cash += Decimal(pikreceipt.totalAmount)
+                            counter = pikreceipt.counter
+                            amount = Decimal(pikreceipt.totalAmount)
+                            receipt_range.append(counter)
+                            total_amount += amount
 
-                    piks = PaymentInKind.objects.filter(receipt=pikreceipt)
-                    for pik in piks:
-                        if pik.votehead.vote_head_name not in voteheadDictionary:
-                            voteheadDictionary[f"{pik.votehead.vote_head_name}"] = pik.amount
-                        else:
-                            voteheadDictionary[f"{pik.votehead.vote_head_name}"] += pik.amount
-                        if pik.votehead.vote_head_name not in universalvoteheadDictionary_collection_voteheads:
-                            universalvoteheadDictionary_collection_voteheads[f"{pik.votehead.vote_head_name}"] = pik.amount
-                        else:
-                            universalvoteheadDictionary_collection_voteheads[f"{pik.votehead.vote_head_name}"] += pik.amount
+                            piks = PaymentInKind.objects.filter(receipt=pikreceipt)
+                            for pik in piks:
+                                if pik.votehead.vote_head_name not in voteheadDictionary:
+                                    voteheadDictionary[f"{pik.votehead.vote_head_name}"] = pik.amount
+                                else:
+                                    voteheadDictionary[f"{pik.votehead.vote_head_name}"] += pik.amount
+                                if pik.votehead.vote_head_name not in universalvoteheadDictionary_collection_voteheads:
+                                    universalvoteheadDictionary_collection_voteheads[f"{pik.votehead.vote_head_name}"] = pik.amount
+                                else:
+                                    universalvoteheadDictionary_collection_voteheads[f"{pik.votehead.vote_head_name}"] += pik.amount
 
 
                 result = ""
@@ -1055,61 +1056,62 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 voteheadDictionary = {}
                 for voucher in querySetExpenses:
                     if voucher.voucher.paymentDate == dateinstance:
-                        method = "BANK" if voucher.voucher.payment_Method.is_cheque else "CASH" if voucher.voucher.payment_Method.is_cash else "BANK" if voucher.voucher.payment_Method.is_bank else "NONE"
-                        if method == "CASH":
-                            cash += Decimal(voucher.amount)
-                        if method == "BANK":
-                            bank += Decimal(voucher.amount)
-                        if method == "NONE":
-                            cash += Decimal(voucher.amount)
+                        if voucher.voucher.accountType == accounttype:
+                            method = "BANK" if voucher.voucher.payment_Method.is_cheque else "CASH" if voucher.voucher.payment_Method.is_cash else "BANK" if voucher.voucher.payment_Method.is_bank else "NONE"
+                            if method == "CASH":
+                                cash += Decimal(voucher.amount)
+                            if method == "BANK":
+                                bank += Decimal(voucher.amount)
+                            if method == "NONE":
+                                cash += Decimal(voucher.amount)
 
-                        counter = voucher.voucher.counter
-                        amount = Decimal(voucher.amount)
-                        receipt_range.append(counter)
-                        total_amount += amount
-                        if "total_amount" not in universalvoteheadDictionary_payment_voteheads:
-                            universalvoteheadDictionary_payment_voteheads[f"total_amount"] = Decimal(amount)
-                        else:
-                            universalvoteheadDictionary_payment_voteheads[f"total_amount"] += Decimal(amount)
-
-
-                        if voucher.votehead.vote_head_name not in voteheadDictionary:
-                            voteheadDictionary[f"{voucher.votehead.vote_head_name}"] = Decimal(voucher.amount)
-                        else:
-                            voteheadDictionary[f"{voucher.votehead.vote_head_name}"] += Decimal(voucher.amount)
-
-                        if voucher.votehead.vote_head_name not in universalvoteheadDictionary_payment_voteheads:
-                            universalvoteheadDictionary_payment_voteheads[f"{voucher.votehead.vote_head_name}"] = Decimal(voucher.amount)
-                        else:
-                            universalvoteheadDictionary_payment_voteheads[f"{voucher.votehead.vote_head_name}"] += Decimal(voucher.amount)
-
-                    total_expenses_cash += cash
-                    total_expenses_bank += bank
-
-                    # result = ""
-                    # if receipt_range:
-                    #     result = f"{min(receipt_range)} - {max(receipt_range)}"
-
-                    receipient_type = voucher.voucher.recipientType
-                    if receipient_type == "OTHER":
-                        person = voucher.voucher.other
-                    elif receipient_type == "STAFF":
-                        person = f"{voucher.voucher.staff.fname} {voucher.voucher.staff.lname}"
-                    else:
-                        person = f"{voucher.voucher.supplier.contactPerson}"
+                            counter = voucher.voucher.counter
+                            amount = Decimal(voucher.amount)
+                            receipt_range.append(counter)
+                            total_amount += amount
+                            if "total_amount" not in universalvoteheadDictionary_payment_voteheads:
+                                universalvoteheadDictionary_payment_voteheads[f"total_amount"] = Decimal(amount)
+                            else:
+                                universalvoteheadDictionary_payment_voteheads[f"total_amount"] += Decimal(amount)
 
 
-                    listofVouchers.append(
-                        {
-                            "date": dateinstance,
-                            "description": person,
-                            "receipt_range": voucher.voucher.counter,
-                            "cash": cash,
-                            "bank": bank,
-                            "total_amount": Decimal(voucher.amount),
-                            "voteheads": voteheadDictionary,
-                        }
-                    )
+                            if voucher.votehead.vote_head_name not in voteheadDictionary:
+                                voteheadDictionary[f"{voucher.votehead.vote_head_name}"] = Decimal(voucher.amount)
+                            else:
+                                voteheadDictionary[f"{voucher.votehead.vote_head_name}"] += Decimal(voucher.amount)
+
+                            if voucher.votehead.vote_head_name not in universalvoteheadDictionary_payment_voteheads:
+                                universalvoteheadDictionary_payment_voteheads[f"{voucher.votehead.vote_head_name}"] = Decimal(voucher.amount)
+                            else:
+                                universalvoteheadDictionary_payment_voteheads[f"{voucher.votehead.vote_head_name}"] += Decimal(voucher.amount)
+
+                            total_expenses_cash += cash
+                            total_expenses_bank += bank
+
+                            # result = ""
+                            # if receipt_range:
+                            #     result = f"{min(receipt_range)} - {max(receipt_range)}"
+
+                            receipient_type = voucher.voucher.recipientType
+                            if receipient_type == "OTHER":
+                                person = voucher.voucher.other
+                            elif receipient_type == "STAFF":
+                                person = f"{voucher.voucher.staff.fname} {voucher.voucher.staff.lname}"
+                            else:
+                                person = f"{voucher.voucher.supplier.contactPerson}"
+
+
+                            listofVouchers.append(
+                                {
+                                    "date": dateinstance,
+                                    "description": person,
+                                    "receipt_range": voucher.voucher.counter,
+                                    "cash": cash,
+                                    "bank": bank,
+                                    "total_amount": Decimal(voucher.amount),
+                                    "voteheads": voteheadDictionary,
+                                }
+                            )
 
             if not month:
                 total_opening_balance = Decimal(0.0)
