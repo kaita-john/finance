@@ -652,7 +652,7 @@ class ExpenseSummaryView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 school_id=school_id
             )
 
-            if not AccountType.objects.filter(id=accounttype, school_id=school_id).exists():
+            if not AccountType.objects.filter(id=accounttype, school=school_id).exists():
                 return Response({'detail': f"Invalid Account Type Id"}, status=status.HTTP_400_BAD_REQUEST)
 
             if not orderby or orderby == "" or orderby == "null" or not accounttype or accounttype == "" or accounttype == "null":
