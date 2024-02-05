@@ -1,4 +1,5 @@
 # Create your views here.
+from collections import defaultdict
 from datetime import date, datetime
 
 from _decimal import Decimal
@@ -826,7 +827,6 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             querySetReceipts = Receipt.objects.filter(school_id=school_id, is_reversed = False)
             querysetPIK = PIKReceipt.objects.filter(school_id=school_id, is_posted=True)
             querySetGrants = Grant.objects.filter(school_id=school_id, deleted = False)
-
             querySetExpenses = VoucherItem.objects.filter(school_id=school_id, voucher__is_deleted=False)
 
             if bankaccount and bankaccount != "" and bankaccount != "null":
@@ -856,20 +856,19 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 querySetGrants = querySetGrants.filter(school_id=school_id, receipt_date__month=month)
 
 
-            # if not bankaccount or not accounttype:
-            #     return Response({'detail': f"Both orderby and accounttype values must be selected"}, status=status.HTTP_400_BAD_REQUEST)
 
             listofdateofcreations = []
             listofdateofcreations.extend(querySetReceipts.values_list('transaction_date', flat=True))
             listofdateofcreations.extend(querysetPIK.values_list('receipt_date', flat=True))
             listofdateofcreations.extend(querySetGrants.values_list('receipt_date', flat=True))
 
-            listofdateofcreations = list(set(listofdateofcreations))
+            listofdateofcreations = sorted(list(set(listofdateofcreations)))
             listofdateofcreations = list(listofdateofcreations)
+
 
             listofreceipts = []
             universalvoteheadDictionary_collection_voteheads = {}
-            universalgrantvoteheadDictionary_collection_voteheads = {}
+            universalgrantvoteheadDictionary_collection_voteheads = defaultdict(Decimal)
 
             total_receipt_cash = Decimal(0.0)
             total_receipt_bank = Decimal(0.0)
@@ -893,9 +892,8 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 bank = Decimal(openbank)
                 inkind = Decimal("0.0")
 
-
                 voteheadDictionary = {}
-                grantvoteheadDictionary = {}
+                grantvoteheadDictionary = defaultdict(Decimal)
 
                 for grant in querySetGrants:
 
@@ -914,31 +912,13 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                             inkind += Decimal(grant.overall_amount)
 
                         votehead_distribution = grant.voteheadamounts
-
                         for votehead_id, amount in votehead_distribution.items():
                             theamount = Decimal(amount)
-
-                            try:
-                                actualvotehead = VoteHead.objects.get(id=votehead_id)
-                                if actualvotehead.vote_head_name not in grantvoteheadDictionary:
-                                    grantvoteheadDictionary[actualvotehead.vote_head_name] = theamount
-                                else:
-                                    grantvoteheadDictionary[actualvotehead.vote_head_name] += theamount
-                                if actualvotehead.vote_head_name not in universalgrantvoteheadDictionary_collection_voteheads:
-                                    universalgrantvoteheadDictionary_collection_voteheads[
-                                        actualvotehead.vote_head_name] = theamount
-                                else:
-                                    universalgrantvoteheadDictionary_collection_voteheads[
-                                        actualvotehead.vote_head_name] += theamount
-
-                            except VoteHead.DoesNotExist:
-                                pass
-
-                        # if grant_receipt_range:
-                        #     print(f"Receipt range is {receipt_range}")
-                        #     grant_result = f"{min(grant_receipt_range)} - {max(grant_receipt_range)}"
-
-                        print(f" Testing Votehead {grantvoteheadDictionary} on {grant.receipt_date}")
+                            actualvotehead = VoteHead.objects.filter(id=votehead_id).first()
+                            if actualvotehead:
+                                grantvoteheadDictionary[actualvotehead.vote_head_name] += theamount
+                                universalgrantvoteheadDictionary_collection_voteheads[
+                                    actualvotehead.vote_head_name] += theamount
 
                         listofreceipts.append(
                             {
