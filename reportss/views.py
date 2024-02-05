@@ -863,14 +863,12 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 querySetBursary = querySetBursary.filter(school_id=school_id, receipt_date__month=month)
 
 
+            receipt_dates = list(querySetReceipts.values_list('transaction_date', flat=True).distinct())
+            pik_dates = list(querysetPIK.values_list('receipt_date', flat=True).distinct())
+            grant_dates = list(querySetGrants.values_list('receipt_date', flat=True).distinct())
+            bursary_dates = list(querySetBursary.values_list('receipt_date', flat=True).distinct())
+            listofdateofcreations = sorted(set(receipt_dates + pik_dates + grant_dates + bursary_dates))
 
-            listofdateofcreations = sorted(set(
-                    querySetReceipts.values_list('transaction_date', flat=True).distinct() |
-                    querysetPIK.values_list('receipt_date', flat=True).distinct() |
-                    querySetGrants.values_list('receipt_date', flat=True).distinct() |
-                    querySetBursary.values_list('bursary__receipt_date', flat=True).distinct()
-                )
-            )
 
             receipt_voteheads = list({thecollection.votehead.vote_head_name for thereceipt in querySetReceipts for thecollection in Collection.objects.filter(receipt=thereceipt)})
             pik_voteheads = list({pik.votehead.vote_head_name for pikReceipt in querysetPIK for pik in PaymentInKind.objects.filter(receipt=pikReceipt)})
