@@ -1214,8 +1214,10 @@ class FeeRegisterView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 except Exception as exception:
                     return Response({'detail': exception}, status=status.HTTP_400_BAD_REQUEST)
 
+
                 querySetReceipts = Receipt.objects.filter(school_id=school_id, student=student, is_reversed = False)
                 querysetPIK = PIKReceipt.objects.filter(school_id=school_id, student=student, is_posted=True)
+
 
                 if financialyear and financialyear != "" and financialyear != "null":
                     querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year__id=financialyear)
