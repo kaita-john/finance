@@ -1785,7 +1785,7 @@ class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 school_id=school_id,
                 voucher__financial_year=financialyear,
                 voucher__paymentDate__month__lte=month,
-                voucher__bank_account_account_type=accounttype
+                voucher__bank_account__account_type=accounttype
             )
 
             print(f"{expenses}")
