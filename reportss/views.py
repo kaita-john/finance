@@ -815,333 +815,337 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
         self.check_defaults(self.request, school_id)
 
-        school_id = self.check_school_id(request)
-        if not school_id:
-            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        try:
+            school_id = self.check_school_id(request)
+            if not school_id:
+                return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
 
-        bankaccount = request.GET.get('bankaccount')
-        accounttype = request.GET.get('accounttype')
-        financialyear = request.GET.get('financialyear')
-        month = request.GET.get('month')
+            bankaccount = request.GET.get('bankaccount')
+            accounttype = request.GET.get('accounttype')
+            financialyear = request.GET.get('financialyear')
+            month = request.GET.get('month')
 
-        querySetReceipts = Receipt.objects.filter(school_id=school_id, is_reversed = False)
-        querysetPIK = PIKReceipt.objects.filter(school_id=school_id, is_posted=True)
-        querySetGrants = Grant.objects.filter(school_id=school_id, deleted = False)
-        querySetExpenses = VoucherItem.objects.filter(school_id=school_id, voucher__is_deleted=False)
-        querySetBursary = Bursary.objects.filter(school_id=school_id, posted=True)
-
-
-        if bankaccount and bankaccount != "" and bankaccount != "null":
-            querySetReceipts = querySetReceipts.filter(school_id=school_id, bank_account=bankaccount)
-            querysetPIK = querysetPIK.filter(school_id=school_id, bank_account=bankaccount)
-            querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount=bankaccount)
-            querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__bank_account=bankaccount)
-            querySetBursary = querySetBursary.filter(school_id=school_id, bankAccount=bankaccount)
-
-        if accounttype and accounttype != "" and accounttype != "null":
-            querySetReceipts = querySetReceipts.filter(school_id=school_id, account_type=accounttype)
-            querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__account_type=accounttype)
-            querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount__account_type=accounttype)
-            querySetExpenses = querySetExpenses.filter(school_id=school_id,voucher__bank_account__account_type=accounttype)
-            querySetBursary = querySetBursary.filter(school_id=school_id, bankAccount__account_type=bankaccount)
-        else:
-            return Response({'detail': f"Account Type is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if financialyear and financialyear != "" and financialyear != "null":
-            querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year=financialyear)
-            querysetPIK = querysetPIK.filter(school_id=school_id, financial_year=financialyear)
-            querySetGrants = querySetGrants.filter(school_id=school_id, financial_year=financialyear)
-            querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__financial_year=financialyear)
-            querySetBursary = querySetBursary.filter(school_id=school_id, financial_year=financialyear)
-
-        if month and month != "" and month != "null":
-            querySetReceipts = querySetReceipts.filter(school_id=school_id, transaction_date__month=month)
-            querysetPIK = querysetPIK.filter(school_id=school_id, receipt_date__month=month)
-            querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__paymentDate__month=month)
-            querySetGrants = querySetGrants.filter(school_id=school_id, receipt_date__month=month)
-            querySetBursary = querySetBursary.filter(school_id=school_id, receipt_date__month=month)
+            querySetReceipts = Receipt.objects.filter(school_id=school_id, is_reversed = False)
+            querysetPIK = PIKReceipt.objects.filter(school_id=school_id, is_posted=True)
+            querySetGrants = Grant.objects.filter(school_id=school_id, deleted = False)
+            querySetExpenses = VoucherItem.objects.filter(school_id=school_id, voucher__is_deleted=False)
+            querySetBursary = Bursary.objects.filter(school_id=school_id, posted=True)
 
 
-        receipt_dates = list(querySetReceipts.values_list('transaction_date', flat=True).distinct())
-        pik_dates = list(querysetPIK.values_list('receipt_date', flat=True).distinct())
-        grant_dates = list(querySetGrants.values_list('receipt_date', flat=True).distinct())
-        bursary_dates = list(querySetBursary.values_list('receipt_date', flat=True).distinct())
-        listofdateofcreations = sorted(set(receipt_dates + pik_dates + grant_dates + bursary_dates))
+            if bankaccount and bankaccount != "" and bankaccount != "null":
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, bank_account=bankaccount)
+                querysetPIK = querysetPIK.filter(school_id=school_id, bank_account=bankaccount)
+                querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount=bankaccount)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__bank_account=bankaccount)
+                querySetBursary = querySetBursary.filter(school_id=school_id, bankAccount=bankaccount)
+
+            if accounttype and accounttype != "" and accounttype != "null":
+                if not bankaccount or bankaccount == "" or bankaccount == "null":
+                    return Response({'detail': f"Bank Account is required"}, status=status.HTTP_400_BAD_REQUEST)
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, account_type=accounttype)
+                querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__account_type=accounttype)
+                querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount__account_type=accounttype)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id,voucher__bank_account__account_type=accounttype)
+                querySetBursary = querySetBursary.filter(school_id=school_id, bankAccount__account_type=bankaccount)
+            else:
+                return Response({'detail': f"Account Type is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if financialyear and financialyear != "" and financialyear != "null":
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year=financialyear)
+                querysetPIK = querysetPIK.filter(school_id=school_id, financial_year=financialyear)
+                querySetGrants = querySetGrants.filter(school_id=school_id, financial_year=financialyear)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__financial_year=financialyear)
+                querySetBursary = querySetBursary.filter(school_id=school_id, financial_year=financialyear)
+
+            if month and month != "" and month != "null":
+                querySetReceipts = querySetReceipts.filter(school_id=school_id, transaction_date__month=month)
+                querysetPIK = querysetPIK.filter(school_id=school_id, receipt_date__month=month)
+                querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__paymentDate__month=month)
+                querySetGrants = querySetGrants.filter(school_id=school_id, receipt_date__month=month)
+                querySetBursary = querySetBursary.filter(school_id=school_id, receipt_date__month=month)
 
 
-        receipt_voteheads = list({thecollection.votehead.vote_head_name for thereceipt in querySetReceipts for thecollection in Collection.objects.filter(receipt=thereceipt)})
-        pik_voteheads = list({pik.votehead.vote_head_name for pikReceipt in querysetPIK for pik in PaymentInKind.objects.filter(receipt=pikReceipt)})
-        grant_voteheads = list({grant_item.votehead.vote_head_name for grant in querySetGrants for grant_item in GrantItem.objects.filter(grant=grant)})
-        combined_voteheads = list(set(receipt_voteheads + pik_voteheads + grant_voteheads))
-
-        print(f"List of voteheads is {combined_voteheads}")
-
-        overall_votehead_amounts = defaultdict(Decimal)
-        cash_overall_total = Decimal(0)
-        bank_overall_total = Decimal(0)
-        receipt_list = []
+            receipt_dates = list(querySetReceipts.values_list('transaction_date', flat=True).distinct())
+            pik_dates = list(querysetPIK.values_list('receipt_date', flat=True).distinct())
+            grant_dates = list(querySetGrants.values_list('receipt_date', flat=True).distinct())
+            bursary_dates = list(querySetBursary.values_list('receipt_date', flat=True).distinct())
+            listofdateofcreations = sorted(set(receipt_dates + pik_dates + grant_dates + bursary_dates))
 
 
-        if not month:
-            opening_balance = Decimal(0.0)
-            opencash = Decimal(0.0)
-            openbank = Decimal(0.0)
-        else:
-            opencash = getBalance(accounttype, month, financialyear, school_id)["cash"]
-            openbank = getBalance(accounttype, month, financialyear, school_id)["bank"]
+            receipt_voteheads = list({thecollection.votehead.vote_head_name for thereceipt in querySetReceipts for thecollection in Collection.objects.filter(receipt=thereceipt)})
+            pik_voteheads = list({pik.votehead.vote_head_name for pikReceipt in querysetPIK for pik in PaymentInKind.objects.filter(receipt=pikReceipt)})
+            grant_voteheads = list({grant_item.votehead.vote_head_name for grant in querySetGrants for grant_item in GrantItem.objects.filter(grant=grant)})
+            combined_voteheads = list(set(receipt_voteheads + pik_voteheads + grant_voteheads))
 
-        for dateinstance in listofdateofcreations:
+            print(f"List of voteheads is {combined_voteheads}")
 
-            receipt_range = []
-            receipt_cash = Decimal(opencash)
-            receipt_bank = Decimal(openbank)
-            thereceipt_voteheads = defaultdict(Decimal)
+            overall_votehead_amounts = defaultdict(Decimal)
+            cash_overall_total = Decimal(0)
+            bank_overall_total = Decimal(0)
+            receipt_list = []
 
 
-            #BURSARIES
-            for bursary in querySetBursary:
-                if bursary.receipt_date == dateinstance:
-                    bursary_cash = Decimal(0)
-                    bursary_bank = Decimal(0)
-                    bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount']
-                    method = "BANK" if bursary.paymentMethod and bursary.paymentMethod.is_cheque else "CASH" if bursary.paymentMethod and bursary.paymentMethod.is_cash else "NONE"
-                    if method == "CASH" or method == "NONE":
-                        bursary_cash += bursary_total_amount
-                        cash_overall_total += bursary_total_amount
-                    if method == "BANK":
-                        bursary_bank += bursary_total_amount
-                        bank_overall_total += bursary_total_amount
-                    bursary_total = bursary_cash + bursary_bank
+            if not month:
+                opening_balance = Decimal(0.0)
+                opencash = Decimal(0.0)
+                openbank = Decimal(0.0)
+            else:
+                opencash = getBalance(accounttype, month, financialyear, school_id)["cash"]
+                openbank = getBalance(accounttype, month, financialyear, school_id)["bank"]
 
-                    thevoteheads = defaultdict(Decimal)
-                    for thevotehead in combined_voteheads:
-                        thevoteheads[thevotehead] += Decimal(0)
+            for dateinstance in listofdateofcreations:
 
-                    receipt_list.append({
-                            "date": dateinstance,
-                            "description": f"{bursary.institution}",
-                            "receipt_range": bursary.counter,
-                            "cash": bursary_cash,
-                            "bank": bursary_bank,
-                            "total_amount": bursary_total,
-                            "voteheads": thevoteheads,
-                        })
-
-            # GRANTS
-            for grant in querySetGrants:
-                if grant.receipt_date == dateinstance:
-                    grant_cash = Decimal(0)
-                    grant_bank = Decimal(0)
-                    grant_overall_amount = Decimal(grant.overall_amount)
-                    method = "BANK" if grant.paymentMethod and grant.paymentMethod.is_cheque else "CASH" if grant.paymentMethod and grant.paymentMethod.is_cash else "NONE"
-                    if method == "CASH" or method == "NONE":
-                        grant_cash += grant_overall_amount
-                        cash_overall_total += grant_overall_amount
-                    if method == "BANK":
-                        grant_bank += grant_overall_amount
-                        bank_overall_total += grant_overall_amount
-                    grant_total = grant_cash + grant_bank
-
-                    thevoteheads = defaultdict(Decimal)
-                    for thevotehead in combined_voteheads:
-
-                        votehead_distribution = grant.voteheadamounts
-                        for votehead_id, amount in votehead_distribution.items():
-                            actualvotehead = VoteHead.objects.filter(id=votehead_id).first()
-                            if actualvotehead and actualvotehead.vote_head_name == thevotehead:
-                                thevoteheads[actualvotehead.vote_head_name] += Decimal(amount)
-                                overall_votehead_amounts[actualvotehead.vote_head_name] += Decimal(amount)
-                            else:
-                                thevoteheads[thevotehead] += Decimal(0)
+                receipt_range = []
+                receipt_cash = Decimal(opencash)
+                receipt_bank = Decimal(openbank)
+                thereceipt_voteheads = defaultdict(Decimal)
 
 
+                #BURSARIES
+                for bursary in querySetBursary:
+                    if bursary.receipt_date == dateinstance:
+                        bursary_cash = Decimal(0)
+                        bursary_bank = Decimal(0)
+                        bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount']
+                        method = "BANK" if bursary.paymentMethod and bursary.paymentMethod.is_cheque else "CASH" if bursary.paymentMethod and bursary.paymentMethod.is_cash else "NONE"
+                        if method == "CASH" or method == "NONE":
+                            bursary_cash += bursary_total_amount
+                            cash_overall_total += bursary_total_amount
+                        if method == "BANK":
+                            bursary_bank += bursary_total_amount
+                            bank_overall_total += bursary_total_amount
+                        bursary_total = bursary_cash + bursary_bank
 
-                    receipt_list.append({
-                            "date": dateinstance,
-                            "description": f"{grant.institution}",
-                            "receipt_range": grant.counter,
-                            "cash": grant_cash,
-                            "bank": grant_bank,
-                            "total_amount": grant_total,
-                            "voteheads": thevoteheads,
-                        })
+                        thevoteheads = defaultdict(Decimal)
+                        for thevotehead in combined_voteheads:
+                            thevoteheads[thevotehead] += Decimal(0)
+
+                        receipt_list.append({
+                                "date": dateinstance,
+                                "description": f"{bursary.institution}",
+                                "receipt_range": bursary.counter,
+                                "cash": bursary_cash,
+                                "bank": bursary_bank,
+                                "total_amount": bursary_total,
+                                "voteheads": thevoteheads,
+                            })
+
+                # GRANTS
+                for grant in querySetGrants:
+                    if grant.receipt_date == dateinstance:
+                        grant_cash = Decimal(0)
+                        grant_bank = Decimal(0)
+                        grant_overall_amount = Decimal(grant.overall_amount)
+                        method = "BANK" if grant.paymentMethod and grant.paymentMethod.is_cheque else "CASH" if grant.paymentMethod and grant.paymentMethod.is_cash else "NONE"
+                        if method == "CASH" or method == "NONE":
+                            grant_cash += grant_overall_amount
+                            cash_overall_total += grant_overall_amount
+                        if method == "BANK":
+                            grant_bank += grant_overall_amount
+                            bank_overall_total += grant_overall_amount
+                        grant_total = grant_cash + grant_bank
+
+                        thevoteheads = defaultdict(Decimal)
+                        for thevotehead in combined_voteheads:
+
+                            votehead_distribution = grant.voteheadamounts
+                            for votehead_id, amount in votehead_distribution.items():
+                                actualvotehead = VoteHead.objects.filter(id=votehead_id).first()
+                                if actualvotehead and actualvotehead.vote_head_name == thevotehead:
+                                    thevoteheads[actualvotehead.vote_head_name] += Decimal(amount)
+                                    overall_votehead_amounts[actualvotehead.vote_head_name] += Decimal(amount)
+                                else:
+                                    thevoteheads[thevotehead] += Decimal(0)
 
 
 
-            # RECEIPTS
-            for receipt in querySetReceipts:
-                if receipt.transaction_date == dateinstance:
-                    receipt_overall_amount = Decimal(receipt.totalAmount)
-                    method = "BANK" if receipt.payment_method and receipt.payment_method.is_cheque else "CASH" if receipt.payment_method and receipt.payment_method.is_cash else "NONE"
-                    if method == "CASH" or method == "NONE":
-                        receipt_cash += receipt_overall_amount
-                        cash_overall_total += receipt_overall_amount
-                    if method == "BANK":
-                        receipt_bank += receipt_overall_amount
-                        bank_overall_total += receipt_overall_amount
+                        receipt_list.append({
+                                "date": dateinstance,
+                                "description": f"{grant.institution}",
+                                "receipt_range": grant.counter,
+                                "cash": grant_cash,
+                                "bank": grant_bank,
+                                "total_amount": grant_total,
+                                "voteheads": thevoteheads,
+                            })
 
-                    counter = receipt.counter
-                    receipt_range.append(counter)
 
-                    collections = Collection.objects.filter(receipt=receipt)
-                    for collection in collections:
+
+                # RECEIPTS
+                for receipt in querySetReceipts:
+                    if receipt.transaction_date == dateinstance:
+                        receipt_overall_amount = Decimal(receipt.totalAmount)
+                        method = "BANK" if receipt.payment_method and receipt.payment_method.is_cheque else "CASH" if receipt.payment_method and receipt.payment_method.is_cash else "NONE"
+                        if method == "CASH" or method == "NONE":
+                            receipt_cash += receipt_overall_amount
+                            cash_overall_total += receipt_overall_amount
+                        if method == "BANK":
+                            receipt_bank += receipt_overall_amount
+                            bank_overall_total += receipt_overall_amount
+
+                        counter = receipt.counter
+                        receipt_range.append(counter)
+
+                        collections = Collection.objects.filter(receipt=receipt)
+                        for collection in collections:
+
+                            for thevotehead in combined_voteheads:
+                                votehead_name = collection.votehead.vote_head_name
+                                if votehead_name == thevotehead:
+                                    thereceipt_voteheads[votehead_name] += Decimal(collection.amount)
+                                    overall_votehead_amounts[votehead_name] += Decimal(collection.amount)
+                                else:
+                                    thereceipt_voteheads[thevotehead] += Decimal(0)
+
+
+                for pikreceipt in querysetPIK:
+                    if pikreceipt.receipt_date == dateinstance:
+                        receipt_cash += Decimal(pikreceipt.totalAmount)
+                        counter = pikreceipt.counter
+                        receipt_range.append(counter)
+                        cash_overall_total += Decimal(pikreceipt.totalAmount)
+
+                    piks = PaymentInKind.objects.filter(receipt=pikreceipt)
+                    for pik in piks:
 
                         for thevotehead in combined_voteheads:
-                            votehead_name = collection.votehead.vote_head_name
+                            votehead_name = pik.votehead.vote_head_name
                             if votehead_name == thevotehead:
-                                thereceipt_voteheads[votehead_name] += Decimal(collection.amount)
-                                overall_votehead_amounts[votehead_name] += Decimal(collection.amount)
+                                thereceipt_voteheads[votehead_name] += Decimal(pik.amount)
+                                overall_votehead_amounts[votehead_name] += Decimal(pik.amount)
                             else:
                                 thereceipt_voteheads[thevotehead] += Decimal(0)
 
 
-            for pikreceipt in querysetPIK:
-                if pikreceipt.receipt_date == dateinstance:
-                    receipt_cash += Decimal(pikreceipt.totalAmount)
-                    counter = pikreceipt.counter
-                    receipt_range.append(counter)
-                    cash_overall_total += Decimal(pikreceipt.totalAmount)
 
-                piks = PaymentInKind.objects.filter(receipt=pikreceipt)
-                for pik in piks:
+                receipt_receptrange = f"{min(receipt_range)} - {max(receipt_range)}" if receipt_range else "None"
+                receipt_list.append({
+                    "date": dateinstance,
+                    "description": f"FEES",
+                    "receipt_range": receipt_receptrange,
+                    "cash": receipt_cash,
+                    "bank": receipt_bank,
+                    "total_amount": receipt_cash + receipt_bank,
+                    "voteheads": thereceipt_voteheads,
+                })
 
-                    for thevotehead in combined_voteheads:
-                        votehead_name = pik.votehead.vote_head_name
-                        if votehead_name == thevotehead:
-                            thereceipt_voteheads[votehead_name] += Decimal(pik.amount)
-                            overall_votehead_amounts[votehead_name] += Decimal(pik.amount)
+
+
+
+            # VOUCHERS
+            listofVoucherDateCreations = sorted(set(querySetExpenses.values_list('voucher__paymentDate', flat=True).distinct()))
+
+            voucher_votehead_list = list({voucher_item.votehead.vote_head_name for voucher_item in querySetExpenses })
+            overall_votehead_amounts_voucher = defaultdict(Decimal)
+            listofVouchers = []
+            voucher_cash_overall_total = Decimal(0)
+            voucher_bank_overall_total = Decimal(0)
+
+            for dateinstance in listofVoucherDateCreations:
+                for voucher in querySetExpenses:
+                    voucher_cash = Decimal("0.0")
+                    voucher_bank = Decimal("0.0")
+                    amount = Decimal(voucher.amount)
+
+                    if voucher.voucher.paymentDate == dateinstance:
+                        method = "BANK" if voucher.voucher.payment_Method and voucher.voucher.payment_Method.is_cheque else "CASH" if voucher.voucher.payment_Method and voucher.voucher.payment_Method.is_cash else "NONE"
+                        if method == "CASH" or method == "NONE":
+                            voucher_cash += amount
+                            voucher_cash_overall_total += amount
+                        elif method == "BANK":
+                            voucher_bank += amount
+                            voucher_bank_overall_total += amount
+
+                        thevoteheads = defaultdict(Decimal)
+
+                        for thevotehead in voucher_votehead_list:
+                            if voucher.votehead.vote_head_name  == thevotehead:
+                                thevoteheads[voucher.votehead.vote_head_name] += amount
+                                overall_votehead_amounts_voucher[voucher.votehead.vote_head_name] += amount
+                            else:
+                                thevoteheads[thevotehead] = Decimal(0)
+
+
+                        receipient_type = voucher.voucher.recipientType
+                        if receipient_type == "OTHER":
+                            person = voucher.voucher.other
+                        elif receipient_type == "STAFF":
+                            person = f"{voucher.voucher.staff.fname} {voucher.voucher.staff.lname}"
                         else:
-                            thereceipt_voteheads[thevotehead] += Decimal(0)
+                            # person = f"{voucher.voucher.supplier.contactPerson}"
+                            person = f"SUPPLIER"
+
+                        listofVouchers.append(
+                            {
+                                "date": dateinstance,
+                                "description": person,
+                                "receipt_range": voucher.voucher.counter,
+                                "cash": voucher_cash,
+                                "bank": voucher_bank,
+                                "total_amount": Decimal(voucher.amount),
+                                "voteheads": thevoteheads,
+                            }
+                        )
 
 
 
-            receipt_receptrange = f"{min(receipt_range)} - {max(receipt_range)}" if receipt_range else "None"
-            receipt_list.append({
-                "date": dateinstance,
-                "description": f"FEES",
-                "receipt_range": receipt_receptrange,
-                "cash": receipt_cash,
-                "bank": receipt_bank,
-                "total_amount": receipt_cash + receipt_bank,
-                "voteheads": thereceipt_voteheads,
-            })
+            if not month:
+                total_opening_balance = Decimal(0.0)
+                opening_cash = Decimal(0.0)
+                opening_bank = Decimal(0.0)
+            else:
+                total_opening_balance = getBalance(accounttype, month, financialyear, school_id)["total"]
+                opening_cash = getBalance(accounttype, month, financialyear, school_id)["cash"]
+                opening_bank = getBalance(accounttype, month, financialyear, school_id)["bank"]
+
+            total_expense = voucher_cash_overall_total + voucher_bank_overall_total
+            total_collection = Decimal(cash_overall_total) + Decimal(bank_overall_total)
+
+            total_collectioncash = cash_overall_total
+            total_collectionbank = bank_overall_total
+
+            total_expensecash = voucher_cash_overall_total
+            total_expensebank = voucher_bank_overall_total
+            total_total_expense = Decimal(total_expensecash) + Decimal(total_expensebank),
+
+            total_total_collection = Decimal(total_collectioncash) + Decimal(total_collectionbank)
+            total_closing_balance = (Decimal(total_opening_balance) + Decimal(total_total_collection)) - Decimal(total_expense)
+
+            closing_cash = Decimal(opening_cash) + Decimal(total_collectioncash) - Decimal(total_expensecash)
+            closing_bank = Decimal(opening_cash) + Decimal(total_collectionbank) - Decimal(total_expensebank)
+
+            thedata = {
+
+                "receipts": receipt_list,
+                "payments": listofVouchers,
+
+                "opening_cash": opening_cash,
+                "opening_bank": opening_bank,
+                "total_opening_balance": total_opening_balance,
+
+                "total_expense": total_total_expense,
+                "total_collection": total_collection,
+
+                "closing_cash": closing_cash,
+                "closing_bank": closing_bank,
+                "total_closing_balance": total_closing_balance,
+
+                "total_collectioncash": total_collectioncash,
+                "total_collectionbank": total_collectionbank,
+                "total_total_collection": total_total_collection,
+
+                "total_expensecash": total_expensecash,
+                "total_expensebank": total_expensebank,
+                "total_total_expense": total_total_expense,
+
+                "total_payment_voteheads": overall_votehead_amounts_voucher,
+                "total_collection_voteheads": overall_votehead_amounts,
+
+            }
 
 
-
-
-        # VOUCHERS
-        listofVoucherDateCreations = sorted(set(querySetExpenses.values_list('voucher__paymentDate', flat=True).distinct()))
-
-        voucher_votehead_list = list({voucher_item.votehead.vote_head_name for voucher_item in querySetExpenses })
-        overall_votehead_amounts_voucher = defaultdict(Decimal)
-        listofVouchers = []
-        voucher_cash_overall_total = Decimal(0)
-        voucher_bank_overall_total = Decimal(0)
-
-        for dateinstance in listofVoucherDateCreations:
-            for voucher in querySetExpenses:
-                voucher_cash = Decimal("0.0")
-                voucher_bank = Decimal("0.0")
-                amount = Decimal(voucher.amount)
-
-                if voucher.voucher.paymentDate == dateinstance:
-                    method = "BANK" if voucher.voucher.payment_Method and voucher.voucher.payment_Method.is_cheque else "CASH" if voucher.voucher.payment_Method and voucher.voucher.payment_Method.is_cash else "NONE"
-                    if method == "CASH" or method == "NONE":
-                        voucher_cash += amount
-                        voucher_cash_overall_total += amount
-                    elif method == "BANK":
-                        voucher_bank += amount
-                        voucher_bank_overall_total += amount
-
-                    thevoteheads = defaultdict(Decimal)
-
-                    for thevotehead in voucher_votehead_list:
-                        if voucher.votehead.vote_head_name  == thevotehead:
-                            thevoteheads[voucher.votehead.vote_head_name] += amount
-                            overall_votehead_amounts_voucher[voucher.votehead.vote_head_name] += amount
-                        else:
-                            thevoteheads[thevotehead] = Decimal(0)
-
-
-                    receipient_type = voucher.voucher.recipientType
-                    if receipient_type == "OTHER":
-                        person = voucher.voucher.other
-                    elif receipient_type == "STAFF":
-                        person = f"{voucher.voucher.staff.fname} {voucher.voucher.staff.lname}"
-                    else:
-                        # person = f"{voucher.voucher.supplier.contactPerson}"
-                        person = f"SUPPLIER"
-
-                    listofVouchers.append(
-                        {
-                            "date": dateinstance,
-                            "description": person,
-                            "receipt_range": voucher.voucher.counter,
-                            "cash": voucher_cash,
-                            "bank": voucher_bank,
-                            "total_amount": Decimal(voucher.amount),
-                            "voteheads": thevoteheads,
-                        }
-                    )
-
-
-
-        if not month:
-            total_opening_balance = Decimal(0.0)
-            opening_cash = Decimal(0.0)
-            opening_bank = Decimal(0.0)
-        else:
-            total_opening_balance = getBalance(accounttype, month, financialyear, school_id)["total"]
-            opening_cash = getBalance(accounttype, month, financialyear, school_id)["cash"]
-            opening_bank = getBalance(accounttype, month, financialyear, school_id)["bank"]
-
-        total_expense = voucher_cash_overall_total + voucher_bank_overall_total
-        total_collection = Decimal(cash_overall_total) + Decimal(bank_overall_total)
-
-        total_collectioncash = cash_overall_total
-        total_collectionbank = bank_overall_total
-
-        total_expensecash = voucher_cash_overall_total
-        total_expensebank = voucher_bank_overall_total
-        total_total_expense = Decimal(total_expensecash) + Decimal(total_expensebank),
-
-        total_total_collection = Decimal(total_collectioncash) + Decimal(total_collectionbank)
-        total_closing_balance = (Decimal(total_opening_balance) + Decimal(total_total_collection)) - Decimal(total_expense)
-
-        closing_cash = Decimal(opening_cash) + Decimal(total_collectioncash) - Decimal(total_expensecash)
-        closing_bank = Decimal(opening_cash) + Decimal(total_collectionbank) - Decimal(total_expensebank)
-
-        thedata = {
-
-            "receipts": receipt_list,
-            "payments": listofVouchers,
-
-            "opening_cash": opening_cash,
-            "opening_bank": opening_bank,
-            "total_opening_balance": total_opening_balance,
-
-            "total_expense": total_total_expense,
-            "total_collection": total_collection,
-
-            "closing_cash": closing_cash,
-            "closing_bank": closing_bank,
-            "total_closing_balance": total_closing_balance,
-
-            "total_collectioncash": total_collectioncash,
-            "total_collectionbank": total_collectionbank,
-            "total_total_collection": total_total_collection,
-
-            "total_expensecash": total_expensecash,
-            "total_expensebank": total_expensebank,
-            "total_total_expense": total_total_expense,
-
-            "total_payment_voteheads": overall_votehead_amounts_voucher,
-            "total_collection_voteheads": overall_votehead_amounts,
-
-        }
-
-
-
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"detail": thedata})
 
