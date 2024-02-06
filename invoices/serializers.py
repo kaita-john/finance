@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from _decimal import Decimal
 from django.db.models import Sum
 from rest_framework import serializers
@@ -11,6 +13,7 @@ from school.models import School
 from school.serializer import SchoolSerializer
 from schoolgroups.serializers import SchoolGroupSerializer
 from streams.serializers import StreamsSerializer
+from students.models import Student
 from students.serializers import StudentSerializer
 from term.serializers import TermSerializer
 from .models import Invoice, Structure, Uninvoice, Balance
@@ -33,8 +36,11 @@ class InvoiceSerializer(serializers.ModelSerializer):
     def get_paid(self, obj):
         invoice = obj
         try:
-            school = School.objects.get(id=invoice.student.school_id)
             student = invoice.student
+            if isinstance(student, UUID):  # Check if student is a UUID object
+                student = Student.objects.get(id=student)  # Fetch student object if it's a UUID
+
+            school = School.objects.get(id=student.school_id)  # Fetch school using student object
             term = invoice.term
             year = invoice.year
             voteheads = invoice.votehead
@@ -45,7 +51,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
                 receipt__term=term,
                 receipt__year=year,
                 receipt__is_reversed=False,
-                school_id= school.id
+                school_id=school.id
             ).aggregate(total_amount_paid=Sum('amount'))['total_amount_paid'] or 0.0
 
             return total_amount_paid
@@ -55,11 +61,14 @@ class InvoiceSerializer(serializers.ModelSerializer):
         except Exception as exception:
             return {'error': f"Bad Request {exception}"}
 
+
     def get_due(self, obj):
         invoice = obj
         try:
-            school = School.objects.get(id=invoice.student.school_id)
             student = invoice.student
+            if isinstance(student, UUID):  # Check if student is a UUID object
+                student = Student.objects.get(id=student)  # Fetch student object if it's a UUID
+            school = School.objects.get(id=student.school_id)  # Fetch school using student object
             term = invoice.term
             year = invoice.year
             voteheads = invoice.votehead
@@ -71,7 +80,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
                 receipt__term=term,
                 receipt__year=year,
                 receipt__is_reversed=False,
-                school_id= school.id
+                school_id=school.id
             ).aggregate(total_amount_paid=Sum('amount'))['total_amount_paid'] or 0.0
 
             return amountRequired - Decimal(total_amount_paid)

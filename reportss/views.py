@@ -1440,7 +1440,6 @@ class LedgerView(SchoolIdMixin,  DefaultMixin, generics.GenericAPIView):
         check_if_object_exists(VoteHead, votehead)
         check_if_object_exists(FinancialYear, financialyear)
 
-
         grantsQuerySet = Grant.objects.filter(
             deleted=False,
             school_id=school_id,
@@ -1556,7 +1555,7 @@ class LedgerView(SchoolIdMixin,  DefaultMixin, generics.GenericAPIView):
                 previous_total_dr = previous_month_balances['totalExpenses']
 
             response_object.append({
-                "start_date": startdate,
+                "start_date": enddate,
                 "month": monthnumber,
                 "cr": total_month_collection_amount,
                 "dr": total_month_expenses_amount,
@@ -1610,7 +1609,7 @@ class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             cash_at_hand = openingObject.opening_cash_at_hand
             cash_at_bank = openingObject.opening_cash_at_bank
 
-        votehead_list = VoteHead.objects.filter(school_id=school_id)
+        votehead_list = VoteHead.objects.filter(school_id=school_id, account_type = accounttype)
 
         print(f"Votehead list is {votehead_list}")
         collectionvoteheadDictionary = {}

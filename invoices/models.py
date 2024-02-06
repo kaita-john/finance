@@ -52,8 +52,6 @@ class Invoice(ParentModel):
     currency = models.ForeignKey(Currency, default=None, null=True, on_delete=DO_NOTHING, related_name="invoices")
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
 
-
-
     def __str__(self):
         return f"{self.invoiceNo}"
 

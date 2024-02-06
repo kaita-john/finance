@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from rest_framework import serializers
 
 from academic_year.serializers import AcademicYearSerializer
@@ -18,14 +20,23 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
     def get_school_details(self, obj):
-        school_id = obj.school_id
-        try:
-            school = School.objects.get(id=school_id)
-            return SchoolSerializer(school).data
-        except School.DoesNotExist as exception:
-            return {'error': f"School not found for id {school_id}"}
-        except Exception as exception:
-            return {'error': f"Bad Request {exception}"}
+        if isinstance(obj, UUID):  # Check if obj is a UUID
+            try:
+                school = School.objects.get(id=obj)
+                return SchoolSerializer(school).data
+            except School.DoesNotExist as exception:
+                return {'error': f"School not found for id {obj}"}
+            except Exception as exception:
+                return {'error': f"Bad Request {exception}"}
+        else:
+            school_id = obj.school_id
+            try:
+                school = School.objects.get(id=school_id)
+                return SchoolSerializer(school).data
+            except School.DoesNotExist as exception:
+                return {'error': f"School not found for id {school_id}"}
+            except Exception as exception:
+                return {'error': f"Bad Request {exception}"}
 
     def validate_groups(self, value):
         if not isinstance(value, list):

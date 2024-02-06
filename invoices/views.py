@@ -52,6 +52,7 @@ class InvoiceCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = InvoiceSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
@@ -62,24 +63,64 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
         if not school_id:
             return Invoice.objects.none()
         self.check_defaults(self.request, school_id)
-
         queryset = Invoice.objects.filter(school_id=school_id)
+
+        term = self.request.query_params.get('term', None)
+        academic_year = self.request.query_params.get('academic_year', None)
+        totals = True
+        student = self.request.query_params.get('student', None)
+
+        if term and term != "" and term != "null":
+            queryset = queryset.filter(term = term)
+
+        if academic_year and academic_year != "" and academic_year != "null":
+            queryset = queryset.filter(year = academic_year)
+
+        if student and student != "" and student != "null":
+            totals = False
+            if totals and totals != "" and totals != "null":
+                raise ValueError(f"You cannot filter by both totals and student")
+            queryset = queryset.filter(student = student)
+            
+        for value in queryset:
+            print(f"Student is {value.student.id}  - {value.amount}")
+
+        if totals and totals != "" and totals != "null":
+            if student and student != "" and student != "null":
+                raise ValueError(f"You cannot filter by both totals and student")
+
+            grouped_by_student = defaultdict(list)
+            for instance in queryset:
+                student_id = instance.student.id
+                grouped_by_student[student_id].append(instance)
+
+            result = []
+            for student_id, instances in grouped_by_student.items():
+                total_amount = sum(instance.amount for instance in instances)
+                first_instance = instances[0]
+                first_instance.amount = total_amount
+                result.append(first_instance)
+                queryset = result
+
         return queryset
 
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        try:
+            queryset = self.get_queryset()
 
-        if not queryset:
-            return JsonResponse([], safe=False, status=200)
+            if not queryset:
+                return JsonResponse([], safe=False, status=200)
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return JsonResponse(serializer.data, safe=False)
+            serializer = self.get_serializer(queryset, many=True)
+            return JsonResponse(serializer.data, safe=False)
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class InvoiceDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
