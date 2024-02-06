@@ -1634,6 +1634,11 @@ class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             return Response({'detail': f"Account Type, Financial Year and Month are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            AccountType.objects.get(id=accounttype)
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
             openingObject = OpeningClosingBalances.objects.get(school_id=school_id, financial_year__id=financialyear)
         except OpeningClosingBalances.DoesNotExist:
             openingObject = None
@@ -1661,7 +1666,8 @@ class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 deleted = False,
                 school_id=school_id,
                 financial_year=financialyear,
-                receipt_date__month__lte=month
+                receipt_date__month__lte=month,
+                bankAccount__account_type = accounttype
             )
 
             for grant in grants:
@@ -1712,7 +1718,8 @@ class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 receipt__is_posted=True,
                 school_id=school_id,
                 receipt__financial_year=financialyear,
-                transaction_date__month__lte=month
+                transaction_date__month__lte=month,
+                receipt__bank_account__account_type = accounttype
             )
 
             print(f"pik {len(piks)}")
@@ -1737,7 +1744,8 @@ class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 receipt__is_reversed=False,
                 school_id=school_id,
                 receipt__financial_year=financialyear,
-                transaction_date__month__lte=month
+                transaction_date__month__lte=month,
+                receipt__bank_account__account_type=accounttype,
             )
 
             print(f"{school_id}")
@@ -1776,7 +1784,8 @@ class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 voucher__is_deleted=False,
                 school_id=school_id,
                 voucher__financial_year=financialyear,
-                voucher__paymentDate__month__lte=month
+                voucher__paymentDate__month__lte=month,
+                voucher__bank_account_account_type=accounttype
             )
 
             print(f"{expenses}")
@@ -1802,7 +1811,7 @@ class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
         collection_voteheads_list = []
 
 
-        budget = Budget.objects.filter(financialYear=financialyear, school_id=school_id).first()
+        budget = Budget.objects.filter(financialYear=financialyear, accountType = accounttype, school_id=school_id).first()
 
         for votehead, data in collectionvoteheadDictionary.items():
             if budget:
