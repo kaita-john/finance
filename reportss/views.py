@@ -1522,22 +1522,6 @@ class LedgerView(SchoolIdMixin,  DefaultMixin, generics.GenericAPIView):
             total_month_collection_amount = Decimal(0.0)
 
 
-            for bursary in bursaryQuerySet:
-                bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount']
-
-                votehead_distribution = grant.voteheadamounts
-                for votehead_id, amount in votehead_distribution.items():
-                    theamount = Decimal(amount)
-                    try:
-                        if str(votehead_id) == votehead:
-                            if grant.receipt_date.month == monthnumber:
-                                collection_amount = theamount
-                                total_month_collection_amount += collection_amount
-
-                    except VoteHead.DoesNotExist:
-                        pass
-
-
 
             for grant in grantsQuerySet:
                 votehead_distribution = grant.voteheadamounts
