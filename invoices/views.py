@@ -217,7 +217,7 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
                         required_boardingstatus = item.boardingStatus
 
                         if required_boardingstatus == boarding_status:
-                            exists_query = Invoice.objects.filter(school_id=school_id, votehead__id=votehead.id, term=term, year=year, student=student)
+                            exists_query = Invoice.objects.filter(school_id=school_id, votehead__id=votehead.id, term=term, year=year, student=student, structure_class = structure_class)
 
                             if exists_query.exists():
                                 print(f"Stopped and Student is {student} and Fee structure Class is {classes} and student class is {student.current_Class} and Votehead is {votehead.vote_head_name}")
