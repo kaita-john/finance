@@ -87,18 +87,19 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
         if student and student != "" and student != "null":
             queryset = queryset.filter(student = student)
         else:
-            grouped_by_student = defaultdict(list)
-            for instance in queryset:
-                student_id = instance.student.id
-                grouped_by_student[student_id].append(instance)
-
-            result = []
-            for student_id, instances in grouped_by_student.items():
-                total_amount = sum(instance.amount for instance in instances)
-                first_instance = instances[0]
-                first_instance.amount = total_amount
-                result.append(first_instance)
-                queryset = result
+            # grouped_by_student = defaultdict(list)
+            # for instance in queryset:
+            #     student_id = instance.student.id
+            #     grouped_by_student[student_id].append(instance)
+            #
+            # result = []
+            # for student_id, instances in grouped_by_student.items():
+            #     total_amount = sum(instance.amount for instance in instances)
+            #     first_instance = instances[0]
+            #     first_instance.amount = total_amount
+            #     result.append(first_instance)
+            #     queryset = result
+            pass
 
         return queryset
 
