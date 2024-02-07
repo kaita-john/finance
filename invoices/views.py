@@ -86,16 +86,8 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
             queryset = queryset.filter(year = academic_year)
 
         if student and student != "" and student != "null":
-            totals = False
-            if totals and totals != "" and totals != "null":
-                raise ValueError(f"You cannot filter by both totals and student")
             queryset = queryset.filter(student = student)
-            
-
-        if totals and totals != "" and totals != "null":
-            if student and student != "" and student != "null":
-                raise ValueError(f"You cannot filter by both totals and student")
-
+        else:
             grouped_by_student = defaultdict(list)
             for instance in queryset:
                 student_id = instance.student.id
