@@ -75,9 +75,9 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
         getcurrentTerm = currentTerm(school_id)
         getcurrentAcademicYear = currentAcademicYear(school_id)
         if not term or term == "" or term == "null":
-            term = getcurrentTerm
+            term = getcurrentTerm.id
         if not academic_year or academic_year == "" or academic_year == "null":
-            academic_year = getcurrentAcademicYear
+            academic_year = getcurrentAcademicYear.id
 
 
         if term and term != "" and term != "null":
