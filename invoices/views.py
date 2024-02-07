@@ -69,6 +69,8 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
         academic_year = self.request.query_params.get('academic_year', None)
         student = self.request.query_params.get('student', None)
 
+        print(f"{queryset.count()} 1111111111")
+
 
         getcurrentTerm = currentTerm(school_id)
         getcurrentAcademicYear = currentAcademicYear(school_id)
@@ -80,13 +82,18 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
 
         if term and term != "" and term != "null":
             queryset = queryset.filter(term = term)
+        print(f"{queryset.count()} 222222222222")
 
         if academic_year and academic_year != "" and academic_year != "null":
             queryset = queryset.filter(year = academic_year)
 
+        print(f"{queryset.count()} 33333333333")
+
         if student and student != "" and student != "null":
             queryset = queryset.filter(student = student)
+            print(f"{queryset.count()} 4444444444444")
         else:
+            print(f"{queryset.count()} 5555555555555")
             # grouped_by_student = defaultdict(list)
             # for instance in queryset:
             #     student_id = instance.student.id
@@ -108,7 +115,7 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
         try:
             queryset = self.get_queryset()
 
-            print(f"Request has {queryset.count()} Items")
+            print(f"{queryset.count()} 66666666666666")
 
             if not queryset:
                 return JsonResponse([], safe=False, status=200)
