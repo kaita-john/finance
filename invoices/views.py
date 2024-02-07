@@ -27,7 +27,7 @@ from students.models import Student
 from term.models import Term
 from term.serializers import TermSerializer
 from utils import SchoolIdMixin, generate_unique_code, UUID_from_PrimaryKey, IsAdminOrSuperUser, currentAcademicYear, \
-    DefaultMixin
+    DefaultMixin, currentTerm
 from voteheads.models import VoteHead
 from .models import Invoice
 from .serializers import InvoiceSerializer, StructureSerializer, UninvoiceStudentSerializer
@@ -70,6 +70,15 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
         totals = True
         student = self.request.query_params.get('student', None)
 
+
+        getcurrentTerm = currentTerm(school_id)
+        getcurrentAcademicYear = currentAcademicYear(school_id)
+        if not term or term == "" or term == "null":
+            term = getcurrentTerm.id
+        if not academic_year or academic_year == "" or academic_year == "null":
+            academic_year = getcurrentAcademicYear.id
+
+
         if term and term != "" and term != "null":
             queryset = queryset.filter(term = term)
 
@@ -82,8 +91,6 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
                 raise ValueError(f"You cannot filter by both totals and student")
             queryset = queryset.filter(student = student)
             
-        for value in queryset:
-            print(f"Student is {value.student.id}  - {value.amount}")
 
         if totals and totals != "" and totals != "null":
             if student and student != "" and student != "null":
