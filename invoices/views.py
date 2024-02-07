@@ -197,8 +197,10 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
         print(error_message)
         errors.append(error_message)
 
-    invoice_no = generate_unique_code()
+    if errors:
+        return Response({"detail": errors}, status=status.HTTP_400_BAD_REQUEST)
 
+    invoice_no = generate_unique_code()
 
     with transaction.atomic():
         for student in students:
@@ -250,7 +252,7 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
                     errors.append(error_message)
 
     if errors:
-        return Response({"detail": errors}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"detail": errors}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response({"detail": "Invoicing was successful"}, status=status.HTTP_201_CREATED)
 
