@@ -186,6 +186,8 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
 
     errors = []
 
+    print(f"Length of fee structure items is {len(fee_structures_itemList)}")
+
     if not fee_structures_itemList:
         error_message = f"There are no Fee Structure Items for Academic Year {structure_year}, Term {structure_term} and Class {structure_class}"
         print(error_message)
@@ -198,7 +200,7 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
         errors.append(error_message)
 
     if errors:
-        raise ValidationError(errors)
+        return Response({"detail": errors}, status=status.HTTP_400_BAD_REQUEST)
 
     invoice_no = generate_unique_code()
 

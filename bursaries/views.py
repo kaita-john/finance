@@ -62,6 +62,12 @@ class BursaryCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                     item = {'amount': studentamount, 'student': value.id}
                     items_data.append(item)
 
+            else:
+                groupStudents = Student.objects.filter(school_id=school_id)
+                for value in groupStudents:
+                    item = {'amount': studentamount, 'student': value.id}
+                    items_data.append(item)
+
             try:
                 with transaction.atomic():
 
