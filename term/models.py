@@ -21,4 +21,4 @@ class Term(ParentModel):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.term_name
+        return f"{self.term_name} - {self.id}"
