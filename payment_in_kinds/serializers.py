@@ -45,3 +45,12 @@ class PaymentInKindSerializer(serializers.ModelSerializer):
             HttpResponse(f"Bad Request {exception}")
 
 
+
+
+
+class PaymentInKindSerializer_Limited(serializers.ModelSerializer):
+    vote_head_name = serializers.CharField(source='votehead.vote_head_name', read_only=True)
+    class Meta:
+        model = PaymentInKind
+        fields = ['id', 'vote_head_name', 'amount']
+

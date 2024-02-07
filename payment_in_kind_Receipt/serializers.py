@@ -18,10 +18,12 @@ class PIKReceiptSerializer(serializers.ModelSerializer):
     payment_in_kinds = serializers.SerializerMethodField(read_only=True)
 
     def get_payment_in_kinds(self, obj):
-        from payment_in_kinds.serializers import PaymentInKindSerializer
+        from payment_in_kinds.serializers import PaymentInKindSerializer_Limited
         payment_in_kinds = obj.paymentinkinds.filter(receipt=obj)
-        return PaymentInKindSerializer(payment_in_kinds, many=True).data
+        return PaymentInKindSerializer_Limited(payment_in_kinds, many=True).data
 
     class Meta:
         model = PIKReceipt
         fields = '__all__'
+
+
