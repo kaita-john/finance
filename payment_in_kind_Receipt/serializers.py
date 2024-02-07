@@ -15,6 +15,12 @@ class PIKReceiptSerializer(serializers.ModelSerializer):
     payment_method_Details = PaymentMethodSerializer(source='payment_method', required=False, read_only=True)
     currency_Details = CurrencySerializer(source='currency', required=False, read_only=True)
     votehead_Details = VoteHeadSerializer(source='votehead', required=False, read_only=True)
+    payment_in_kinds = serializers.SerializerMethodField(read_only=True)
+
+    def get_payment_in_kinds(self, obj):
+        from payment_in_kinds.serializers import PaymentInKindSerializer
+        payment_in_kinds = obj.paymentinkinds.filter(receipt=obj)
+        return PaymentInKindSerializer(payment_in_kinds, many=True).data
 
     class Meta:
         model = PIKReceipt
