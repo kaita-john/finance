@@ -71,7 +71,6 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
 
         print(f"{queryset.count()} 1111111111")
 
-
         if (not term or term == "" or term == "null") and  (not academic_year or academic_year == "" or academic_year == "null"):
             getcurrentTerm = currentTerm(school_id)
             getcurrentAcademicYear = currentAcademicYear(school_id)
@@ -80,10 +79,6 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
             if not academic_year or academic_year == "" or academic_year == "null":
                 academic_year = getcurrentAcademicYear.id
 
-        # if term and not year:
-        #     //
-        # if year and not term:
-        #     //
 
         if term and term != "" and term != "null":
             queryset = queryset.filter(term = term)
@@ -100,18 +95,18 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
             print(f"{queryset.count()} 4444444444444")
         else:
             print(f"{queryset.count()} 5555555555555")
-            # grouped_by_student = defaultdict(list)
-            # for instance in queryset:
-            #     student_id = instance.student.id
-            #     grouped_by_student[student_id].append(instance)
-            #
-            # result = []
-            # for student_id, instances in grouped_by_student.items():
-            #     total_amount = sum(instance.amount for instance in instances)
-            #     first_instance = instances[0]
-            #     first_instance.amount = total_amount
-            #     result.append(first_instance)
-            #     queryset = result
+            grouped_by_student = defaultdict(list)
+            for instance in queryset:
+                student_id = instance.student.id
+                grouped_by_student[student_id].append(instance)
+
+            result = []
+            for student_id, instances in grouped_by_student.items():
+                total_amount = sum(instance.amount for instance in instances)
+                first_instance = instances[0]
+                first_instance.amount = total_amount
+                result.append(first_instance)
+                queryset = result
             pass
 
         return queryset
@@ -120,8 +115,6 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
-
-            print(f"{queryset.count()} 66666666666666")
 
             if not queryset:
                 return JsonResponse([], safe=False, status=200)
