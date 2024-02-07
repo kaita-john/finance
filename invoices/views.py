@@ -198,7 +198,7 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
         errors.append(error_message)
 
     if errors:
-        return Response({"detail": errors}, status=status.HTTP_400_BAD_REQUEST)
+        raise ValidationError(errors)
 
     invoice_no = generate_unique_code()
 
@@ -219,7 +219,7 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
                         required_boardingstatus = item.boardingStatus
 
                         if required_boardingstatus == boarding_status:
-                            exists_query = Invoice.objects.filter(school_id=school_id, votehead__id=votehead.id, term=term, year=year, student=student, structure_class = structure_class)
+                            exists_query = Invoice.objects.filter(school_id=school_id, votehead__id=votehead.id, term=term, year=year, student=student, classes = structure_class)
 
                             if exists_query.exists():
                                 print(f"Stopped and Student is {student} and Fee structure Class is {classes} and student class is {student.current_Class} and Votehead is {votehead.vote_head_name}")
@@ -266,68 +266,68 @@ class InvoiceStructureView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView)
 
     def post(self, request, *args, **kwargs):
         school_id = self.check_school_id(request)
-        if not school_id:
-            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
-        self.check_defaults(self.request, school_id)
+        try:
+            if not school_id:
+                return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+            self.check_defaults(self.request, school_id)
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serialized_data = serializer.data
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serialized_data = serializer.data
 
-        filter_type = serialized_data.get('filter_type')
-        structure_year = serialized_data.get('structure_year')
-        structure_term = serialized_data.get('structure_term')
-        structure_class = serialized_data.get('structure_class')
+            filter_type = serialized_data.get('filter_type')
+            structure_year = serialized_data.get('structure_year')
+            structure_term = serialized_data.get('structure_term')
+            structure_class = serialized_data.get('structure_class')
 
-        if filter_type and filter_type == 'student':
-            student = serialized_data.get('student')
-            if not student:
-                return Response({"detail": "Student ID is required for filter_type 'student'"})
-            students = Student.objects.filter(id = student, school_id=school_id)
+            if filter_type and filter_type == 'student':
+                student = serialized_data.get('student')
+                if not student:
+                    return Response({"detail": "Student ID is required for filter_type 'student'"})
+                students = Student.objects.filter(id = student, school_id=school_id)
 
-            return createInvoices(school_id, students, structure_year, structure_term, structure_class)
-
-
-        elif filter_type and filter_type == 'class':
-            classes = serialized_data.get('classes')
-            if not classes:
-                return Response({"detail": "Class ID is required for filter_type 'class'"})
-            students = Student.objects.filter(current_Class__id = classes, school_id=school_id)
-
-            return createInvoices(school_id, students, structure_year, structure_term, structure_class)
+                return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
-        elif filter_type and filter_type == 'stream':
-            classes =serialized_data.get('classes')
-            stream =serialized_data.get('stream')
-            if not classes or not stream:
-                return Response({"detail": "Both class ID and stream ID are required for filter_type 'stream'"})
-            students = Student.objects.filter(current_Class__id = classes, current_Stream__id = stream, school_id=school_id)
+            elif filter_type and filter_type == 'class':
+                classes = serialized_data.get('classes')
+                if not classes:
+                    return Response({"detail": "Class ID is required for filter_type 'class'"})
+                students = Student.objects.filter(current_Class__id = classes, school_id=school_id)
 
-            return createInvoices(school_id, students, structure_year, structure_term, structure_class)
-
-
-        elif filter_type and filter_type == 'group':
-            group =serialized_data.get('group')
-            groupid = group
-            if not groupid:
-                return Response({"detail": "Group is require for Group Query"})
-            try:
-                group = SchoolGroup.objects.get(id=groupid)
-            except SchoolGroup.DoesNotExist:
-                return Response({'detail': f"Invalid Group ID"}, status=status.HTTP_400_BAD_REQUEST)
-
-            students = Student.objects.filter(current_Class__id=structure_class, groups__icontains=str(groupid),school_id=school_id)
-
-            return createInvoices(school_id, students, structure_year, structure_term, structure_class)
+                return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
-        else:
-            return Response({"detail": "Invalid filter_type. It should be one of: 'student', 'class', 'stream'"})
+            elif filter_type and filter_type == 'stream':
+                classes =serialized_data.get('classes')
+                stream =serialized_data.get('stream')
+                if not classes or not stream:
+                    return Response({"detail": "Both class ID and stream ID are required for filter_type 'stream'"})
+                students = Student.objects.filter(current_Class__id = classes, current_Stream__id = stream, school_id=school_id)
+
+                return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
+            elif filter_type and filter_type == 'group':
+                group =serialized_data.get('group')
+                groupid = group
+                if not groupid:
+                    return Response({"detail": "Group is require for Group Query"})
+                try:
+                    group = SchoolGroup.objects.get(id=groupid)
+                except SchoolGroup.DoesNotExist:
+                    return Response({'detail': f"Invalid Group ID"}, status=status.HTTP_400_BAD_REQUEST)
+
+                students = Student.objects.filter(current_Class__id=structure_class, groups__icontains=str(groupid),school_id=school_id)
+
+                return createInvoices(school_id, students, structure_year, structure_term, structure_class)
 
 
+            else:
+                return Response({"detail": "Invalid filter_type. It should be one of: 'student', 'class', 'stream'"})
+
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class InvoiceClassesListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
