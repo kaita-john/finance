@@ -72,7 +72,7 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
         print(f"{queryset.count()} 1111111111")
 
 
-        if not term or term == "" or term == "null" and not academic_year or academic_year == "" or academic_year == "null":
+        if (not term or term == "" or term == "null") and  (not academic_year or academic_year == "" or academic_year == "null"):
             getcurrentTerm = currentTerm(school_id)
             getcurrentAcademicYear = currentAcademicYear(school_id)
             if not term or term == "" or term == "null":
