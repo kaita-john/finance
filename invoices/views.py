@@ -67,7 +67,6 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
 
         term = self.request.query_params.get('term', None)
         academic_year = self.request.query_params.get('academic_year', None)
-        totals = True
         student = self.request.query_params.get('student', None)
 
 
