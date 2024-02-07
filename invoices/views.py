@@ -108,6 +108,8 @@ class InvoiceListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
         try:
             queryset = self.get_queryset()
 
+            print(f"Request has {queryset.count()} Items")
+
             if not queryset:
                 return JsonResponse([], safe=False, status=200)
 
