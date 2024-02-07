@@ -107,7 +107,7 @@ class BursaryListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
         if not school_id:
             return Bursary.objects.none()
         self.check_defaults(self.request, school_id)
-        queryset = Bursary.objects.filter(school_id=school_id)
+        queryset = Bursary.objects.filter(school_id=school_id, posted=True)
         return queryset
 
     def list(self, request, *args, **kwargs):
