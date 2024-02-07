@@ -8,6 +8,7 @@ from academic_year.serializers import AcademicYearSerializer
 from appcollections.models import Collection
 from classes.serializers import ClassesSerializer
 from currencies.serializers import CurrencySerializer
+from payment_in_kinds.models import PaymentInKind
 from receipts.models import Receipt
 from school.models import School
 from school.serializer import SchoolSerializer
@@ -45,7 +46,8 @@ class InvoiceSerializer(serializers.ModelSerializer):
             year = invoice.year
             voteheads = invoice.votehead
 
-            total_amount_paid = Collection.objects.filter(
+
+            collections_amount_paid = Collection.objects.filter(
                 votehead=voteheads,
                 student=student,
                 receipt__term=term,
@@ -53,6 +55,18 @@ class InvoiceSerializer(serializers.ModelSerializer):
                 receipt__is_reversed=False,
                 school_id=school.id
             ).aggregate(total_amount_paid=Sum('amount'))['total_amount_paid'] or 0.0
+
+            total_PIK = PaymentInKind.objects.filter(
+                votehead=voteheads,
+                student=student,
+                receipt__term=term,
+                receipt__year=year,
+                receipt__is_posted=True,
+                school_id=school.id
+            ).aggregate(total_amount_paid=Sum('amount'))['total_amount_paid'] or 0.0
+
+            total_amount_paid = collections_amount_paid + total_PIK
+
 
             return total_amount_paid
 
@@ -74,7 +88,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
             voteheads = invoice.votehead
             amountRequired = invoice.amount
 
-            total_amount_paid = Collection.objects.filter(
+            collections_amount_paid = Collection.objects.filter(
                 votehead=voteheads,
                 student=student,
                 receipt__term=term,
@@ -82,6 +96,17 @@ class InvoiceSerializer(serializers.ModelSerializer):
                 receipt__is_reversed=False,
                 school_id=school.id
             ).aggregate(total_amount_paid=Sum('amount'))['total_amount_paid'] or 0.0
+
+            total_PIK = PaymentInKind.objects.filter(
+                votehead=voteheads,
+                student=student,
+                receipt__term=term,
+                receipt__year=year,
+                receipt__is_posted=True,
+                school_id=school.id
+            ).aggregate(total_amount_paid=Sum('amount'))['total_amount_paid'] or 0.0
+
+            total_amount_paid = collections_amount_paid + total_PIK
 
             return amountRequired - Decimal(total_amount_paid)
 
