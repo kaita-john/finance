@@ -432,9 +432,9 @@ class ReceiptDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDest
                 instance.save()
 
                 bank_account = instance.bank_account
-                amount = instance.totalAmount
-                initial_balance = bank_account.balance
-                new_balance = initial_balance - Decimal(amount)
+                previous_receipt_amount = instance.totalAmount
+                current_balance = bank_account.balance #Bank balance as it stands
+                new_balance = current_balance - Decimal(previous_receipt_amount)
                 bank_account.balance = new_balance
                 bank_account.save()
 

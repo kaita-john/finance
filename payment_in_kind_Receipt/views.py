@@ -186,7 +186,6 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                 bank_account.balance = new_balance
                 bank_account.save()
 
-
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

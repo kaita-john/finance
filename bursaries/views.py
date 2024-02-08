@@ -496,3 +496,28 @@ class UnPostBursaryDetailView(SchoolIdMixin, DefaultMixin, generics.UpdateAPIVie
                 bank_account.save()
 
         return Response({'detail': "Bursary has been unposted successfully"}, status=status.HTTP_200_OK)
+
+
+
+
+class TrashBursaryDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateDestroyAPIView):
+    queryset = Bursary.objects.all()
+    serializer_class = BursarySerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+    lookup_field = 'pk'
+
+
+    def destroy(self, request, *args, **kwargs):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'error': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
+
+        bursary = self.get_object()
+        if bursary.posted:
+            return Response({'detail': f"You cannot delete a posted Bursary, Unpost it instead"}, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_destroy(bursary)
+        return Response({'detail': 'Record deleted successfully'}, status=status.HTTP_200_OK)
+
+
