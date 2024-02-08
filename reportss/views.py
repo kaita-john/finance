@@ -1523,16 +1523,18 @@ class LedgerView(SchoolIdMixin,  DefaultMixin, generics.GenericAPIView):
             for bursary in bursaryQuerySet:
                 bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount'] or Decimal(0)
                 actualvotehead = bursary.votehead
-                votehead_id = actualvotehead.id
 
-                try:
-                    if str(votehead_id) == votehead:
-                        if bursary.receipt_date.month == monthnumber:
-                            collection_amount = bursary_total_amount
-                            total_month_collection_amount += collection_amount
+                if actualvotehead:
+                    votehead_id = actualvotehead.id
 
-                except VoteHead.DoesNotExist:
-                    pass
+                    try:
+                        if str(votehead_id) == votehead:
+                            if bursary.receipt_date.month == monthnumber:
+                                collection_amount = bursary_total_amount
+                                total_month_collection_amount += collection_amount
+
+                    except VoteHead.DoesNotExist:
+                        pass
 
 
 
@@ -1670,31 +1672,33 @@ class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             for bursary in bursarys:
                 bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount'] or Decimal(0)
                 actualvotehead = bursary.votehead
-                votehead_id = actualvotehead.id
 
-                if not collectionvoteheadDictionary.get(f"{votehead_id}"):
-                    collectionvoteheadDictionary[f"{votehead_id}"] = {}
+                if actualvotehead:
+                    votehead_id = actualvotehead.id
 
-                    if not collectionvoteheadDictionary.get(f"{votehead_id}").get("cramount"):
-                        collectionvoteheadDictionary[f"{votehead_id}"]["cramount"] = Decimal(0.0)
-                    if not collectionvoteheadDictionary.get(f"{votehead_id}").get("dramount"):
-                        collectionvoteheadDictionary[f"{votehead_id}"]["dramount"] = Decimal(0.0)
+                    if not collectionvoteheadDictionary.get(f"{votehead_id}"):
+                        collectionvoteheadDictionary[f"{votehead_id}"] = {}
 
-                    collectionvoteheadDictionary[f"{votehead_id}"]["name"] = actualvotehead.vote_head_name
-                    collectionvoteheadDictionary[f"{votehead_id}"][
-                        "lf_number"] = actualvotehead.ledget_folio_number_lf
+                        if not collectionvoteheadDictionary.get(f"{votehead_id}").get("cramount"):
+                            collectionvoteheadDictionary[f"{votehead_id}"]["cramount"] = Decimal(0.0)
+                        if not collectionvoteheadDictionary.get(f"{votehead_id}").get("dramount"):
+                            collectionvoteheadDictionary[f"{votehead_id}"]["dramount"] = Decimal(0.0)
 
-                if actualvotehead == votehead:
-                    method = "NONE"
-                    if bursary.paymentMethod:
-                        method = "BANK" if bursary.paymentMethod.is_cheque else "CASH" if bursary.paymentMethod.is_cash else "BANK" if bursary.paymentMethod.is_bank else "NONE"
-                    if method == "CASH":
-                        total_cash += Decimal(bursary_total_amount)
-                    if method == "BANK":
-                        total_bank += Decimal(bursary_total_amount)
-                    if method == "NONE":
-                        total_cash += Decimal(bursary_total_amount)
-                    collectionvoteheadDictionary[f"{votehead_id}"]["cramount"] += bursary_total_amount
+                        collectionvoteheadDictionary[f"{votehead_id}"]["name"] = actualvotehead.vote_head_name
+                        collectionvoteheadDictionary[f"{votehead_id}"][
+                            "lf_number"] = actualvotehead.ledget_folio_number_lf
+
+                    if actualvotehead == votehead:
+                        method = "NONE"
+                        if bursary.paymentMethod:
+                            method = "BANK" if bursary.paymentMethod.is_cheque else "CASH" if bursary.paymentMethod.is_cash else "BANK" if bursary.paymentMethod.is_bank else "NONE"
+                        if method == "CASH":
+                            total_cash += Decimal(bursary_total_amount)
+                        if method == "BANK":
+                            total_bank += Decimal(bursary_total_amount)
+                        if method == "NONE":
+                            total_cash += Decimal(bursary_total_amount)
+                        collectionvoteheadDictionary[f"{votehead_id}"]["cramount"] += bursary_total_amount
 
 
 
