@@ -455,7 +455,7 @@ class StudentCollectionListView(SchoolIdMixin, DefaultMixin, generics.RetrieveAP
                 creation_Date = pik_receipt.dateofcreation
                 mode_of_payment = "PIK"
                 receipt_no = pik_receipt.counter
-                transaction_code = "N|A"
+                transaction_code = "CASH"
                 amount = pik_receipt.totalAmount
                 receipt_id = pik_receipt.id
 
