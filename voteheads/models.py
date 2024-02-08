@@ -15,6 +15,7 @@ class VoteHead(ParentModel):
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
     is_Overpayment_Default = models.BooleanField(default=False, blank=False, null=False)
     is_Arrears_Default = models.BooleanField(default=False, blank=False, null=False)
+    is_bursary_default = models.BooleanField(default=False, blank=False, null=False)
     priority_number = models.CharField(max_length=255,  default=None, blank=True, null=True)
     ledget_folio_number_lf = models.CharField(max_length=255,  default=None, blank=True, null=True)
 

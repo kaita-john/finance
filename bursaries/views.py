@@ -4,7 +4,7 @@ from datetime import datetime
 from _decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
@@ -23,10 +23,13 @@ from receipts.models import Receipt
 from reportss.models import trackBalance
 from students.models import Student
 from utils import SchoolIdMixin, IsAdminOrSuperUser, UUID_from_PrimaryKey, generate_unique_code, defaultCurrency, \
-    currentAcademicYear, currentTerm, defaultAccountType, DefaultMixin
+    currentAcademicYear, currentTerm, defaultAccountType, DefaultMixin, defaultBursaryVoteHead
 from voteheads.models import VoteheadConfiguration, VoteHead
+from voucher_items.models import VoucherItem
+from vouchers.models import Voucher
 from .models import Bursary
 from .serializers import BursarySerializer
+
 
 
 class BursaryCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
@@ -46,7 +49,12 @@ class BursaryCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
             if not currency:
                 return Response({'detail': f"Default Currency has not been set for this school"}, status=status.HTTP_400_BAD_REQUEST)
 
+            votehead = defaultBursaryVoteHead(school_id)
+            if not currency:
+                return Response({'detail': f"Default Bursary VoteHead has not been set for this school"}, status=status.HTTP_400_BAD_REQUEST)
+
             serializer.validated_data['school_id'] = school_id
+            serializer.validated_data['votehead'] = str(votehead.id)
 
             schoolgroup = serializer.validated_data.get('schoolgroup')
             classes = serializer.validated_data.get('classes')
@@ -253,13 +261,13 @@ def autoBursary(self, request, school_id, auto_configuration_type, itemamount, b
 
             receipt_instance.save()
 
-            print("Here  2")
-            bank_account = receipt_instance.bank_account
-            amount = receipt_instance.totalAmount
-            initial_balance = bank_account.balance
-            new_balance = initial_balance + Decimal(amount)
-            bank_account.balance = new_balance
-            bank_account.save()
+            # print("Here  2")
+            # bank_account = receipt_instance.bank_account
+            # amount = receipt_instance.totalAmount
+            # initial_balance = bank_account.balance
+            # new_balance = initial_balance + Decimal(amount)
+            # bank_account.balance = new_balance
+            # bank_account.save()
 
             overpayment = 0
             totalAmount = receipt_instance.totalAmount
@@ -404,6 +412,34 @@ class PostBursaryDetailView(SchoolIdMixin, DefaultMixin, generics.UpdateAPIView)
 
             serializer = self.get_serializer(bursary, data=request.data, partial=partial)
             if serializer.is_valid():
+
+                bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount'] or Decimal(0)
+                actualvotehead = bursary.votehead
+
+                voucher_instance = Voucher.objects.create(
+                    school_id=school_id,
+                    accountType=bursary.bankAccount.accountType,
+                    recipientType="other",
+                    other=f"BURSARY",
+                    bank_account=bursary.bank_account.account_type,
+                    payment_Method=bursary.paymentMethod,
+                    referenceNumber=str(bursary.id),
+                    paymentDate=bursary.receipt_date,
+                    description="AUTO PIK",
+                    totalAmount=bursary_total_amount,
+                    deliveryNoteNumber="AUTO",
+                    financial_year=bursary.financial_year,
+                )
+
+                VoucherItem.objects.create(
+                    voucher=voucher_instance,
+                    school_id=school_id,
+                    votehead=actualvotehead,
+                    amount=bursary_total_amount,
+                    quantity=Decimal(1),
+                    itemName="Bursary",
+                )
+
                 print(f"22222222")
                 items_data = serializer.get_items(bursary)
                 print(f"Items data is {items_data}")
@@ -488,12 +524,19 @@ class UnPostBursaryDetailView(SchoolIdMixin, DefaultMixin, generics.UpdateAPIVie
                     receipt_instance.year
                 )
 
-                bank_account = receipt_instance.bank_account
-                amount = receipt_instance.totalAmount
-                initial_balance = bank_account.balance
-                new_balance = initial_balance - Decimal(amount)
-                bank_account.balance = new_balance
-                bank_account.save()
+                # bank_account = receipt_instance.bank_account
+                # amount = receipt_instance.totalAmount
+                # initial_balance = bank_account.balance
+                # new_balance = initial_balance - Decimal(amount)
+                # bank_account.balance = new_balance
+                # bank_account.save()
+
+                try:
+                    related_voucher = Voucher.objects.get(referenceNumber=bursary.id)
+                    related_voucher.is_deleted = True
+                except ObjectDoesNotExist:
+                    voucher = None
+
 
         return Response({'detail': "Bursary has been unposted successfully"}, status=status.HTTP_200_OK)
 

@@ -11,6 +11,7 @@ from models import ParentModel
 from payment_methods.models import PaymentMethod
 from schoolgroups.models import SchoolGroup
 from term.models import Term
+from voteheads.models import VoteHead
 
 
 class Bursary(ParentModel):
@@ -28,6 +29,7 @@ class Bursary(ParentModel):
     receipt_date = models.DateField(default=None, null=True)
     financial_year = models.ForeignKey(FinancialYear, default=None, null=True, on_delete=models.CASCADE, related_name="bursaries")
     schoolgroup = models.ForeignKey(SchoolGroup, default=None, null=True, on_delete=DO_NOTHING, related_name="bursaries")
+    votehead = models.ForeignKey(VoteHead, default=None, null=True, on_delete=DO_NOTHING, related_name="bursaries")
     classes = models.ForeignKey(Classes, default=None, null=True, on_delete=DO_NOTHING, related_name="bursaries")
     currency = models.ForeignKey(Currency, default=None, null=True, on_delete=DO_NOTHING, related_name="bursaries")
     studentamount = models.DecimalField(max_digits=15, null=True, default=0.00, decimal_places=2)

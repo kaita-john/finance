@@ -28,7 +28,6 @@ from payment_in_kind_Receipt.models import PIKReceipt
 from payment_in_kinds.models import PaymentInKind
 from payment_methods.models import PaymentMethod
 from receipts.models import Receipt
-from receipts.serializers import ReceiptSerializer
 from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, IncomeSummary, BalanceTracker, \
     OpeningClosingBalances
 from reportss.serializers import ReportStudentBalanceSerializer, StudentTransactionsPrintViewSerializer, \
@@ -911,7 +910,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                     if bursary.receipt_date == dateinstance:
                         bursary_cash = Decimal(0)
                         bursary_bank = Decimal(0)
-                        bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount']
+                        bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount'] or Decimal(0)
                         method = "BANK" if bursary.paymentMethod and bursary.paymentMethod.is_cheque else "CASH" if bursary.paymentMethod and bursary.paymentMethod.is_cash else "NONE"
                         if method == "CASH" or method == "NONE":
                             bursary_cash += bursary_total_amount
@@ -1518,8 +1517,22 @@ class LedgerView(SchoolIdMixin,  DefaultMixin, generics.GenericAPIView):
             startdate = month['start_date']
             enddate = month['end_date']
             monthnumber = month['month_number']
-
             total_month_collection_amount = Decimal(0.0)
+
+
+            for bursary in bursaryQuerySet:
+                bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount'] or Decimal(0)
+                actualvotehead = bursary.votehead
+                votehead_id = actualvotehead.id
+
+                try:
+                    if str(votehead_id) == votehead:
+                        if bursary.receipt_date.month == monthnumber:
+                            collection_amount = bursary_total_amount
+                            total_month_collection_amount += collection_amount
+
+                except VoteHead.DoesNotExist:
+                    pass
 
 
 
@@ -1643,7 +1656,46 @@ class TrialBalanceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
         total_bank = Decimal(0.0)
         total_expense = Decimal(0.0)
 
+
         for votehead in votehead_list:
+
+            bursarys = Bursary.objects.filter(
+                posted = True,
+                school_id=school_id,
+                financial_year=financialyear,
+                receipt_date__month__lte=month,
+                bankAccount__account_type = accounttype
+            )
+
+            for bursary in bursarys:
+                bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount'] or Decimal(0)
+                actualvotehead = bursary.votehead
+                votehead_id = actualvotehead.id
+
+                if not collectionvoteheadDictionary.get(f"{votehead_id}"):
+                    collectionvoteheadDictionary[f"{votehead_id}"] = {}
+
+                    if not collectionvoteheadDictionary.get(f"{votehead_id}").get("cramount"):
+                        collectionvoteheadDictionary[f"{votehead_id}"]["cramount"] = Decimal(0.0)
+                    if not collectionvoteheadDictionary.get(f"{votehead_id}").get("dramount"):
+                        collectionvoteheadDictionary[f"{votehead_id}"]["dramount"] = Decimal(0.0)
+
+                    collectionvoteheadDictionary[f"{votehead_id}"]["name"] = actualvotehead.vote_head_name
+                    collectionvoteheadDictionary[f"{votehead_id}"][
+                        "lf_number"] = actualvotehead.ledget_folio_number_lf
+
+                if actualvotehead == votehead:
+                    method = "NONE"
+                    if bursary.paymentMethod:
+                        method = "BANK" if bursary.paymentMethod.is_cheque else "CASH" if bursary.paymentMethod.is_cash else "BANK" if bursary.paymentMethod.is_bank else "NONE"
+                    if method == "CASH":
+                        total_cash += Decimal(bursary_total_amount)
+                    if method == "BANK":
+                        total_bank += Decimal(bursary_total_amount)
+                    if method == "NONE":
+                        total_cash += Decimal(bursary_total_amount)
+                    collectionvoteheadDictionary[f"{votehead_id}"]["cramount"] += bursary_total_amount
+
 
 
             grants = Grant.objects.filter(

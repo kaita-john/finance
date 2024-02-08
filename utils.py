@@ -210,6 +210,12 @@ def defaultArrearVoteHead(school_id):
     except VoteHead.DoesNotExist:
         return None
 
+def defaultBursaryVoteHead(school_id):
+    try:
+        return VoteHead.objects.get(is_bursary_default=True, school_id=school_id)
+    except VoteHead.DoesNotExist:
+        return None
+
 def defaultAccountType(school_id):
     try:
         return AccountType.objects.get(is_default=True, school = school_id)
@@ -349,6 +355,7 @@ class DefaultMixin:
         getdefaultArrearVoteHead = defaultArrearVoteHead(school_id)
         getdefaultAccountType = defaultAccountType(school_id)
         getdefaultBankAccount = defaultBankAccount(school_id)
+        getdefaultBursaryVoteHead = defaultBursaryVoteHead(school_id)
         getdefaultIntegrationPaymentMethod = default_MpesaPaymentMethod(school_id)
 
         if not getdefaultconfiguration:
@@ -373,6 +380,8 @@ class DefaultMixin:
             raise ValidationError({'detail': 'Default Account Type not set for this school!'})
         if not getdefaultBankAccount:
             raise ValidationError({'detail': 'Default Bank Account not set for this school!'})
+        if not getdefaultBursaryVoteHead:
+            raise ValidationError({'detail': 'Default Bursary VoteHead not set for this school!'})
         # if not getdefaultIntegrationPaymentMethod:
         #     raise ValidationError({'detail': 'Default Integration Payment Method not set for this school!'})
 
