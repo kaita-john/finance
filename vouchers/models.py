@@ -44,7 +44,8 @@ class Voucher(ParentModel):
         if self.other:
             self.other = self.other.upper()
         if self.referenceNumber:
-            self.referenceNumber = self.referenceNumber.upper()
+            # self.referenceNumber = self.referenceNumber.upper()
+            pass
         if self.paymentVoucherNumber:
             self.paymentVoucherNumber = self.paymentVoucherNumber.upper()
         if self.deliveryNoteNumber:

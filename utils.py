@@ -247,6 +247,9 @@ def defaultVoteHeadConfiguration(school_id):
         return None
 
 
+def default_Cash_Payment_Method(school_id):
+    return PaymentMethod.objects.filter(school=school_id, is_cash=True).first()
+
 
 def check_if_object_exists(Model, obj_id):
     try:

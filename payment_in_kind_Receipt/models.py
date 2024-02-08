@@ -1,5 +1,7 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import DO_NOTHING
+from rest_framework import serializers
 
 from academic_year.models import AcademicYear
 from bank_accounts.models import BankAccount
@@ -9,6 +11,8 @@ from financial_years.models import FinancialYear
 from models import ParentModel
 from students.models import Student
 from term.models import Term
+from vouchers.models import Voucher
+from vouchers.serializers import VoucherSerializer
 
 
 class PIKReceipt(ParentModel):
@@ -28,6 +32,7 @@ class PIKReceipt(ParentModel):
     overpayment_amount = models.DecimalField(max_digits=15, default=0.00, null=True, blank=True, decimal_places=2)
     financial_year = models.ForeignKey(FinancialYear, null=True, on_delete=DO_NOTHING, related_name="pik_receipts")
     counter = models.FloatField(null=True, default=None)
+
 
     def save(self, *args, **kwargs):
         if self.receipt_No:

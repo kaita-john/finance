@@ -23,8 +23,10 @@ from payment_in_kinds.serializers import PaymentInKindSerializer
 from receipts.models import Receipt
 from reportss.models import trackBalance
 from utils import SchoolIdMixin, IsAdminOrSuperUser, generate_unique_code, defaultCurrency, currentAcademicYear, \
-    currentTerm, DefaultMixin
+    currentTerm, DefaultMixin, default_Cash_Payment_Method
 from voteheads.models import VoteHead
+from voucher_items.models import VoucherItem
+from vouchers.models import Voucher
 from .models import PIKReceipt
 from .serializers import PIKReceiptSerializer
 
@@ -178,13 +180,60 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                 else:
                     print(f"It is not greater than - No overpayment")
 
-                print("Here  1")
-                bank_account = pikreceipt_instance.bank_account
-                amount = pikreceipt_instance.totalAmount
-                initial_balance = bank_account.balance
-                new_balance = initial_balance + Decimal(amount)
-                bank_account.balance = new_balance
-                bank_account.save()
+                # print("Here  1")
+                # bank_account = pikreceipt_instance.bank_account
+                # amount = pikreceipt_instance.totalAmount
+                # initial_balance = bank_account.balance
+                # new_balance = initial_balance + Decimal(amount)
+                # bank_account.balance = new_balance
+                # bank_account.save()
+
+                ddefault_Cash_Payment_Method = default_Cash_Payment_Method(school_id)
+                if not ddefault_Cash_Payment_Method:
+                    raise ValueError("Default Cash Payment Method Not Set")
+
+
+                voucher_instance = Voucher.objects.create(
+                    school_id = school_id,
+                    accountType = pikreceipt_instance.bank_account.account_type,
+                    recipientType = "other",
+                    other = f"{pikreceipt_instance.student.first_name} {pikreceipt_instance.student.first_name}",
+                    bank_account = pikreceipt_instance.bank_account,
+                    payment_Method = ddefault_Cash_Payment_Method,
+                    referenceNumber = str(pikreceipt_instance.id),
+                    paymentDate = pikreceipt_instance.receipt_date,
+                    description = "AUTO PIK",
+                    totalAmount = pikreceipt_instance.totalAmount,
+                    deliveryNoteNumber = "AUTO",
+                    financial_year = pikreceipt_instance.financial_year,
+                )
+
+                for value in pik_values:
+                    value['receipt'] = pikreceipt_instance.id
+                    value['school_id'] = school_id
+                    value['student'] = pikreceipt_instance.student.id
+                    amount  = value['quantity'] * value['unit_cost']
+                    quantity = value['quantity']
+                    itemName = value['itemName']
+                    votehead = value['votehead']
+
+                    try:
+                        votehead_instance = VoteHead.objects.get(id=votehead)
+                    except ObjectDoesNotExist:
+                        raise Exception(f"VoteHead '{votehead}' does not exist.")
+
+
+                    VoucherItem.objects.create(
+                        voucher = voucher_instance,
+                        school_id = school_id,
+                        votehead = votehead_instance,
+                        amount = amount,
+                        quantity = quantity,
+                        itemName = itemName,
+                    )
+
+
+
 
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -282,12 +331,12 @@ class PIKReceiptDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateD
                 instance.save()
 
                 # Subtract the receipt amount from the bank account
-                bank_account = instance.bank_account
-                amount = instance.totalAmount
-                initial_balance = bank_account.balance
-                new_balance = initial_balance - Decimal(amount)
-                bank_account.balance = new_balance
-                bank_account.save()
+                # bank_account = instance.bank_account
+                # amount = instance.totalAmount
+                # initial_balance = bank_account.balance
+                # new_balance = initial_balance - Decimal(amount)
+                # bank_account.balance = new_balance
+                # bank_account.save()
 
                 receipt_instance = instance
                 trackBalance(
@@ -298,6 +347,13 @@ class PIKReceiptDetailView(SchoolIdMixin, DefaultMixin, generics.RetrieveUpdateD
                     receipt_instance.term,
                     receipt_instance.year
                 )
+                receipt_instance_id = instance.id
+
+                try:
+                    related_voucher = Voucher.objects.get(referenceNumber=receipt_instance_id)
+                    related_voucher.is_deleted = True
+                except ObjectDoesNotExist:
+                    voucher = None
 
             return Response({'detail': "PIKReceipt Reversed Successfully"}, status=status.HTTP_200_OK)
         except Exception as exception:
