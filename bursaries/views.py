@@ -49,6 +49,7 @@ class BursaryCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
             serializer.validated_data['school_id'] = school_id
 
             schoolgroup = serializer.validated_data.get('schoolgroup')
+            classes = serializer.validated_data.get('classes')
             studentamount = serializer.validated_data.get('studentamount')
 
             items_data = serializer.validated_data.pop('items_list', [])
@@ -56,9 +57,20 @@ class BursaryCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
             if schoolgroup and schoolgroup != "" and schoolgroup != "null":
                 if not studentamount or studentamount == "" or studentamount == "null":
                     return Response({'detail': f"Enter amount for each student"}, status=status.HTTP_400_BAD_REQUEST)
-
+                if classes and classes != "" and classes != "null":
+                    return Response({'detail': f"You cannot select both Classes and School"}, status=status.HTTP_400_BAD_REQUEST)
                 groupStudents = Student.objects.filter(groups__icontains=str(schoolgroup), school_id=school_id)
                 for value in groupStudents:
+                    item = {'amount': studentamount, 'student': value.id}
+                    items_data.append(item)
+
+            if classes and classes != "" and classes != "null":
+                if schoolgroup and schoolgroup != "" and schoolgroup != "null":
+                    return Response({'detail': f"You cannot select both Classes and School"}, status=status.HTTP_400_BAD_REQUEST)
+                if not studentamount or studentamount == "" or studentamount == "null":
+                    return Response({'detail': f"Enter amount for each student"}, status=status.HTTP_400_BAD_REQUEST)
+                classesStudents = Student.objects.filter(current_Class=classes, school_id=school_id)
+                for value in classesStudents:
                     item = {'amount': studentamount, 'student': value.id}
                     items_data.append(item)
 
