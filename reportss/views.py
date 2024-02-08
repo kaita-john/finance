@@ -25,9 +25,11 @@ from grants.models import Grant
 from invoices.models import Invoice
 from items.models import Item
 from payment_in_kind_Receipt.models import PIKReceipt
+from payment_in_kind_Receipt.serializers import PIKReceiptSerializer
 from payment_in_kinds.models import PaymentInKind
 from payment_methods.models import PaymentMethod
 from receipts.models import Receipt
+from receipts.serializers import ReceiptSerializer
 from reportss.models import ReportStudentBalance, StudentTransactionsPrintView, IncomeSummary, BalanceTracker, \
     OpeningClosingBalances
 from reportss.serializers import ReportStudentBalanceSerializer, StudentTransactionsPrintViewSerializer, \
@@ -416,6 +418,7 @@ class StudentCollectionListView(SchoolIdMixin, DefaultMixin, generics.RetrieveAP
             term = request.GET.get('term')
             academicYear = request.GET.get('academicYear')
 
+
             queryset = Receipt.objects.filter(
                 is_reversed = False,
                 student_id=student.id,
@@ -451,7 +454,7 @@ class StudentCollectionListView(SchoolIdMixin, DefaultMixin, generics.RetrieveAP
                 receipt_Date = pik_receipt.receipt_date
                 creation_Date = pik_receipt.dateofcreation
                 mode_of_payment = "PIK"
-                receipt_no = pik_receipt.receipt_No
+                receipt_no = pik_receipt.counter
                 transaction_code = "N|A"
                 amount = pik_receipt.totalAmount
                 receipt_id = pik_receipt.id
@@ -478,7 +481,7 @@ class StudentCollectionListView(SchoolIdMixin, DefaultMixin, generics.RetrieveAP
                 receipt_Date = receipt.receipt_date
                 creation_Date = receipt.dateofcreation
                 mode_of_payment = payment_method_name
-                receipt_no = receipt.receipt_No
+                receipt_no = receipt.counter
                 transaction_code = receipt.transaction_code
                 amount = receipt.totalAmount
                 receipt_id = receipt.id
@@ -2469,3 +2472,42 @@ class NotesView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
         }
 
         return Response({"detail": full})
+
+
+
+
+
+
+class GetReceiptDetails(APIView, SchoolIdMixin):
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+
+    def get(self, request):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+
+        pik = request.GET.get('pik')
+        collection_id = request.GET.get('collection_id')
+        if not collection_id:
+            return Response({'detail': "Collection ID is a must"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if pik and pik != "null" and pik != "":
+            try:
+                pik_instance = PIKReceipt.objects.get(id=collection_id)
+                serializer = PIKReceiptSerializer(pik_instance)
+                data = serializer.data
+                return Response(data, status=status.HTTP_200_OK)
+            except ObjectDoesNotExist:
+                return Response({'detail': f"Payment In Kind Not Found"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            print("Here")
+            try:
+                print(f"Object exists")
+                pik_instance = Receipt.objects.get(id=collection_id)
+                serializer = ReceiptSerializer(pik_instance)
+                data = serializer.data
+                return Response(data, status=status.HTTP_200_OK)
+            except ObjectDoesNotExist:
+                return Response({'detail': f"Payment In Kind Not Found"}, status=status.HTTP_400_BAD_REQUEST)
+
+
