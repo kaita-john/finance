@@ -319,7 +319,7 @@ class StudentTransactionsPrint(SchoolIdMixin, DefaultMixin, generics.RetrieveAPI
                     transactionDate=transaction_date,
                     transactionType="FEE COLLECTION",
                     description=description,
-                    expected="",
+                    expected="N|A",
                     paid=value.totalAmount
                 )
                 item.save()
