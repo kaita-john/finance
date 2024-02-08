@@ -1236,6 +1236,7 @@ class FeeRegisterView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 listofdateofcreations = []
                 listofdateofcreations.extend(querySetReceipts.values_list('transaction_date', flat=True))
                 listofdateofcreations.extend(querysetPIK.values_list('receipt_date', flat=True))
+                listofdateofcreations = [date for date in listofdateofcreations if date is not None]
                 listofdateofcreations = list(set(listofdateofcreations))
                 listofdateofcreations = list(listofdateofcreations)
 
@@ -1244,7 +1245,6 @@ class FeeRegisterView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 total_collections = Decimal(0.0)
 
                 dated_instances = []
-
 
                 for index, dateinstance in enumerate(listofdateofcreations):
 
@@ -1504,13 +1504,8 @@ class LedgerView(SchoolIdMixin,  DefaultMixin, generics.GenericAPIView):
         unique_grant_dates = grantsQuerySet.values_list('receipt_date', flat=True).distinct()
         unique_bursary_dates = bursaryQuerySet.values_list('receipt_date', flat=True).distinct()
 
-        date_list.extend(unique_collection_dates)
-        date_list.extend(unique_pik_dates)
-        date_list.extend(unique_voucher_dates)
-        date_list.extend(unique_grant_dates)
-        date_list.extend(unique_bursary_dates)
-
-        date_list = list(set(date_list))
+        date_list = list(unique_collection_dates) + list(unique_pik_dates) + list(unique_voucher_dates) + list(unique_grant_dates) + list(unique_bursary_dates)
+        date_list = [date for date in date_list if date is not None]
 
         actualFinancialYear = FinancialYear.objects.get(id = financialyear)
         monthlist  = FinancialYear.get_month_info(actualFinancialYear)
