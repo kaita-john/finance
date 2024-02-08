@@ -233,8 +233,6 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                     )
 
 
-
-
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
