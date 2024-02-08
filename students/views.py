@@ -228,6 +228,30 @@ class StudentSearchByAdmissionNumber(APIView, DefaultMixin, SchoolIdMixin):
 
         return Response({'detail': serialized_data}, status=status.HTTP_200_OK)
 
+class StudentSearchByUID(APIView, DefaultMixin, SchoolIdMixin):
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+
+    def get(self, request):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
+
+        student_id = request.GET.get('student_id')
+
+        if not student_id or student_id == "" or student_id == "null":
+            return Response({'detail': "Id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            student = Student.objects.get(school_id = school_id, id=student_id)
+        except ObjectDoesNotExist:
+            return Response({'detail': "Student with Id not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = StudentSerializer(student)
+        serialized_data = serializer.data
+
+        return Response({'detail': serialized_data}, status=status.HTTP_200_OK)
+
 
 class GetStudentsByClass(APIView, DefaultMixin, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
