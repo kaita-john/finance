@@ -50,11 +50,11 @@ class BursaryCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                 return Response({'detail': f"Default Currency has not been set for this school"}, status=status.HTTP_400_BAD_REQUEST)
 
             votehead = defaultBursaryVoteHead(school_id)
-            if not currency:
+            if not votehead:
                 return Response({'detail': f"Default Bursary VoteHead has not been set for this school"}, status=status.HTTP_400_BAD_REQUEST)
 
             serializer.validated_data['school_id'] = school_id
-            serializer.validated_data['votehead'] = str(votehead.id)
+            serializer.validated_data['votehead'] = votehead
 
             schoolgroup = serializer.validated_data.get('schoolgroup')
             classes = serializer.validated_data.get('classes')
@@ -413,71 +413,73 @@ class PostBursaryDetailView(SchoolIdMixin, DefaultMixin, generics.UpdateAPIView)
             serializer = self.get_serializer(bursary, data=request.data, partial=partial)
             if serializer.is_valid():
 
-                bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount'] or Decimal(0)
-                actualvotehead = bursary.votehead
+                with transaction.atomic():
 
-                voucher_instance = Voucher.objects.create(
-                    school_id=school_id,
-                    accountType=bursary.bankAccount.accountType,
-                    recipientType="other",
-                    other=f"BURSARY",
-                    bank_account=bursary.bank_account.account_type,
-                    payment_Method=bursary.paymentMethod,
-                    referenceNumber=str(bursary.id),
-                    paymentDate=bursary.receipt_date,
-                    description="AUTO PIK",
-                    totalAmount=bursary_total_amount,
-                    deliveryNoteNumber="AUTO",
-                    financial_year=bursary.financial_year,
-                )
+                    bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount'] or Decimal(0)
+                    actualvotehead = bursary.votehead
 
-                VoucherItem.objects.create(
-                    voucher=voucher_instance,
-                    school_id=school_id,
-                    votehead=actualvotehead,
-                    amount=bursary_total_amount,
-                    quantity=Decimal(1),
-                    itemName="Bursary",
-                )
+                    voucher_instance = Voucher.objects.create(
+                        school_id=school_id,
+                        accountType=bursary.bankAccount.account_type,
+                        recipientType="other",
+                        other=f"BURSARY",
+                        bank_account=bursary.bankAccount,
+                        payment_Method=bursary.paymentMethod,
+                        referenceNumber=str(bursary.id),
+                        paymentDate=bursary.receipt_date,
+                        description="AUTO PIK",
+                        totalAmount=bursary_total_amount,
+                        deliveryNoteNumber="AUTO",
+                        financial_year=bursary.financial_year,
+                    )
 
-                print(f"22222222")
-                items_data = serializer.get_items(bursary)
-                print(f"Items data is {items_data}")
-                if not items_data:
-                    return Response({'detail': "Bursay has zero items"}, status=status.HTTP_400_BAD_REQUEST)
-                print(f'Length of items_data is {len(items_data)}')
-                for item in items_data:
-                    print(f"4444444")
-                    print(f"Item is {item}")
-                    itemamount = item.get('amount')
-                    bursary  = item.get('bursary')
-                    itemstudent = item.get('student')
+                    VoucherItem.objects.create(
+                        voucher=voucher_instance,
+                        school_id=school_id,
+                        votehead=actualvotehead,
+                        amount=bursary_total_amount,
+                        quantity=Decimal(1),
+                        itemName="Bursary",
+                    )
 
-                    try:
-                        print(f"5555555555")
-                        configuration = VoteheadConfiguration.objects.get(school_id=school_id)
-                        print("returning 2")
-                    except ObjectDoesNotExist:
-                        print("returning 3")
-                        return Response({'detail': "Please set up votehead configuration for this school first!"},status=status.HTTP_400_BAD_REQUEST)
+                    print(f"22222222")
+                    items_data = serializer.get_items(bursary)
+                    print(f"Items data is {items_data}")
+                    if not items_data:
+                        return Response({'detail': "Bursay has zero items"}, status=status.HTTP_400_BAD_REQUEST)
+                    print(f'Length of items_data is {len(items_data)}')
+                    for item in items_data:
+                        print(f"4444444")
+                        print(f"Item is {item}")
+                        itemamount = item.get('amount')
+                        bursary  = item.get('bursary')
+                        itemstudent = item.get('student')
 
-                    print(f"66666666666")
-                    configuration_type = configuration.configuration_type
-                    auto_configuration_type = configuration.auto_configuration_type
+                        try:
+                            print(f"5555555555")
+                            configuration = VoteheadConfiguration.objects.get(school_id=school_id)
+                            print("returning 2")
+                        except ObjectDoesNotExist:
+                            print("returning 3")
+                            return Response({'detail': "Please set up votehead configuration for this school first!"},status=status.HTTP_400_BAD_REQUEST)
 
-                    try:
-                        current_financial_year = FinancialYear.objects.get(is_current=True, school=school_id)
-                    except ObjectDoesNotExist:
-                        return Response({'detail': f"Current Financial Year not set"}, status=status.HTTP_400_BAD_REQUEST)
+                        print(f"66666666666")
+                        configuration_type = configuration.configuration_type
+                        auto_configuration_type = configuration.auto_configuration_type
+
+                        try:
+                            current_financial_year = FinancialYear.objects.get(is_current=True, school=school_id)
+                        except ObjectDoesNotExist:
+                            return Response({'detail': f"Current Financial Year not set"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-                    if configuration_type == MANUAL:
-                        print("returning 4")
-                        return Response({'detail': "Votehead Configuration set to manual. Change to Auto"}, status=status.HTTP_400_BAD_REQUEST)
-                    elif configuration_type == AUTO:
-                        print("returning 5")
-                        print(f"Item bursary is {bursary}")
-                        autoBursary(self, request, school_id, auto_configuration_type, itemamount, bursary, itemstudent, current_financial_year)
+                        if configuration_type == MANUAL:
+                            print("returning 4")
+                            return Response({'detail': "Votehead Configuration set to manual. Change to Auto"}, status=status.HTTP_400_BAD_REQUEST)
+                        elif configuration_type == AUTO:
+                            print("returning 5")
+                            print(f"Item bursary is {bursary}")
+                            autoBursary(self, request, school_id, auto_configuration_type, itemamount, bursary, itemstudent, current_financial_year)
 
                 return Response({'detail': f"Posting Successful! Receipt and collections created successfully"}, status=status.HTTP_200_OK)
             else:
