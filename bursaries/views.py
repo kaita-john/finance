@@ -245,7 +245,7 @@ def autoBursary(self, request, school_id, auto_configuration_type, itemamount, b
                 term=term,
                 year=year,
                 currency=default_Currency,
-                transaction_code=bursary.id,
+                transaction_code=receipt_no,
                 addition_notes="Bursary Payment",
                 financial_year = current_financial_year
             )

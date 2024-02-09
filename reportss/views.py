@@ -362,6 +362,7 @@ class StudentTransactionsPrint(SchoolIdMixin, DefaultMixin, generics.RetrieveAPI
             for value in querysetInvoices:
                 term_name = getattr(value.term, 'term_name', None)
                 year_name = getattr(value.year, 'academic_year', None)
+                year_name = getattr(value.amount, 'academic_year', None)
                 student_class = getattr(value, 'classes', None)
                 transaction_date = getattr(value, 'dateofcreation', None)
                 description = f"{student_class}-{term_name}-{year_name}"
