@@ -854,7 +854,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 querysetPIK = querysetPIK.filter(school_id=school_id, bank_account__account_type=accounttype)
                 querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount__account_type=accounttype)
                 querySetExpenses = querySetExpenses.filter(school_id=school_id,voucher__bank_account__account_type=accounttype)
-                querySetBursary = querySetBursary.filter(school_id=school_id, bankAccount__account_type=bankaccount)
+                querySetBursary = querySetBursary.filter(school_id=school_id, bankAccount__account_type=accounttype)
             else:
                 return Response({'detail': f"Account Type is required"}, status=status.HTTP_400_BAD_REQUEST)
 
