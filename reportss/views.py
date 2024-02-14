@@ -885,7 +885,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             grant_voteheads = list({grant_item.votehead.vote_head_name for grant in querySetGrants for grant_item in GrantItem.objects.filter(grant=grant)})
             bursary_voteheads = list({bursary_item.votehead.vote_head_name for bursary in querySetBursary for bursary_item in Item.objects.filter(bursary=bursary)})
 
-            combined_voteheads = list(set(receipt_voteheads + pik_voteheads + grant_voteheads))
+            combined_voteheads = list(set(receipt_voteheads + pik_voteheads + grant_voteheads + bursary_voteheads))
 
             print(f"List of voteheads is {combined_voteheads}")
 
