@@ -835,12 +835,17 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             querySetBursary = Bursary.objects.filter(school_id=school_id, posted=True)
 
 
+            print(f"0 Length of queryset bursaries is {len(querySetBursary)}")
+
             if bankaccount and bankaccount != "" and bankaccount != "null":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, bank_account=bankaccount)
                 querysetPIK = querysetPIK.filter(school_id=school_id, bank_account=bankaccount)
                 querySetGrants = querySetGrants.filter(school_id=school_id, bankAccount=bankaccount)
                 querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__bank_account=bankaccount)
                 querySetBursary = querySetBursary.filter(school_id=school_id, bankAccount=bankaccount)
+
+
+            print(f"1 Length of queryset bursaries is {len(querySetBursary)}")
 
             if accounttype and accounttype != "" and accounttype != "null":
                 if not bankaccount or bankaccount == "" or bankaccount == "null":
@@ -853,12 +858,16 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             else:
                 return Response({'detail': f"Account Type is required"}, status=status.HTTP_400_BAD_REQUEST)
 
+            print(f"2 Length of queryset bursaries is {len(querySetBursary)}")
+
             if financialyear and financialyear != "" and financialyear != "null":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, financial_year=financialyear)
                 querysetPIK = querysetPIK.filter(school_id=school_id, financial_year=financialyear)
                 querySetGrants = querySetGrants.filter(school_id=school_id, financial_year=financialyear)
                 querySetExpenses = querySetExpenses.filter(school_id=school_id, voucher__financial_year=financialyear)
                 querySetBursary = querySetBursary.filter(school_id=school_id, financial_year=financialyear)
+
+            print(f"3 Length of queryset bursaries is {len(querySetBursary)}")
 
             if month and month != "" and month != "null":
                 querySetReceipts = querySetReceipts.filter(school_id=school_id, transaction_date__month=month)
@@ -903,7 +912,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 opencash = getBalance(accounttype, month, financialyear, school_id)["cash"]
                 openbank = getBalance(accounttype, month, financialyear, school_id)["bank"]
 
-            print(f"Length of queryset bursaries is {len(querySetBursary)}")
+            print(f"4 Length of queryset bursaries is {len(querySetBursary)}")
             for dateinstance in listofdateofcreations:
 
                 receipt_range = []
