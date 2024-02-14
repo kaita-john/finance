@@ -226,7 +226,7 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
                         votehead = item.votehead
                         required_boardingstatus = item.boardingStatus
 
-                        if (required_boardingstatus == boarding_status) or required_boardingstatus == "ALL" or required_boardingstatus == "all":
+                        if (required_boardingstatus == boarding_status) or required_boardingstatus == "ALL" or required_boardingstatus == "all" or not required_boardingstatus:
                             exists_query = Invoice.objects.filter(school_id=school_id, votehead__id=votehead.id, term=term, year=year, student=student, classes = structure_class)
 
                             if exists_query.exists():
