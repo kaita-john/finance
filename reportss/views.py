@@ -903,6 +903,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 opencash = getBalance(accounttype, month, financialyear, school_id)["cash"]
                 openbank = getBalance(accounttype, month, financialyear, school_id)["bank"]
 
+            print(f"Length of queryset bursaries is {len(querySetBursary)}")
             for dateinstance in listofdateofcreations:
 
                 receipt_range = []
@@ -914,6 +915,7 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 #BURSARIES
                 for bursary in querySetBursary:
                     if bursary.receipt_date == dateinstance:
+                        print(f"Checking Bursary receipt date of {bursary.receipt_date} against date {dateinstance}")
                         bursary_cash = Decimal(0)
                         bursary_bank = Decimal(0)
                         bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount'] or Decimal(0)
