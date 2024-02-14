@@ -892,9 +892,9 @@ class CashBookView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
             receipt_voteheads = list({thecollection.votehead.vote_head_name for thereceipt in querySetReceipts for thecollection in Collection.objects.filter(receipt=thereceipt)})
             pik_voteheads = list({pik.votehead.vote_head_name for pikReceipt in querysetPIK for pik in PaymentInKind.objects.filter(receipt=pikReceipt)})
             grant_voteheads = list({grant_item.votehead.vote_head_name for grant in querySetGrants for grant_item in GrantItem.objects.filter(grant=grant)})
-            bursary_voteheads = list({bursary_item.votehead.vote_head_name for bursary in querySetBursary for bursary_item in Item.objects.filter(bursary=bursary)})
+            # bursary_voteheads = list({bursary_item.votehead.vote_head_name for bursary in querySetBursary for bursary_item in Item.objects.filter(bursary=bursary)})
 
-            combined_voteheads = list(set(receipt_voteheads + pik_voteheads + grant_voteheads + bursary_voteheads))
+            combined_voteheads = list(set(receipt_voteheads + pik_voteheads + grant_voteheads ))
 
             print(f"List of voteheads is {combined_voteheads}")
 
