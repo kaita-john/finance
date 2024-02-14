@@ -427,7 +427,7 @@ class PostBursaryDetailView(SchoolIdMixin, DefaultMixin, generics.UpdateAPIView)
                         payment_Method=bursary.paymentMethod,
                         referenceNumber=str(bursary.id),
                         paymentDate=bursary.receipt_date,
-                        description="PIK",
+                        description=f"BURSASRY FROM {bursary.institution}",
                         totalAmount=bursary_total_amount,
                         deliveryNoteNumber="AUTO",
                         financial_year=bursary.financial_year,

@@ -84,6 +84,7 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                     year
                 )
                 pikreceipt_instance = pikreceipt_serializer.save()
+                additional_notes = pikreceipt_instance.addition_notes
 
                 pikreceipt_instance.student_class = pikreceipt_instance.student.current_Class
                 pikreceipt_instance.financial_year = current_financial_year
@@ -150,7 +151,7 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                         currency=default_Currency,
                         transaction_code=generate_unique_code("TRN"),
                         transaction_date=datetime.now(),
-                        addition_notes="Payment In Kind Receipt",
+                        addition_notes=additional_notes,
                         student_class=student.current_Class,
                     )
 
@@ -202,7 +203,7 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                     payment_Method = ddefault_Cash_Payment_Method,
                     referenceNumber = str(pikreceipt_instance.id),
                     paymentDate = pikreceipt_instance.receipt_date,
-                    description = "AUTO PIK",
+                    description = additional_notes,
                     totalAmount = pikreceipt_instance.totalAmount,
                     deliveryNoteNumber = "AUTO",
                     financial_year = pikreceipt_instance.financial_year,
