@@ -114,7 +114,7 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                     student = created_Pik.receipt.student
 
                     try:
-                        invoice_instance = Invoice.objects.get(votehead__id=value['votehead'], term=term_instance,year=year_instance, school_id=school_id, student=student)
+                        invoice_instance = Invoice.objects.get(votehead=value['votehead'], term=term_instance,year=year_instance, school_id=school_id, student=student)
 
                         requiredAmount = invoice_instance.amount - invoice_instance.paid
                         if created_Pik.amount > requiredAmount:
