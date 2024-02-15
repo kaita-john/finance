@@ -31,6 +31,7 @@ class Voucher(ParentModel):
     description = models.CharField(max_length=7000, blank=True, null=True)
     totalAmount = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     deliveryNoteNumber = models.CharField(max_length=255, blank=True, null=True)
+    referallNumber = models.CharField(max_length=255, blank=True, null=True)
 
     is_deleted = models.BooleanField(default=False)
     date_deleted = models.DateTimeField(null=True)

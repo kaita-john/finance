@@ -25,7 +25,7 @@ class PIKReceiptSerializer(serializers.ModelSerializer):
     def get_related_voucher(self, obj):
         receipt_instance_id = obj.id
         try:
-            related_voucher = Voucher.objects.get(referenceNumber=receipt_instance_id)
+            related_voucher = Voucher.objects.get(referallNumber=receipt_instance_id)
             related_voucher.is_deleted = True
             serializer = VoucherSerializer(related_voucher)
             return serializer.data

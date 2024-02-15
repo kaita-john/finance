@@ -418,6 +418,8 @@ class PostBursaryDetailView(SchoolIdMixin, DefaultMixin, generics.UpdateAPIView)
                     bursary_total_amount = bursary.items.aggregate(total_amount=Sum('amount'))['total_amount'] or Decimal(0)
                     actualvotehead = bursary.votehead
 
+                    receipt_no = generate_unique_code("PK")
+
                     voucher_instance = Voucher.objects.create(
                         school_id=school_id,
                         accountType=bursary.bankAccount.account_type,
@@ -425,7 +427,8 @@ class PostBursaryDetailView(SchoolIdMixin, DefaultMixin, generics.UpdateAPIView)
                         other=f"BURSARY",
                         bank_account=bursary.bankAccount,
                         payment_Method=bursary.paymentMethod,
-                        referenceNumber=str(bursary.id),
+                        referenceNumber=receipt_no,
+                        referallNumber=str(bursary.id),
                         paymentDate=bursary.receipt_date,
                         description=f"BURSASRY FROM {bursary.institution}",
                         totalAmount=bursary_total_amount,
