@@ -61,11 +61,18 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                     Response({'detail': "Default Term Not Set For This School"}, status=status.HTTP_400_BAD_REQUEST)
 
                 totalAmount = 0.00
+                pikreceipt_serializer = self.get_serializer(data=request.data)
+
+                overpayment = 0
+                overpayment_amount = pikreceipt_serializer.validated_data.get('overpayment_amount')
+                if overpayment_amount:
+                    overpayment = overpayment_amount
+
                 pik_values = request.data.get('pik_values', [])
                 if pik_values:
-                    totalAmount = sum( Decimal(item['unit_cost']) * Decimal(item['quantity']) for item in pik_values)
+                    totalAmount = sum(Decimal(item['unit_cost']) * Decimal(item['quantity']) for item in pik_values) + overpayment
 
-                pikreceipt_serializer = self.get_serializer(data=request.data)
+
                 pikreceipt_serializer.is_valid(raise_exception=True)
                 pikreceipt_serializer.validated_data['school_id'] = school_id
                 pikreceipt_serializer.validated_data['receipt_No'] = receipt_no
@@ -90,11 +97,6 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                 pikreceipt_instance.financial_year = current_financial_year
                 pikreceipt_instance.save()
 
-                overpayment = 0
-                overpayment_amount = pikreceipt_serializer.validated_data.get('overpayment_amount')
-
-                if overpayment_amount:
-                    overpayment=overpayment_amount
 
                 for value in pik_values:
                     value['receipt'] = pikreceipt_instance.id
@@ -138,6 +140,11 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                         raise ValueError("Default Account Type Not Set")
 
 
+                    paymentMethod = None
+
+                    payment_method = default_Cash_Payment_Method(school_id)
+                    if payment_method:
+                        paymentMethod = payment_method
 
                     receiptInstance = Receipt.objects.create(
                         school_id = school_id,
@@ -146,7 +153,7 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                         totalAmount = overpayment,
                         account_type = defaultAccountType,
                         bank_account=pikreceipt_instance.bank_account,
-                        payment_method=None,
+                        payment_method=paymentMethod,
                         term=term,
                         year=year,
                         currency=default_Currency,

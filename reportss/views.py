@@ -471,33 +471,33 @@ class StudentCollectionListView(SchoolIdMixin, DefaultMixin, generics.RetrieveAP
                 })
 
 
-            # for receipt in queryset:
-            #
-            #     payment_method_name = getattr(receipt.payment_method, 'name', None)
-            #     if receipt.payment_method:
-            #         payment_method_name = receipt.payment_method.name
-            #     else:
-            #         payment_method_name = None
-            #
-            #     receipt_Date = receipt.receipt_date
-            #     creation_Date = receipt.dateofcreation
-            #     mode_of_payment = payment_method_name
-            #     receipt_no = receipt.counter
-            #     transaction_code = receipt.transaction_code
-            #     amount = receipt.totalAmount
-            #     receipt_id = receipt.id
-            #
-            #
-            #
-            #     data.append({
-            #         "receipt_Date": receipt_Date,
-            #         "creation_Date": creation_Date,
-            #         "mode_of_payment": mode_of_payment,
-            #         "receipt_no": receipt_no,
-            #         "transaction_code": transaction_code,
-            #         "amount": amount,
-            #         "receipt_id": receipt_id
-            #     })
+            for receipt in queryset:
+
+                payment_method_name = getattr(receipt.payment_method, 'name', None)
+                if receipt.payment_method:
+                    payment_method_name = receipt.payment_method.name
+                else:
+                    payment_method_name = None
+
+                receipt_Date = receipt.receipt_date
+                creation_Date = receipt.dateofcreation
+                mode_of_payment = payment_method_name
+                receipt_no = receipt.counter
+                transaction_code = receipt.transaction_code
+                amount = receipt.totalAmount
+                receipt_id = receipt.id
+
+
+
+                data.append({
+                    "receipt_Date": receipt_Date,
+                    "creation_Date": creation_Date,
+                    "mode_of_payment": mode_of_payment,
+                    "receipt_no": receipt_no,
+                    "transaction_code": transaction_code,
+                    "amount": amount,
+                    "receipt_id": receipt_id
+                })
 
 
         except Exception as exception:
