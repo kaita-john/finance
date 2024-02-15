@@ -198,7 +198,7 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                     school_id = school_id,
                     accountType = pikreceipt_instance.bank_account.account_type,
                     recipientType = "other",
-                    other = f"{pikreceipt_instance.student.first_name} {pikreceipt_instance.student.first_name}",
+                    other = f"{pikreceipt_instance.student.first_name} {pikreceipt_instance.student.last_name}",
                     bank_account = pikreceipt_instance.bank_account,
                     payment_Method = ddefault_Cash_Payment_Method,
                     referenceNumber = str(pikreceipt_instance.id),
