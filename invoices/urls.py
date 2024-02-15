@@ -5,6 +5,7 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
+
     path('invoiceview', invoiceView.as_view(), name="invoiceView"),
     path('create', InvoiceCreateView.as_view(), name="invoice-create"),
     path('list', InvoiceListView.as_view(), name="invoice-list"),
