@@ -1,13 +1,17 @@
 # Create your views here.
 import uuid
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from utils import SchoolIdMixin, UUID_from_PrimaryKey, DefaultMixin
+from term.models import Term
+from term.serializers import TermSerializer
+from utils import SchoolIdMixin, UUID_from_PrimaryKey, DefaultMixin, IsAdminOrSuperUser
 from academic_year.models import AcademicYear
 from .serializers import AcademicYearSerializer
 
@@ -93,3 +97,21 @@ class AcademicYearDetailView(SchoolIdMixin, generics.RetrieveUpdateDestroyAPIVie
         self.perform_destroy(instance)
         return Response({'detail': 'Record deleted successfully'}, status=status.HTTP_200_OK)
 
+
+
+
+class CurrentAcademicYear(APIView, DefaultMixin, SchoolIdMixin):
+    permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+    def get(self, request):
+        school_id = self.check_school_id(request)
+        if not school_id:
+            return JsonResponse({'detail': 'Invalid school_id in token'}, status=401)
+        self.check_defaults(self.request, school_id)
+
+        try:
+            year = AcademicYear.objects.get(is_current=True, school_id = school_id)
+            serializer = AcademicYearSerializer(year, many=False)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"Current Academic Year not set for school"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

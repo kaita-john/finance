@@ -134,7 +134,7 @@ def sendMail(sender_email, sender_password, receiver_email, subject, usermessage
 def generate_unique_code(prefix="INV"):
     timestamp = int(time.time())
     random_component = uuid.uuid4().hex[:6]
-    unique_code = f"{prefix}{timestamp}{random_component}"
+    unique_code = f"{prefix.upper()}{timestamp}{random_component}"
     return unique_code
 
 
