@@ -129,7 +129,8 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
 
                 if  overpayment > 0:
 
-                    pikreceipt_instance.totalAmount = pikreceipt_instance.totalAmount + Decimal(overpayment_amount)
+                    pikreceipt_instance.totalAmount = pikreceipt_instance.totalAmount
+                    # pikreceipt_instance.totalAmount = pikreceipt_instance.totalAmount + Decimal(overpayment_amount)
                     pikreceipt_instance.save()
 
                     overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
