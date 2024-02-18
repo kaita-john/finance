@@ -62,9 +62,9 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
 
                 totalAmount = 0.00
                 pikreceipt_serializer = self.get_serializer(data=request.data)
+                pikreceipt_serializer.is_valid(raise_exception=True)
 
                 overpayment = 0
-                bigoverpayment = 0
                 overpayment_amount = pikreceipt_serializer.validated_data.get('overpayment_amount')
                 if overpayment_amount:
                     overpayment = overpayment_amount
@@ -74,7 +74,6 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                     totalAmount = sum(Decimal(item['unit_cost']) * Decimal(item['quantity']) for item in pik_values)
 
 
-                pikreceipt_serializer.is_valid(raise_exception=True)
                 pikreceipt_serializer.validated_data['school_id'] = school_id
                 pikreceipt_serializer.validated_data['receipt_No'] = receipt_no
                 pikreceipt_serializer.validated_data['currency'] = default_Currency
