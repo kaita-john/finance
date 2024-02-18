@@ -64,13 +64,14 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                 pikreceipt_serializer = self.get_serializer(data=request.data)
 
                 overpayment = 0
+                bigoverpayment = 0
                 overpayment_amount = pikreceipt_serializer.validated_data.get('overpayment_amount')
                 if overpayment_amount:
                     overpayment = overpayment_amount
 
                 pik_values = request.data.get('pik_values', [])
                 if pik_values:
-                    totalAmount = sum(Decimal(item['unit_cost']) * Decimal(item['quantity']) for item in pik_values) + overpayment
+                    totalAmount = sum(Decimal(item['unit_cost']) * Decimal(item['quantity']) for item in pik_values)
 
 
                 pikreceipt_serializer.is_valid(raise_exception=True)
@@ -115,20 +116,22 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                     year_instance = created_Pik.receipt.year
                     student = created_Pik.receipt.student
 
-                    try:
-                        invoice_instance = Invoice.objects.get(votehead=value['votehead'], term=term_instance,year=year_instance, school_id=school_id, student=student)
-
-                        requiredAmount = invoice_instance.amount - invoice_instance.paid
-                        if created_Pik.amount > requiredAmount:
-                            raise ValueError(f"Amount entered is more than required balance for votehead {invoice_instance.votehead.vote_head_name}")
-
-                    except Invoice.DoesNotExist:
-                        print(f"Didn't find invoice so creating overpayment")
-                        overpayment += created_Pik.amount
-                    except Invoice.MultipleObjectsReturned:
-                        raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
+                    # try:
+                    #     invoice_instance = Invoice.objects.get(votehead=value['votehead'], term=term_instance,year=year_instance, school_id=school_id, student=student)
+                    #     requiredAmount = invoice_instance.amount - invoice_instance.paid
+                    #     if created_Pik.amount > requiredAmount:
+                    #         raise ValueError(f"Amount entered is more than required balance for votehead {invoice_instance.votehead.vote_head_name}")
+                    #
+                    # except Invoice.DoesNotExist:
+                    #     print(f"Didn't find invoice so creating overpayment")
+                    #     overpayment += created_Pik.amount
+                    # except Invoice.MultipleObjectsReturned:
+                    #     raise ValueError("Transaction cancelled: Multiple invoices found for the given criteria")
 
                 if  overpayment > 0:
+
+                    pikreceipt_instance.totalAmount = pikreceipt_instance.totalAmount + Decimal(overpayment_amount)
+                    pikreceipt_instance.save()
 
                     overpayment_votehead = VoteHead.objects.filter(is_Overpayment_Default=True).first()
                     if not overpayment_votehead:
@@ -215,7 +218,7 @@ class PIKReceiptCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
                     referallNumber = str(pikreceipt_instance.id),
                     paymentDate = pikreceipt_instance.receipt_date,
                     description = additional_notes,
-                    totalAmount = pikreceipt_instance.totalAmount,
+                    totalAmount = pikreceipt_instance.totalAmount + Decimal(overpayment),
                     deliveryNoteNumber = "AUTO",
                     financial_year = pikreceipt_instance.financial_year,
                 )
