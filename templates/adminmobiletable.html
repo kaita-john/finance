@@ -1,0 +1,109 @@
+{% extends 'adminmenu.html' %}
+{% load static %}
+{% block body %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                alert("{{ message }}")
+            </script>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Begin Page Content -->
+    <div class="container-fluid">
+
+        <br>
+        <!-- Page Heading -->
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0 text-gray-800"></h1>
+            <div>
+                <a href="{% url 'adddevice' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                        class=""></i>Add A Device</a>
+            </div>
+        </div>
+        <br>
+
+        <!-- DataTales Example -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Mobile Devices</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th>DEVICE ID</th>
+                            <th>School</th>
+                            <th>Device Mobile</th>
+                            <th>Device Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tfoot>
+                        <tr>
+                            <th>DEVICE ID</th>
+                            <th>School</th>
+                            <th>Device Mobile</th>
+                            <th>Device Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </tfoot>
+                        <tbody>
+
+                        {% for valued in summary.mobilelist %}
+                            <tr>
+                                <td>{{ valued.id }}</td>
+                                <td>{{ valued.school.name }}</td>
+                                <td>{{ valued.mobile }}</td>
+                                <td>
+                                    <div align="center">
+                                        {% if valued.active %}
+                                            <a href=""
+                                               style="padding-right: 20px;"><i class=""></i> Active </a> |
+                                            <a href=""
+                                               style="padding-left: 20px; color: black"><i class=""></i> Inactive </a>
+                                        {% else %}
+                                            <a href=""
+                                               style="padding-right: 20px; color: black"><i class=""></i> Active </a> |
+                                            <a href=""
+                                               style="padding-left: 20px;"><i class=""></i> Inactive </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+
+
+                                <td>
+                                    <div class="row justify-content-center">
+                                        <div class="col-md-4 text-center">
+                                            <a href="{% url 'editdevice' mobileid=valued.id %}"
+                                               class="btn btn-primary btn-sm">
+                                                <i class=""></i> Edit
+                                            </a>
+                                        </div>
+                                        <div class="col-md-1 text-center my-2 my-md-0">|</div>
+                                        <div class="col-md-4 text-center">
+                                            <a href="{% url 'deleteDevice' mobileid=valued.id %}"
+                                               class="btn btn-danger btn-sm">
+                                                <i class=""></i> Delete
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        {% endfor %}
+
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+{% endblock %}

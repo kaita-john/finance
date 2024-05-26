@@ -1,0 +1,167 @@
+{% extends 'agentmenu.html' %}
+{% load static %}
+{% block body %}
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                alert("{{ message }}")
+            </script>
+        {% endfor %}
+    {% endif %}
+
+    <br>
+    <!-- Begin Page Content -->
+    <div class="container-fluid">
+
+        <!-- Page Heading -->
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0 text-gray-800">{{ summary.schoolname }} - Agent Code : {{ summary.userid }}</h1>
+            <div>
+                <a style="background: {{ summary.color }}  !important;" href="#"
+                   class="btn btn-sm btn-primary shadow-sm"><i class=""></i> Registered
+                    Students: {{ summary.numberofRegisteredStudents }}</a>
+                <a style="background: {{ summary.color }}  !important;" href="{% url 'logout' %}"
+                   class="btn btn-sm btn-primary shadow-sm"><i class=""></i> Logout</a>
+            </div>
+        </div>
+
+        <!-- Page Heading -->
+        <br>
+        <br>
+
+        {% if summary.istheadmin %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 align="center" class="m-0 font-weight-bold text-primary">REVENUE : KES {{ summary.totalschoolrevenue }}</h6>
+                </div>
+            </div>
+        {% endif %}
+
+
+        <div class="row">
+
+            <div class="col-lg-6">
+                <!-- Circle Buttons -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 align="center" class="m-0 font-weight-bold text-primary"
+                            style="color: {{ summary.color }}  !important;">UNUSED TOKENS</h6>
+                    </div>
+                    <div class="card-body">
+                        <div align="center"
+                             class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.unusedtokens }}
+                            Tkns
+                        </div>
+                        <!-- Circle Buttons (Default) -->
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 style="color: {{ summary.color }}  !important;" class="m-0 font-weight-bold text-primary"
+                            align="center">RELATIVE TALK TIME</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div align="center"
+                                     class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.relativetalketime }}
+                                    Mins
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-lg-6">
+                <!-- Circle Buttons -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 align="center" class="m-0 font-weight-bold text-primary"
+                            style="color: {{ summary.color }}  !important;">USED TOKENS</h6>
+                    </div>
+                    <div class="card-body">
+                        <div align="center"
+                             class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.usedtokens }}
+                            Tkns
+                        </div>
+                        <!-- Circle Buttons (Default) -->
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 style="color: {{ summary.color }}  !important;" class="m-0 font-weight-bold text-primary"
+                            align="center">MINUTES USED</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div align="center"
+                                     class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.usedtokensmins }}
+                                    Mins
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+
+        <div class="row">
+
+            <div class="col-lg-6">
+                <!-- Circle Buttons -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 style="color: {{ summary.color }}  !important;" align="center"
+                            class="m-0 font-weight-bold text-primary">STUDENTS</h6>
+                    </div>
+                    <div class="card-body">
+                        <div align="center"
+                             class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.numberofRegisteredStudents }}
+                            Stds
+                        </div>
+                        <!-- Circle Buttons (Default) -->
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 style="color: {{ summary.color }}  !important;" class="m-0 font-weight-bold text-primary"
+                            align="center">PARENTS</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div align="center"
+                                     class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.numberofparents }}
+                                    Prnts
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}

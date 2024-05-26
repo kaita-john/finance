@@ -1,0 +1,29 @@
+{% load crispy_forms_tags %}
+{% load static %}
+{% block body %}
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                alert("{{ message }}")
+            </script>
+        {% endfor %}
+    {% endif %}
+
+    <div class="container-fluid">
+
+        <br>
+        <h3 style="font-size: 23px" class="mt-3">Upload A File</h3><br>
+
+        <form action="" enctype="multipart/form-data" method="post">
+            {% csrf_token %}
+            {{ summary.form | crispy }}
+            <br>
+            <br>
+            <button type="submit" id="submit" value="submit" class="btn rounded-4 shadow-none w-100 btn-login"
+                    style="background-color: {{ summary.color }}; color: white">Submit File
+            </button>
+        </form>
+
+    </div>
+
+{% endblock %}

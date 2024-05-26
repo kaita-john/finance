@@ -1,0 +1,123 @@
+{% extends 'agentmenu.html' %}
+{% load static %}
+{% block body %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                alert("{{ message }}")
+            </script>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Begin Page Content -->
+    <div class="container-fluid">
+
+        <br>
+        <!-- Page Heading -->
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0 text-gray-800"></h1>
+            <div>
+                <a style="background: {{ summary.color }}  !important;" href="{% url 'addparent' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary
+                       shadow-sm"><i class=""></i> Add Parent</a>
+
+                <a style="background: {{ summary.color }}  !important;" href="{% url 'importParent' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary
+                       shadow-sm"><i class=""></i> Import Parents</a>
+            </div>
+        </div>
+        <br>
+
+
+        <!-- DataTales Example -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 style="color: {{ summary.color }}  !important;" class="m-0 font-weight-bold text-primary">
+                    Parents</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+
+
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th>Parent Name</th>
+                            <th>Phone No.</th>
+                            <th>Student(s)</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tfoot>
+                        <tr>
+                            <th>Parent Name</th>
+                            <th>Phone No.</th>
+                            <th class="text-center">Student(s)</th>
+                            <th>Actions</th>
+                        </tr>
+                        </tfoot>
+                        <tbody>
+
+                        {% for parent in summary.parents %}
+                            <tr>
+                                <td>{{ parent.name }}</td>
+                                <td>{{ parent.mobile }}</td>
+
+                                <td>
+                                    <ul>
+                                        {% for student in parent.students %}
+
+                                            <table class="table table-bordered" id="dataTable" width="100%"
+                                                   cellspacing="0">
+                                                <thead>
+                                                <tr>
+                                                    <td rowspan="2">{{ student.fullname }}
+                                                        - {{ parent.relationship }}</td>
+                                                    <td>{{ parent.relationship }}</td>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+
+                                                {% for contact in student.contacts %}
+                                                    <tr>
+                                                        <td>{{ contact }}</td>
+                                                    </tr>
+                                                {% endfor %}
+
+                                                </tbody>
+                                            </table>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                <td>
+
+                                    <div class="row justify-content-center">
+                                        <div class="col-md-4 text-center">
+                                            <a style="width: 60px" href="{% url 'editparent' parentid=parent.id %}"
+                                               class="btn btn-primary btn-sm">
+                                                <i class=""></i> Edit
+                                            </a>
+                                        </div>
+                                        <div class="col-md-1 text-center my-2 my-md-0">|</div>
+                                        <div class="col-md-4 text-center">
+                                            <a href="{% url 'deleteparent' parentid=parent.id %}"
+                                               class="btn btn-danger btn-sm">
+                                                <i class=""></i> Delete
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+{% endblock %}
