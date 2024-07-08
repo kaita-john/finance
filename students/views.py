@@ -57,6 +57,7 @@ class StudentCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
             if created_student.invoice_Student:
                 studentList = []
                 studentList.append(created_student)
+                #TEST
 
                 try:
                     return createInvoices(school_id, studentList, created_student.current_Year, created_student.current_Term,
