@@ -23,13 +23,13 @@ class VoteHead(ParentModel):
     def save(self, *args, **kwargs):
         if self.folio_number:
             self.folio_number = self.folio_number.upper()
-            existing_folio_head = VoteHead.objects.filter(folio_number=self.folio_number,school_id=self.school_id).exclude(pk=self.pk).first()
+            existing_folio_head = VoteHead.objects.filter(folio_number=self.folio_number,school_id=self.school_id, account_type=self.account_type).exclude(pk=self.pk).first()
             if existing_folio_head:
                 raise ValidationError({'VoteHead with the same folio number and school_id already exists.'})
 
         if self.priority_number:
             self.priority_number = self.priority_number.upper()
-            existing_priority_head = VoteHead.objects.filter(priority_number=self.priority_number,school_id=self.school_id).exclude(pk=self.pk).first()
+            existing_priority_head = VoteHead.objects.filter(priority_number=self.priority_number, account_type = self.account_type, school_id=self.school_id).exclude(pk=self.pk).first()
             if existing_priority_head:
                 raise ValidationError({'VoteHead with the same priority number and school_id already exists.'})
 
@@ -62,7 +62,6 @@ class VoteheadConfiguration(ParentModel):
             self.auto_configuration_type = None
         elif self.configuration_type == AUTO and not self.auto_configuration_type:
             raise ValidationError("Auto Configuration type must be specified")
-
         super().save(*args, **kwargs)
 
     def __str__(self):

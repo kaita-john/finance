@@ -8,6 +8,7 @@ urlpatterns = [
     path('upload-balances', UploadStudentBalancesView.as_view(), name="template-type"),
     path('upload-single-student-balance', UploadSingleStudentBalance.as_view(), name="upload-single-student-balance"),
     path('create', StudentCreateView.as_view(), name="student-create"),
+    path('delete-all-students', StudentDeleteAllView.as_view(), name="student-delete-all"),
     path('upload', UploadStudentCreateView.as_view(), name="student-create"),
     path('list', StudentListView.as_view(), name="student-list"),
     path('search-by-admission', StudentSearchByAdmissionNumber.as_view(), name="student-list"),
