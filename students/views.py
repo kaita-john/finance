@@ -704,19 +704,24 @@ class UpdateStudentGroupsAPIView(generics.UpdateAPIView, SchoolIdMixin):
         return Response({"detail": "Students Groups updated successfully."}, status=status.HTTP_200_OK)
 
 
+
+
+
 class StudentDeleteAllView(SchoolIdMixin, DefaultMixin, generics.DestroyAPIView):
     serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        school_id = self.check_school_id(self.request)
-        if not school_id:
-            return Student.objects.none()
-        self.check_defaults(self.request, school_id)
-        return Student.objects.filter(school_id=school_id)
+        return Student.objects.none()
 
     def delete(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        school_id = request.query_params.get('school_id')
+        if not school_id:
+            return JsonResponse({"message": "school_id is required"}, status=400)
+
+        self.check_defaults(request, school_id)
+        queryset = Student.objects.filter(school_id=school_id)
+
         if not queryset.exists():
             return JsonResponse({"message": "No students to delete"}, status=200)
 
@@ -735,3 +740,4 @@ class StudentDeleteAllView(SchoolIdMixin, DefaultMixin, generics.DestroyAPIView)
             "message": f"Deleted {deleted_count} out of {total_count} students",
             "errors": errors
         }, status=200)
+
