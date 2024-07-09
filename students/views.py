@@ -32,6 +32,7 @@ from voteheads.models import VoteHead
 from voteheads.serializers import VoteHeadSerializer
 from .models import Student
 from .serializers import StudentSerializer
+from streams.models import Stream
 
 
 class StudentCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
@@ -360,6 +361,7 @@ class UploadStudentCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIVie
 
 
         classes = request.GET.get('classes')
+        stream = request.GET.get('stream')
         fileid = request.GET.get('fileid')
 
         try:
@@ -387,6 +389,11 @@ class UploadStudentCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIVie
             theclass = Classes.objects.get(id=classes)
         except ObjectDoesNotExist:
             return Response({'detail': f"This class does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            theStream = Stream.objects.get(id=stream)
+        except ObjectDoesNotExist:
+            return Response({'detail': f"This stream does not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             df = pd.read_excel(file.document)  # Assuming the path attribute contains the file path
@@ -436,6 +443,7 @@ class UploadStudentCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIVie
                         current_Class = theclass,
                         current_Year = currentYear,
                         current_Term = currentTerm,
+                        current_Stream = theStream
                     )
 
         except Exception as exception:
