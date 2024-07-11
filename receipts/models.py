@@ -16,7 +16,7 @@ from term.models import Term
 
 class Receipt(ParentModel):
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
-    student = models.ForeignKey(Student, on_delete=DO_NOTHING, related_name="receipts")
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="receipts")
     receipt_date = models.DateField(auto_now_add=True, null=True)
     receipt_No = models.CharField(max_length=255, null=True)
     totalAmount = models.DecimalField(max_digits=15, decimal_places=2)
