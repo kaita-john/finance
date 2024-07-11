@@ -529,18 +529,37 @@ class invoiceView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView):
                 votehead_list = defaultdict(lambda: defaultdict(Decimal))
                 overall = defaultdict(Decimal)
 
+                # invoiced_voteheads_list = []
+                #
+                # for item in items:
+                #     boarding_status = item.boardingStatus
+                #     votehead_list[item.votehead.vote_head_name][boarding_status] += Decimal(item.amount)
+                #     overall[boarding_status] += Decimal(item.amount)
+                #     data =  {
+                #         "votehead": item.votehead.vote_head_name,
+                #         "boardingStatus": boarding_status,
+                #         "amount": Decimal(item.amount)
+                #     }
+                #     invoiced_voteheads_list.append(data)
+
                 invoiced_voteheads_list = []
 
                 for item in items:
                     boarding_status = item.boardingStatus
-                    votehead_list[item.votehead.vote_head_name][boarding_status] += Decimal(item.amount)
-                    overall[boarding_status] += Decimal(item.amount)
-                    data =  {
-                        "votehead": item.votehead.vote_head_name,
+                    votehead_name = item.votehead.vote_head_name
+                    amount = Decimal(item.amount)
+                    votehead_list[votehead_name][boarding_status] += amount
+                    overall[boarding_status] += amount
+                    data = {
+                        "votehead": votehead_name,
                         "boardingStatus": boarding_status,
-                        "amount": Decimal(item.amount)
+                        "amount": amount
                     }
-                    invoiced_voteheads_list.append(data)
+                    # Check if data already exists in the list
+                    if not any(d['votehead'] == votehead_name and d['boardingStatus'] == boarding_status and d[
+                        'amount'] == amount for d in invoiced_voteheads_list):
+                        invoiced_voteheads_list.append(data)
+
 
                 fee_structure_items['invoiced_voteheads'] = invoiced_voteheads_list
                 fee_structure_items['totals'] = overall
