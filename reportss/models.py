@@ -54,7 +54,7 @@ class ReceivedCheque(ParentModel):
     transactionDate = models.CharField(max_length=20, null=True, blank=True)
     dateofcreation = models.CharField(max_length=20, null=True, blank=True)
     chequeNo = models.CharField(max_length=20, null=True, blank=True)
-    student = models.ForeignKey(Student, default=None, null=True, on_delete=DO_NOTHING)
+    student = models.ForeignKey(Student, default=None, null=True, on_delete=models.CASCADE)
     currency = models.ForeignKey(Currency, default=None, null=True, on_delete=DO_NOTHING)
     amount = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
 
@@ -67,7 +67,7 @@ class BalanceTracker(ParentModel):
     balanceBefore = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     amountPaid = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
     balanceAfter = models.DecimalField(max_digits=15, default=0.00, decimal_places=2)
-    student = models.ForeignKey(Student, default=None, null=True, on_delete=DO_NOTHING)
+    student = models.ForeignKey(Student, default=None, null=True, on_delete=models.CASCADE)
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
 
     def __str__(self):

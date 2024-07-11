@@ -7,7 +7,7 @@ from voteheads.models import VoteHead
 
 
 class Collection(models.Model):
-    student = models.ForeignKey(Student, on_delete=DO_NOTHING, related_name="collections")
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="collections")
     transaction_date = models.DateField(auto_now_add=True, null=True)
     receipt = models.ForeignKey(Receipt, on_delete=DO_NOTHING, default=None, null=True, related_name="collections")
     amount = models.DecimalField(max_digits=15, decimal_places=2)

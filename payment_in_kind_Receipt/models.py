@@ -17,7 +17,7 @@ from vouchers.serializers import VoucherSerializer
 
 class PIKReceipt(ParentModel):
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
-    student = models.ForeignKey(Student, on_delete=DO_NOTHING, related_name="pik_receipts")
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="pik_receipts")
     receipt_date = models.DateField(auto_now_add=True, null=True)
     receipt_No = models.CharField(max_length=255, null=True)
     term = models.ForeignKey(Term, null=True, on_delete=DO_NOTHING, related_name="pik_receipts")
