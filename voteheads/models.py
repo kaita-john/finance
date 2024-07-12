@@ -23,13 +23,13 @@ class VoteHead(ParentModel):
     def save(self, *args, **kwargs):
         if self.folio_number:
             self.folio_number = self.folio_number.upper()
-            existing_folio_head = VoteHead.objects.filter(folio_number=self.folio_number,school_id=self.school_id, account_type=self.account_type).exclude(pk=self.pk).first()
+            existing_folio_head = VoteHead.objects.filter(vote_head_name=self.vote_head_name, folio_number=self.folio_number,school_id=self.school_id, account_type=self.account_type).exclude(pk=self.pk).first()
             if existing_folio_head:
                 raise ValidationError({'VoteHead with the same folio number and school_id already exists.'})
 
         if self.priority_number:
             self.priority_number = self.priority_number.upper()
-            existing_priority_head = VoteHead.objects.filter(priority_number=self.priority_number, account_type = self.account_type, school_id=self.school_id).exclude(pk=self.pk).first()
+            existing_priority_head = VoteHead.objects.filter(vote_head_name=self.vote_head_name, priority_number=self.priority_number, account_type = self.account_type, school_id=self.school_id).exclude(pk=self.pk).first()
             if existing_priority_head:
                 raise ValidationError({'VoteHead with the same priority number and school_id already exists.'})
 
