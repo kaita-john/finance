@@ -33,7 +33,7 @@ class VoteHead(ParentModel):
             if existing_priority_head:
                 raise ValidationError({'VoteHead with the same priority number and school_id already exists.'})
 
-        existing_votehead = VoteHead.objects.filter(vote_head_name=self.vote_head_name,school_id=self.school_id).exclude(pk=self.pk).first()
+        existing_votehead = VoteHead.objects.filter(vote_head_name=self.vote_head_name, folio_number=self.folio_number, priority_number=self.priority_number, account_type = self.account_type, school_id=self.school_id).exclude(pk=self.pk).first()
         if existing_votehead:
             raise ValidationError({'VoteHead with the same name and school_id already exists.'})
 
