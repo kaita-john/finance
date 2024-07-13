@@ -52,8 +52,6 @@ class ReportStudentBalanceView(APIView, DefaultMixin, SchoolIdMixin):
     pagination_class = PageNumberPagination
 
     def calculate(self, school_id, queryset, startdate, enddate, boardingstatus, term, year):
-
-        print(f"1")
         if boardingstatus:
             queryset.filter(boarding_status=boardingstatus)
 
@@ -141,11 +139,11 @@ class ReportStudentBalanceView(APIView, DefaultMixin, SchoolIdMixin):
         try:
             queryset = Student.objects.filter(school_id=school_id)
 
-            currentClass = request.GET.get('currentClass')
+            currentClass = request.GET.get('class')
             stream = request.GET.get('stream')
             student = request.GET.get('student')
-            startdate = request.GET.get('startdate')
-            enddate = request.GET.get('enddate')
+            startdate = request.GET.get('date_from')
+            enddate = request.GET.get('date_to')
             boardingstatus = request.GET.get('boardingstatus')
             amountabove = request.GET.get('amountabove')
             amountbelow = request.GET.get('amountbelow')
