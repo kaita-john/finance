@@ -7,6 +7,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -105,13 +106,14 @@ class VoucherCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
 class VoucherListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = VoucherSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+    pagination_class = PageNumberPagination
+
 
     def get_queryset(self):
         school_id = self.check_school_id(self.request)
         if not school_id:
             return Voucher.objects.none()
         self.check_defaults(self.request, school_id)
-
         queryset = Voucher.objects.filter(school_id=school_id, is_deleted=False)
         return queryset
 
@@ -119,6 +121,11 @@ class VoucherListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
         queryset = self.get_queryset()
         if not queryset.exists():
             return JsonResponse([], safe=False,status=200)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(queryset, many=True)
         return JsonResponse(serializer.data, safe=False)
 

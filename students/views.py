@@ -75,6 +75,7 @@ class StudentCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView):
 class StudentListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
     serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = PageNumberPagination  # Use the default pagination class
 
     def get_queryset(self):
         school_id = self.check_school_id(self.request)
@@ -100,6 +101,11 @@ class StudentListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):
             queryset = queryset.filter(current_Stream = current_stream)
         if student_id:
             queryset = queryset.filter(id = student_id)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
         return JsonResponse(serializer.data, safe=False)

@@ -8,6 +8,7 @@ from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status, generics
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -48,6 +49,7 @@ from vouchers.models import Voucher
 
 class ReportStudentBalanceView(APIView, DefaultMixin, SchoolIdMixin):
     permission_classes = [IsAuthenticated, IsAdminOrSuperUser]
+    pagination_class = PageNumberPagination
 
     def calculate(self, school_id, queryset, startdate, enddate, boardingstatus, term, year):
 
@@ -181,6 +183,13 @@ class ReportStudentBalanceView(APIView, DefaultMixin, SchoolIdMixin):
                 reportsStudentBalanceList = [report for report in reportsStudentBalanceList if report.totalBalance > amountabove]
 
             print(f"Students List is {reportsStudentBalanceList}")
+
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(reportsStudentBalanceList, request)
+            if page is not None:
+                serializer = ReportStudentBalanceSerializer(page, many=True)
+                return paginator.get_paginated_response(serializer.data)
+
             serializer = ReportStudentBalanceSerializer(reportsStudentBalanceList, many=True)
             serialized_data = serializer.data
             return Response({'detail': serialized_data}, status=status.HTTP_200_OK)
