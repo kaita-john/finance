@@ -201,15 +201,6 @@ class FilterStudents(APIView, DefaultMixin, SchoolIdMixin):
     model = Student
     pagination_class = PageNumberPagination  # Use the default pagination class
 
-    def paginate_queryset(self, queryset):
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(queryset, self.request, view=self)
-        return page
-
-    def get_paginated_response(self, data):
-        paginator = self.pagination_class()
-        return paginator.get_paginated_response(data)
-
     def get(self, request):
         school_id = self.check_school_id(request)
         if not school_id:
@@ -248,10 +239,11 @@ class FilterStudents(APIView, DefaultMixin, SchoolIdMixin):
             for student in queryset:
                 student.school_id = school_id
 
-            page = self.paginate_queryset(queryset)
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(queryset, request)
             if page is not None:
                 serializer = StudentSerializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
+                return paginator.get_paginated_response(serializer.data)
 
             serializer = StudentSerializer(queryset, many=True)
             serialized_data = serializer.data
