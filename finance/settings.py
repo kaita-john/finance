@@ -182,28 +182,28 @@ WSGI_APPLICATION = 'finance.wsgi.application'
 
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': os.getenv('DBNAME'),
-#         'USER': os.environ.get('DBUSERNAME'),
-#         'PASSWORD': os.environ.get('DBPASSWORD'),
-#         'ATOMIC_REQUESTS': True,
-#         'OPTIONS': {
-#             'options': '-c search_path={}'.format(os.environ.get('DBSCHEMA'))
-#         },
-#         'HOST': str(os.environ.get('DBHOST')),
-#         'PORT': int(os.environ.get('DBPORT')),
-#
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / "db.sqlite3",
 #     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.getenv('DBNAME'),
+        'USER': os.environ.get('DBUSERNAME'),
+        'PASSWORD': os.environ.get('DBPASSWORD'),
+        'ATOMIC_REQUESTS': True,
+        'OPTIONS': {
+            'options': '-c search_path={}'.format(os.environ.get('DBSCHEMA'))
+        },
+        'HOST': str(os.environ.get('DBHOST')),
+        'PORT': int(os.environ.get('DBPORT')),
+
+    }
+}
 
 
 # Password validation
