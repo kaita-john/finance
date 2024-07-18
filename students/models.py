@@ -21,7 +21,7 @@ class Student(ParentModel):
     boarding_status = models.CharField(max_length=255, default="BOARDING")
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
     current_Stream = models.ForeignKey(Stream, default=None, null=True, on_delete=DO_NOTHING, related_name="students")
-    current_Class = models.ForeignKey(Classes, default=None, null=True, on_delete=DO_NOTHING, related_name="students")
+    current_Class = models.ForeignKey(Classes, default=None, null=True, on_delete=models.CASCADE, related_name="students")
     current_Year = models.ForeignKey(AcademicYear, default=None, null=True, on_delete=DO_NOTHING, related_name="students")
     current_Term = models.ForeignKey(Term, default=None, null=True, on_delete=DO_NOTHING, related_name="students")
     groups = models.JSONField(default=list, blank=True, null=True)
