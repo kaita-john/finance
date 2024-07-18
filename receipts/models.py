@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import DO_NOTHING
+from django.db.models import DO_NOTHING, CASCADE
 
 from academic_year.models import AcademicYear
 from account_types.models import AccountType
@@ -31,7 +31,7 @@ class Receipt(ParentModel):
     addition_notes = models.CharField(max_length=7000, blank=True, null=True)
     is_reversed = models.BooleanField(default=False, blank=False, null=False)
     reversal_date = models.DateField(null=True)
-    student_class = models.ForeignKey(Classes, null=True, on_delete=DO_NOTHING, related_name="receipts")
+    student_class = models.ForeignKey(Classes, null=True, on_delete=CASCADE, related_name="receipts")
     financial_year = models.ForeignKey(FinancialYear, null=True, on_delete=DO_NOTHING, related_name="receipts")
     counter = models.FloatField(null=True, default=None)
 
