@@ -188,19 +188,17 @@ WSGI_APPLICATION = 'finance.wsgi.application'
 #         'NAME': BASE_DIR / "db.sqlite3",
 #     }
 # }
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.getenv('DBNAME'),
-        'USER': os.environ.get('DBUSERNAME'),
-        'PASSWORD': os.environ.get('DBPASSWORD'),
+        'NAME': "alanzi_finance",
+        'USER': "ien",
+        'PASSWORD': "Log!n2azuredb2022",
         'ATOMIC_REQUESTS': True,
-        'OPTIONS': {
-            'options': '-c search_path={}'.format(os.environ.get('DBSCHEMA'))
-        },
-        'HOST': str(os.environ.get('DBHOST')),
-        'PORT': int(os.environ.get('DBPORT')),
-
+        'HOST': "51.12.248.43",
+        'PORT': "5432",
     }
 }
 

@@ -211,7 +211,8 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
     invoice_no = generate_unique_code()
 
     with transaction.atomic():
-        for student in students:
+
+        for student in students[:3]:
             boarding_status = student.boarding_status
 
             for item in fee_structures_itemList:
@@ -231,11 +232,10 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
 
                             if exists_query.exists():
                                 print(f"Stopped and Student is {student} and Fee structure Class is {classes} and student class is {student.current_Class} and Votehead is {votehead.vote_head_name}")
-
                                 print("Invoice already exists there!")
-                                invoice = exists_query[0]
-                                invoice.amount = invoice.amount + Decimal(amount)
-                                invoice.save()
+                                # invoice = exists_query[0]
+                                # invoice.amount = invoice.amount + Decimal(amount)
+                                # invoice.save()
                             else:
                                 invoice = Invoice(
                                     issueDate=timezone.now().date(),
@@ -252,6 +252,7 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
                                     school_id=school_id,
                                     votehead=votehead
                                 )
+                                print(f"Created invoice for {student.first_name, classes, year, term, votehead.vote_head_name, amount}")
                                 invoice.save()
 
                 except Exception as e:
@@ -412,7 +413,7 @@ class UnInvoiceStudentView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView)
         student = serialized_data.get('student')
         filter_type = serialized_data.get('filter_type')
 
-        invoicetypes = ["classes", "student", "stream"]
+        invoicetypes = ["class", "classes", "student", "stream"]
         if filter_type not in invoicetypes:
             return Response({'detail': "Valid options are class, student and stream"},status=status.HTTP_400_BAD_REQUEST)
 
@@ -420,7 +421,7 @@ class UnInvoiceStudentView(SchoolIdMixin, DefaultMixin, generics.GenericAPIView)
             return Response({'detail': "To uninvoice a stream, enter both Class and Term"},status=status.HTTP_400_BAD_REQUEST)
 
         size = None
-        if filter_type == "classes":
+        if filter_type == "classes" or filter_type == "class":
             invoiceList = Invoice.objects.filter(year=structure_year, term=structure_term, classes=structure_class, school_id=school_id)
             size = len(invoiceList)
             for value in invoiceList:

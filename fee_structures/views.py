@@ -32,8 +32,13 @@ class FeeStructureCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView
             if academic_year is None:
                 current_academic_year = currentAcademicYear(school_id)
                 if current_academic_year is None:
-                    return Response({'detail': 'Current academic year is not set'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'detail': 'Current academic year is not set'},status=status.HTTP_400_BAD_REQUEST)
                 serializer.validated_data['academic_year'] = current_academic_year
+
+            # Check if a FeeStructure with the same academic_year, classes, term, and school_id already exists
+            existing_fee_structure = FeeStructure.objects.filter(academic_year=serializer.validated_data['academic_year'],classes=serializer.validated_data['classes'],term=serializer.validated_data['term'],school_id=school_id).first()
+            if existing_fee_structure:
+                return Response({'detail': 'A FeeStructure with these attributes already exists.'},status=status.HTTP_400_BAD_REQUEST)
 
             try:
                 with transaction.atomic():
@@ -42,18 +47,16 @@ class FeeStructureCreateView(SchoolIdMixin, DefaultMixin, generics.CreateAPIView
                     for fee_structure_item_data in fee_structure_items_data:
                         fee_structure_item_data['school_id'] = fee_structure.school_id
                         fee_structure_item_data['fee_Structure'] = fee_structure.id
-                        print(f"checking -> {fee_structure_item_data}")
                         fee_structure_item_serializer = FeeStructureItemSerializer(data=fee_structure_item_data)
                         fee_structure_item_serializer.is_valid(raise_exception=True)
-                        print(f"checking -> {fee_structure_item_serializer.validated_data}")
                         fee_structure_item_serializer.save()
-
-                    return Response({'detail': f'FeeStructure created successfully'},status=status.HTTP_201_CREATED)
+                    return Response({'detail': 'FeeStructure created successfully'},status=status.HTTP_201_CREATED)
             except Exception as e:
-                return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({'detail': str(e)},  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
-            print("Here")
-            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors},  status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 class FeeStructureListView(SchoolIdMixin, DefaultMixin, generics.ListAPIView):

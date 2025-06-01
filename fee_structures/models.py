@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import DO_NOTHING, CASCADE
+from django.db.models import DO_NOTHING, CASCADE, UniqueConstraint
 
 from academic_year.models import AcademicYear
 from classes.models import Classes
@@ -17,4 +17,12 @@ class FeeStructure(ParentModel):
     school_id = models.UUIDField(max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.school_id}"
+        return f"{self.id}"
+
+    # class Meta:
+    #     constraints = [
+    #         UniqueConstraint(
+    #             fields=['academic_year', 'classes', 'term', 'school_id'],
+    #             name='unique_fee_structure_per_term_class_year_school'
+    #         )
+    #     ]
