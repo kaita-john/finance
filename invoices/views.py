@@ -212,7 +212,8 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
 
     with transaction.atomic():
 
-        for student in students[:3]:
+        #for student in students[:3]:
+        for student in students:
             boarding_status = student.boarding_status
 
             for item in fee_structures_itemList:
@@ -233,9 +234,9 @@ def createInvoices(school_id, students, structure_year, structure_term, structur
                             if exists_query.exists():
                                 print(f"Stopped and Student is {student} and Fee structure Class is {classes} and student class is {student.current_Class} and Votehead is {votehead.vote_head_name}")
                                 print("Invoice already exists there!")
-                                # invoice = exists_query[0]
-                                # invoice.amount = invoice.amount + Decimal(amount)
-                                # invoice.save()
+                                invoice = exists_query[0]
+                                invoice.amount = invoice.amount + Decimal(amount)
+                                invoice.save()
                             else:
                                 invoice = Invoice(
                                     issueDate=timezone.now().date(),
