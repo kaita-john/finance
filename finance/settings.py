@@ -13,6 +13,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -87,7 +88,6 @@ INSTALLED_APPS = [
     'transactions',
     'budgets',
 ]
-
 
 APPEND_SLASH = False
 
@@ -181,7 +181,6 @@ WSGI_APPLICATION = 'finance.wsgi.application'
 # }
 
 
-
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
@@ -197,12 +196,13 @@ DATABASES = {
         'USER': "ien",
         'PASSWORD': "Log!n2azuredb2022",
         'ATOMIC_REQUESTS': True,
-        'HOST': "51.12.248.43",
+        'OPTIONS': {
+            'options': '-c search_path={}'.format(os.environ.get('DBSCHEMA'))
+        },
+        'HOST': "localhost",
         'PORT': "5432",
     }
 }
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
