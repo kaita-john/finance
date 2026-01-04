@@ -79,8 +79,8 @@ class AppUserSerializer(serializers.ModelSerializer):
         roles = FetchRoleSerializer(many=False).to_internal_value(roles_data)
 
         name = validated_data.get('first_name', "User")
-        sender_email = "kaitaformal@gmail.com"
-        sender_password ="wwmx vsyr tvwp sfac"
+        sender_email = "kaitahouseofmusic@gmail.com"
+        sender_password ='yjmb nzam asyo zlbi'
         receiver_email = validated_data.get('email')
         subject  = "PASSWORD"
 
